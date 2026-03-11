@@ -55,7 +55,7 @@ public class ProfileService
         Bio = u.Bio,
         AvatarUrl = u.AvatarUrl,
         FavoriteActivities = u.FavoriteActivities,
-        RatingAvg = u.RatingAvg,
+        RatingAvg = (double)u.RatingAvg,
         RatingCount = u.RatingCount,
         CreatedAt = u.CreatedAt
     };

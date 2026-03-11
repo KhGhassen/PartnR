@@ -3,6 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { register } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
 
+const PASSWORD_RULES = [
+  { test: (p: string) => p.length >= 8, label: '8 caractères minimum' },
+  { test: (p: string) => /[A-Z]/.test(p), label: '1 majuscule' },
+  { test: (p: string) => /\d/.test(p), label: '1 chiffre' },
+];
+
 export default function Register() {
   const [form, setForm] = useState({ firstName: '', email: '', password: '', city: '' });
   const [error, setError] = useState('');
@@ -10,8 +16,14 @@ export default function Register() {
   const { setAuth } = useAuth();
   const navigate = useNavigate();
 
+  const passwordValid = PASSWORD_RULES.every((r) => r.test(form.password));
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!passwordValid) {
+      setError('Le mot de passe ne respecte pas les critères');
+      return;
+    }
     setError('');
     setLoading(true);
     try {
@@ -43,6 +55,7 @@ export default function Register() {
             <input
               type="text"
               required
+              maxLength={50}
               value={form.firstName}
               onChange={update('firstName')}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
@@ -68,7 +81,23 @@ export default function Register() {
               onChange={update('password')}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
             />
-            <p className="text-xs text-gray-400 mt-1">Min. 8 caractères, 1 majuscule, 1 chiffre</p>
+            {form.password.length > 0 && (
+              <div className="mt-2 space-y-1">
+                {PASSWORD_RULES.map((rule) => (
+                  <p
+                    key={rule.label}
+                    className={`text-xs flex items-center gap-1 ${
+                      rule.test(form.password) ? 'text-green-600' : 'text-gray-400'
+                    }`}
+                  >
+                    {rule.test(form.password) ? '✓' : '○'} {rule.label}
+                  </p>
+                ))}
+              </div>
+            )}
+            {form.password.length === 0 && (
+              <p className="text-xs text-gray-400 mt-1">Min. 8 caractères, 1 majuscule, 1 chiffre</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Ville</label>
@@ -82,7 +111,7 @@ export default function Register() {
           </div>
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !passwordValid}
             className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
           >
             {loading ? 'Inscription...' : "S'inscrire"}

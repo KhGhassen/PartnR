@@ -11,7 +11,7 @@ public class EventService
 
     public EventService(AppDbContext db) => _db = db;
 
-    public async Task<List<EventDto>> ListAsync(string? city, Guid? activityId, string? status)
+    public async Task<List<EventDto>> ListAsync(string? city, Guid? activityId, EventStatus? status)
     {
         var query = _db.Events
             .Include(e => e.Activity)
@@ -23,10 +23,10 @@ public class EventService
             query = query.Where(e => e.City.ToLower() == city.ToLower());
         if (activityId.HasValue)
             query = query.Where(e => e.ActivityId == activityId.Value);
-        if (!string.IsNullOrEmpty(status))
-            query = query.Where(e => e.Status == status);
+        if (status.HasValue)
+            query = query.Where(e => e.Status == status.Value);
         else
-            query = query.Where(e => e.Status == "Published");
+            query = query.Where(e => e.Status == EventStatus.Published);
 
         var events = await query.OrderBy(e => e.Date).Take(50).ToListAsync();
         return events.Select(MapToDto).ToList();
@@ -52,21 +52,20 @@ public class EventService
         var ev = new Event
         {
             Title = dto.Title,
-            Description = dto.Description,
+            Description = dto.Description ?? string.Empty,
             City = dto.City,
-            Location = dto.Location,
+            Location = dto.Location ?? string.Empty,
             Date = dto.Date,
             MaxParticipants = dto.MaxParticipants,
             ActivityId = dto.ActivityId,
             CreatorId = creatorId,
-            Status = "Published"
+            Status = EventStatus.Published
         };
 
-        // Auto-add creator as participant
         ev.Participants.Add(new EventParticipant
         {
             UserId = creatorId,
-            Status = "Confirmed"
+            Status = ParticipantStatus.Confirmed
         });
 
         _db.Events.Add(ev);
@@ -89,7 +88,7 @@ public class EventService
         if (dto.Location is not null) ev.Location = dto.Location;
         if (dto.Date.HasValue) ev.Date = dto.Date.Value;
         if (dto.MaxParticipants.HasValue) ev.MaxParticipants = dto.MaxParticipants.Value;
-        if (dto.Status is not null) ev.Status = dto.Status;
+        if (dto.Status.HasValue) ev.Status = dto.Status.Value;
 
         await _db.SaveChangesAsync();
         return await GetByIdAsync(ev.Id);
@@ -101,10 +100,10 @@ public class EventService
             .FirstOrDefaultAsync(e => e.Id == eventId)
             ?? throw new KeyNotFoundException("Event not found.");
 
-        if (ev.Status != "Published")
+        if (ev.Status != EventStatus.Published)
             throw new InvalidOperationException("Cannot join this event.");
 
-        var confirmed = ev.Participants.Count(p => p.Status == "Confirmed");
+        var confirmed = ev.Participants.Count(p => p.Status == ParticipantStatus.Confirmed);
         if (confirmed >= ev.MaxParticipants)
             throw new InvalidOperationException("Event is full.");
 
@@ -114,7 +113,7 @@ public class EventService
         ev.Participants.Add(new EventParticipant
         {
             UserId = userId,
-            Status = "Confirmed"
+            Status = ParticipantStatus.Confirmed
         });
 
         await _db.SaveChangesAsync();
@@ -130,7 +129,7 @@ public class EventService
         if (ev!.CreatorId == userId)
             throw new InvalidOperationException("Creator cannot leave. Cancel the event instead.");
 
-        participant.Status = "Cancelled";
+        participant.Status = ParticipantStatus.Cancelled;
         await _db.SaveChangesAsync();
     }
 
@@ -155,12 +154,12 @@ public class EventService
         Location = e.Location,
         Date = e.Date,
         MaxParticipants = e.MaxParticipants,
-        Status = e.Status,
+        Status = e.Status.ToString(),
         ActivityName = e.Activity.Name,
         ActivityIcon = e.Activity.Icon,
         CreatorId = e.CreatorId,
         CreatorName = e.Creator.FirstName,
-        ParticipantCount = e.Participants.Count(p => p.Status == "Confirmed"),
+        ParticipantCount = e.Participants.Count(p => p.Status == ParticipantStatus.Confirmed),
         CreatedAt = e.CreatedAt
     };
 
@@ -173,19 +172,19 @@ public class EventService
         Location = e.Location,
         Date = e.Date,
         MaxParticipants = e.MaxParticipants,
-        Status = e.Status,
+        Status = e.Status.ToString(),
         ActivityName = e.Activity.Name,
         ActivityIcon = e.Activity.Icon,
         CreatorId = e.CreatorId,
         CreatorName = e.Creator.FirstName,
-        ParticipantCount = e.Participants.Count(p => p.Status == "Confirmed"),
+        ParticipantCount = e.Participants.Count(p => p.Status == ParticipantStatus.Confirmed),
         CreatedAt = e.CreatedAt,
         Participants = e.Participants.Select(p => new ParticipantDto
         {
             UserId = p.UserId,
             FirstName = p.User.FirstName,
             AvatarUrl = p.User.AvatarUrl,
-            Status = p.Status,
+            Status = p.Status.ToString(),
             JoinedAt = p.JoinedAt
         }).ToList()
     };

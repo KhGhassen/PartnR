@@ -2,18 +2,15 @@ using Microsoft.AspNetCore.Identity;
 
 namespace PartnR.Api.Entities;
 
-/// <summary>
-/// Utilisateur de la plateforme. Étend IdentityUser pour l'auth.
-/// </summary>
-public class AppUser : IdentityUser
+public class AppUser : IdentityUser<Guid>
 {
     public string FirstName { get; set; } = string.Empty;
     public string? AvatarUrl { get; set; }
     public string City { get; set; } = string.Empty;
-    public string Bio { get; set; } = string.Empty;  // max 300 chars
-    public List<string> FavoriteActivities { get; set; } = [];  // max 3
+    public string Bio { get; set; } = string.Empty;
+    public List<string> FavoriteActivities { get; set; } = [];
     public bool PhoneVerified { get; set; }
-    public string Role { get; set; } = "user";  // "user" | "admin"
+    public string Role { get; set; } = "user";
     public decimal RatingAvg { get; set; }
     public int RatingCount { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

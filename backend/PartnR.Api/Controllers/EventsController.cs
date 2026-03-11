@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PartnR.Api.DTOs.Events;
+using PartnR.Api.Entities;
 using PartnR.Api.Services;
 
 namespace PartnR.Api.Controllers;
@@ -18,7 +19,7 @@ public class EventsController : ControllerBase
     public async Task<ActionResult<List<EventDto>>> List(
         [FromQuery] string? city,
         [FromQuery] Guid? activityId,
-        [FromQuery] string? status)
+        [FromQuery] EventStatus? status)
     {
         var events = await _eventService.ListAsync(city, activityId, status);
         return Ok(events);
