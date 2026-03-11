@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PartnR — Présentation du projet</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --indigo: #4f46e5;
+    --indigo-light: #818cf8;
+    --indigo-dark: #3730a3;
+    --slate-50: #f8fafc;
+    --slate-100: #f1f5f9;
+    --slate-200: #e2e8f0;
+    --slate-300: #cbd5e1;
+    --slate-500: #64748b;
+    --slate-700: #334155;
+    --slate-800: #1e293b;
+    --slate-900: #0f172a;
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --red: #ef4444;
+  }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--slate-900);
+    color: var(--slate-100);
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  .slide {
+    display: none;
+    width: 100vw;
+    height: 100vh;
+    padding: 60px 80px;
+    position: relative;
+    overflow-y: auto;
+  }
+  .slide.active { display: flex; flex-direction: column; }
+
+  /* Navigation */
+  .nav {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    z-index: 100;
+    background: rgba(15,23,42,0.85);
+    backdrop-filter: blur(10px);
+    padding: 10px 24px;
+    border-radius: 50px;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  .nav button {
+    background: none;
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s;
+  }
+  .nav button:hover { background: var(--indigo); border-color: var(--indigo); }
+  .nav .counter {
+    font-size: 13px;
+    color: var(--slate-300);
+    min-width: 60px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+  .dots { display: flex; gap: 6px; }
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--slate-500);
+    transition: all 0.3s;
+    cursor: pointer;
+    border: none;
+  }
+  .dot.active { background: var(--indigo-light); width: 24px; border-radius: 4px; }
+
+  /* Typography */
+  h1 { font-size: 3.5rem; font-weight: 800; line-height: 1.1; }
+  h2 { font-size: 2rem; font-weight: 700; margin-bottom: 32px; color: white; }
+  h3 { font-size: 1.25rem; font-weight: 600; margin-bottom: 12px; color: var(--indigo-light); }
+  .subtitle { font-size: 1.4rem; color: var(--slate-300); margin-top: 12px; font-weight: 300; }
+  .badge {
+    display: inline-block;
+    background: rgba(79,70,229,0.15);
+    color: var(--indigo-light);
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid rgba(79,70,229,0.3);
+  }
+  .slide-number {
+    position: absolute;
+    top: 30px;
+    right: 40px;
+    font-size: 13px;
+    color: var(--slate-500);
+  }
+
+  /* Cards & Grids */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+  .card {
+    background: rgba(30,41,59,0.6);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 24px;
+    transition: all 0.3s;
+  }
+  .card:hover { border-color: rgba(79,70,229,0.3); }
+
+  .stat-card {
+    text-align: center;
+    padding: 28px 20px;
+  }
+  .stat-card .number {
+    font-size: 3rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--indigo-light), #c084fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1;
+  }
+  .stat-card .label {
+    font-size: 14px;
+    color: var(--slate-300);
+    margin-top: 8px;
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  th {
+    text-align: left;
+    padding: 10px 16px;
+    font-weight: 600;
+    color: var(--indigo-light);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  td {
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: var(--slate-200);
+  }
+  tr:hover td { background: rgba(79,70,229,0.05); }
+  .method { font-weight: 600; font-size: 12px; padding: 3px 10px; border-radius: 4px; }
+  .method.get { background: rgba(34,197,94,0.15); color: #4ade80; }
+  .method.post { background: rgba(59,130,246,0.15); color: #60a5fa; }
+  .method.put { background: rgba(245,158,11,0.15); color: #fbbf24; }
+  .method.delete { background: rgba(239,68,68,0.15); color: #f87171; }
+
+  /* Progress bars */
+  .progress-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 14px;
+  }
+  .progress-label {
+    width: 180px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--slate-200);
+  }
+  .progress-bar {
+    flex: 1;
+    height: 10px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 1s ease;
+  }
+  .progress-fill.green { background: linear-gradient(90deg, #22c55e, #4ade80); }
+  .progress-fill.amber { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+  .progress-fill.red { background: linear-gradient(90deg, #ef4444, #f87171); }
+  .progress-pct {
+    width: 50px;
+    text-align: right;
+    font-size: 14px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .pct-green { color: #4ade80; }
+  .pct-amber { color: #fbbf24; }
+  .pct-red { color: #f87171; }
+
+  /* Mermaid */
+  .mermaid-container {
+    background: rgba(248,250,252,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .mermaid { width: 100%; }
+  .mermaid svg { max-width: 100%; }
+
+  /* Tags */
+  .tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    margin: 2px;
+  }
+  .tag-green { background: rgba(34,197,94,0.15); color: #4ade80; }
+  .tag-blue { background: rgba(59,130,246,0.15); color: #60a5fa; }
+  .tag-purple { background: rgba(168,85,247,0.15); color: #c084fc; }
+  .tag-amber { background: rgba(245,158,11,0.15); color: #fbbf24; }
+
+  /* File tree */
+  .file-tree {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--slate-300);
+    background: rgba(15,23,42,0.5);
+    border: 1px solid rgba(255,255,255,0.06);
+    padding: 20px 24px;
+    border-radius: 12px;
+    overflow: auto;
+    max-height: 400px;
+  }
+  .file-tree .folder { color: var(--indigo-light); font-weight: 600; }
+  .file-tree .file { color: var(--slate-300); }
+  .file-tree .highlight { color: #4ade80; font-weight: 500; }
+
+  /* Flex utils */
+  .flex { display: flex; }
+  .flex-col { flex-direction: column; }
+  .flex-1 { flex: 1; }
+  .gap-8 { gap: 8px; }
+  .gap-16 { gap: 16px; }
+  .gap-24 { gap: 24px; }
+  .gap-32 { gap: 32px; }
+  .items-center { align-items: center; }
+  .justify-center { justify-content: center; }
+  .mt-auto { margin-top: auto; }
+  .mb-8 { margin-bottom: 8px; }
+  .mb-16 { margin-bottom: 16px; }
+  .mb-24 { margin-bottom: 24px; }
+  .mb-32 { margin-bottom: 32px; }
+  .text-center { text-align: center; }
+
+  /* List */
+  .check-list { list-style: none; }
+  .check-list li {
+    padding: 6px 0;
+    font-size: 15px;
+    color: var(--slate-200);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .check-list li::before { font-size: 16px; }
+  .check-list li.done::before { content: "✅"; }
+  .check-list li.wip::before { content: "🔶"; }
+  .check-list li.todo::before { content: "⬜"; }
+
+  /* Title slide special */
+  .title-slide {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background: radial-gradient(ellipse at 50% 0%, rgba(79,70,229,0.15) 0%, transparent 60%);
+  }
+  .title-slide h1 {
+    font-size: 5rem;
+    background: linear-gradient(135deg, white, var(--indigo-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .tech-pills {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 32px;
+    flex-wrap: wrap;
+  }
+  .pill {
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.04);
+    color: var(--slate-200);
+  }
+</style>
+</head>
+<body>
+
+<!-- ==================== SLIDE 1: TITRE ==================== -->
+<div class="slide title-slide active" id="slide-1">
+  <span class="slide-number">01 / 11</span>
+  <div style="margin-bottom: 16px;">
+    <span class="badge">Projet Full-Stack</span>
+  </div>
+  <h1>PartnR</h1>
+  <p class="subtitle">Trouvez des partenaires pour vos activités sportives et de loisirs</p>
+  <div class="tech-pills">
+    <span class="pill">React 19</span>
+    <span class="pill">TypeScript</span>
+    <span class="pill">Tailwind CSS 4</span>
+    <span class="pill">ASP.NET Core 8</span>
+    <span class="pill">PostgreSQL</span>
+    <span class="pill">SignalR</span>
+  </div>
+  <p style="color: var(--slate-500); margin-top: 48px; font-size: 13px;">
+    Utilisez les flèches ← → ou les boutons ci-dessous pour naviguer
+  </p>
+</div>
+
+<!-- ==================== SLIDE 2: CHIFFRES ==================== -->
+<div class="slide" id="slide-2">
+  <span class="slide-number">02 / 11</span>
+  <h2>Vue d'ensemble du projet</h2>
+  <div class="grid-4 mb-32">
+    <div class="card stat-card">
+      <div class="number">70</div>
+      <div class="label">Fichiers source</div>
+    </div>
+    <div class="card stat-card">
+      <div class="number">3 689</div>
+      <div class="label">Lignes de code</div>
+    </div>
+    <div class="card stat-card">
+      <div class="number">27</div>
+      <div class="label">Tests (15 + 12)</div>
+    </div>
+    <div class="card stat-card">
+      <div class="number">6</div>
+      <div class="label">Commits</div>
+    </div>
+  </div>
+  <div class="grid-3">
+    <div class="card">
+      <h3>Backend (.NET)</h3>
+      <p style="font-size: 2rem; font-weight: 700; color: white;">1 868 LOC</p>
+      <p style="font-size: 13px; color: var(--slate-300); margin-top: 8px;">
+        27 fichiers C# &bull; 5 Controllers &bull; 4 Services<br>
+        6 Entities &bull; 6 DTOs &bull; 1 Hub SignalR
+      </p>
+    </div>
+    <div class="card">
+      <h3>Frontend (React)</h3>
+      <p style="font-size: 2rem; font-weight: 700; color: white;">1 821 LOC</p>
+      <p style="font-size: 13px; color: var(--slate-300); margin-top: 8px;">
+        26 fichiers TS/TSX &bull; 7 Pages &bull; 3 Composants<br>
+        6 API modules &bull; 1 AuthContext &bull; Types
+      </p>
+    </div>
+    <div class="card">
+      <h3>Tests</h3>
+      <p style="font-size: 2rem; font-weight: 700; color: white;">27 tests</p>
+      <p style="font-size: 13px; color: var(--slate-300); margin-top: 8px;">
+        xUnit + InMemory DB (backend)<br>
+        Vitest + Testing Library (frontend)<br>
+        <span style="color: #4ade80;">100% passing ✓</span>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SLIDE 3: ARCHITECTURE ==================== -->
+<div class="slide" id="slide-3">
+  <span class="slide-number">03 / 11</span>
+  <h2>Architecture globale</h2>
+  <div class="mermaid-container flex-1">
+    <pre class="mermaid">
+graph LR
+    subgraph Client["🖥️ Frontend (React 19 + Vite 7)"]
+        A["Pages<br/>7 routes"] --> B["API Layer<br/>Axios"]
+        A --> C["AuthContext<br/>JWT localStorage"]
+        A --> D["EventChat<br/>SignalR Client"]
+    end
+
+    subgraph Server["⚙️ Backend (ASP.NET Core 8)"]
+        E["Controllers<br/>5 REST"] --> F["Services<br/>4 métier"]
+        G["SignalR Hub<br/>Event Chat"] --> F
+        F --> H["EF Core<br/>DbContext"]
+        I["Middleware<br/>Exceptions"] --> E
+        J["Rate Limiter<br/>JWT Auth"] --> E
+    end
+
+    subgraph DB["🗄️ PostgreSQL"]
+        K["6 Tables<br/>+ Identity"]
+    end
+
+    B -->|"HTTP/JSON<br/>Vite Proxy :5173→:5000"| E
+    D -->|"WebSocket<br/>/hubs/event-chat"| G
+    H -->|"Npgsql"| K
+
+    style Client fill:#1e1b4b,stroke:#818cf8,color:#e0e7ff
+    style Server fill:#1a2332,stroke:#60a5fa,color:#dbeafe
+    style DB fill:#1a2e1a,stroke:#4ade80,color:#dcfce7
+    </pre>
+  </div>
+</div>
+
+<!-- ==================== SLIDE 4: MODÈLE DE DONNÉES ==================== -->
+<div class="slide" id="slide-4">
+  <span class="slide-number">04 / 11</span>
+  <h2>Modèle de données</h2>
+  <div class="mermaid-container flex-1">
+    <pre class="mermaid">
+erDiagram
+    AppUser ||--o{ Event : "crée"
+    AppUser ||--o{ EventParticipant : "participe"
+    AppUser ||--o{ Message : "envoie"
+    AppUser ||--o{ Rating : "note (rater)"
+    AppUser ||--o{ Rating : "reçoit (rated)"
+    Event ||--o{ EventParticipant : "a"
+    Event ||--o{ Message : "contient"
+    Event ||--o{ Rating : "génère"
+    Activity ||--o{ Event : "catégorise"
+
+    AppUser {
+        guid Id PK
+        string FirstName
+        string Email
+        string City
+        string Bio
+        decimal RatingAvg
+        int RatingCount
+    }
+    Event {
+        guid Id PK
+        guid CreatorId FK
+        guid ActivityId FK
+        string Title
+        string City
+        datetime Date
+        int MaxParticipants
+        EventStatus Status
+    }
+    Activity {
+        guid Id PK
+        string Name
+        string Slug
+        string Icon
+    }
+    EventParticipant {
+        guid Id PK
+        guid EventId FK
+        guid UserId FK
+        ParticipantStatus Status
+    }
+    Message {
+        guid Id PK
+        guid EventId FK
+        guid UserId FK
+        string Content
+        datetime CreatedAt
+    }
+    Rating {
+        guid Id PK
+        guid EventId FK
+        guid RaterId FK
+        guid RatedUserId FK
+        int Score
+        string Comment
+    }
+    </pre>
+  </div>
+</div>
+
+<!-- ==================== SLIDE 5: BACKEND ==================== -->
+<div class="slide" id="slide-5">
+  <span class="slide-number">05 / 11</span>
+  <h2>Architecture Backend</h2>
+  <div class="grid-2 flex-1">
+    <div>
+      <div class="mermaid-container mb-24">
+        <pre class="mermaid">
+graph TB
+    A["🌐 HTTP Request"] --> B["ExceptionMiddleware"]
+    B --> C["Rate Limiter"]
+    C --> D["JWT Auth"]
+    D --> E["Controllers"]
+    E --> F["Services"]
+    F --> G["AppDbContext"]
+    G --> H["PostgreSQL"]
+
+    style A fill:#334155,stroke:#94a3b8,color:#f1f5f9
+    style E fill:#3730a3,stroke:#818cf8,color:#e0e7ff
+    style F fill:#1e40af,stroke:#60a5fa,color:#dbeafe
+    style G fill:#065f46,stroke:#34d399,color:#d1fae5
+    style H fill:#14532d,stroke:#4ade80,color:#dcfce7
+        </pre>
+      </div>
+    </div>
+    <div>
+      <div class="card mb-16">
+        <h3>Controllers (5)</h3>
+        <div style="font-size: 13px; color: var(--slate-300); line-height: 2;">
+          <span class="tag tag-blue">AuthController</span> register, login, me<br>
+          <span class="tag tag-blue">EventsController</span> CRUD + join/leave<br>
+          <span class="tag tag-blue">ProfilesController</span> get, search, update<br>
+          <span class="tag tag-blue">RatingsController</span> create, get<br>
+          <span class="tag tag-blue">ActivitiesController</span> list
+        </div>
+      </div>
+      <div class="card mb-16">
+        <h3>Services (4)</h3>
+        <div style="font-size: 13px; color: var(--slate-300); line-height: 2;">
+          <span class="tag tag-purple">AuthService</span> Register, Login, JWT<br>
+          <span class="tag tag-purple">EventService</span> List, Create, Update, Join, Leave, Delete<br>
+          <span class="tag tag-purple">ProfileService</span> GetById, Update, Search<br>
+          <span class="tag tag-purple">RatingService</span> Create, GetForUser
+        </div>
+      </div>
+      <div class="card">
+        <h3>Sécurité</h3>
+        <div style="font-size: 13px; color: var(--slate-300); line-height: 2;">
+          <span class="tag tag-green">Rate Limiting</span> Auth: 10/min, API: 60/min<br>
+          <span class="tag tag-green">JWT Bearer</span> Tokens signés + expiration<br>
+          <span class="tag tag-green">CORS</span> Origines configurables<br>
+          <span class="tag tag-green">Validation</span> DataAnnotations
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SLIDE 6: FRONTEND ==================== -->
+<div class="slide" id="slide-6">
+  <span class="slide-number">06 / 11</span>
+  <h2>Architecture Frontend</h2>
+  <div class="grid-2 flex-1">
+    <div>
+      <div class="card mb-16">
+        <h3>Pages (7 routes)</h3>
+        <table>
+          <tr><td><span class="tag tag-blue">/ </span></td><td>EventList</td><td style="color:var(--slate-500)">Liste + filtres</td></tr>
+          <tr><td><span class="tag tag-blue">/events/new</span></td><td>CreateEvent</td><td style="color:var(--slate-500)">Formulaire + validation</td></tr>
+          <tr><td><span class="tag tag-blue">/events/:id</span></td><td>EventDetail</td><td style="color:var(--slate-500)">Détail + chat + ratings</td></tr>
+          <tr><td><span class="tag tag-blue">/events/:id/edit</span></td><td>EditEvent</td><td style="color:var(--slate-500)">Modification (créateur)</td></tr>
+          <tr><td><span class="tag tag-blue">/profile/:id</span></td><td>Profile</td><td style="color:var(--slate-500)">Vue / édition profil</td></tr>
+          <tr><td><span class="tag tag-blue">/login</span></td><td>Login</td><td style="color:var(--slate-500)">Connexion</td></tr>
+          <tr><td><span class="tag tag-blue">/register</span></td><td>Register</td><td style="color:var(--slate-500)">Inscription + validation MDP</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h3>Composants (3)</h3>
+        <div style="font-size: 14px; color: var(--slate-300); line-height: 2.2;">
+          <strong style="color:white">Navbar</strong> — Navigation + auth status<br>
+          <strong style="color:white">EventChat</strong> — Chat SignalR temps réel<br>
+          <strong style="color:white">RatingForm</strong> — Notation étoiles 1-5 + commentaire
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="mermaid-container mb-16">
+        <pre class="mermaid">
+graph TB
+    A["App.tsx"] --> B["AuthProvider"]
+    B --> C["BrowserRouter"]
+    C --> D["Navbar"]
+    C --> E["Routes"]
+    E --> F["EventList"]
+    E --> G["EventDetail"]
+    E --> H["CreateEvent"]
+    E --> I["EditEvent"]
+    E --> J["Profile"]
+    E --> K["Login / Register"]
+    G --> L["EventChat"]
+    G --> M["RatingForm"]
+
+    subgraph API["API Layer (Axios)"]
+        N["auth.ts"]
+        O["events.ts"]
+        P["profiles.ts"]
+        Q["ratings.ts"]
+        R["activities.ts"]
+    end
+
+    F --> O
+    G --> O
+    G --> Q
+    H --> O
+    K --> N
+    J --> P
+    L -->|"SignalR WebSocket"| S["Hub /hubs/event-chat"]
+
+    style A fill:#3730a3,stroke:#818cf8,color:#e0e7ff
+    style B fill:#4338ca,stroke:#818cf8,color:#e0e7ff
+    style API fill:#1e293b,stroke:#475569,color:#94a3b8
+        </pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SLIDE 7: API ENDPOINTS ==================== -->
+<div class="slide" id="slide-7">
+  <span class="slide-number">07 / 11</span>
+  <h2>API Endpoints (13 routes)</h2>
+  <div class="grid-2 flex-1" style="gap: 32px;">
+    <div>
+      <div class="card mb-16">
+        <h3>Auth (rate limited: 10/min)</h3>
+        <table>
+          <tr><td><span class="method post">POST</span></td><td>/api/auth/register</td><td style="color:var(--slate-500)">Inscription</td></tr>
+          <tr><td><span class="method post">POST</span></td><td>/api/auth/login</td><td style="color:var(--slate-500)">Connexion</td></tr>
+          <tr><td><span class="method get">GET</span></td><td>/api/auth/me</td><td style="color:var(--slate-500)">Profil courant</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h3>Profils</h3>
+        <table>
+          <tr><td><span class="method get">GET</span></td><td>/api/profiles/{id}</td><td style="color:var(--slate-500)">Voir profil</td></tr>
+          <tr><td><span class="method get">GET</span></td><td>/api/profiles?city=&amp;activity=</td><td style="color:var(--slate-500)">Recherche</td></tr>
+          <tr><td><span class="method put">PUT</span></td><td>/api/profiles/me</td><td style="color:var(--slate-500)">Modifier</td></tr>
+        </table>
+      </div>
+    </div>
+    <div>
+      <div class="card mb-16">
+        <h3>Événements</h3>
+        <table>
+          <tr><td><span class="method get">GET</span></td><td>/api/events</td><td style="color:var(--slate-500)">Lister</td></tr>
+          <tr><td><span class="method get">GET</span></td><td>/api/events/{id}</td><td style="color:var(--slate-500)">Détail</td></tr>
+          <tr><td><span class="method post">POST</span></td><td>/api/events</td><td style="color:var(--slate-500)">Créer</td></tr>
+          <tr><td><span class="method put">PUT</span></td><td>/api/events/{id}</td><td style="color:var(--slate-500)">Modifier</td></tr>
+          <tr><td><span class="method delete">DEL</span></td><td>/api/events/{id}</td><td style="color:var(--slate-500)">Supprimer</td></tr>
+          <tr><td><span class="method post">POST</span></td><td>/api/events/{id}/join</td><td style="color:var(--slate-500)">Rejoindre</td></tr>
+          <tr><td><span class="method post">POST</span></td><td>/api/events/{id}/leave</td><td style="color:var(--slate-500)">Quitter</td></tr>
+        </table>
+      </div>
+      <div class="card">
+        <h3>Notations &amp; Activités</h3>
+        <table>
+          <tr><td><span class="method post">POST</span></td><td>/api/events/{id}/ratings</td><td style="color:var(--slate-500)">Noter</td></tr>
+          <tr><td><span class="method get">GET</span></td><td>/api/.../ratings/user/{id}</td><td style="color:var(--slate-500)">Avis reçus</td></tr>
+          <tr><td><span class="method get">GET</span></td><td>/api/activities</td><td style="color:var(--slate-500)">Liste activités</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SLIDE 8: FLUX UTILISATEUR ==================== -->
+<div class="slide" id="slide-8">
+  <span class="slide-number">08 / 11</span>
+  <h2>Flux utilisateur principal</h2>
+  <div class="mermaid-container flex-1">
+    <pre class="mermaid">
+sequenceDiagram
+    actor U as Utilisateur
+    participant F as Frontend
+    participant A as API
+    participant H as SignalR Hub
+    participant DB as PostgreSQL
+
+    U->>F: S'inscrire
+    F->>A: POST /auth/register
+    A->>DB: Créer AppUser
+    A-->>F: JWT Token
+    Note over F: Stocké dans localStorage
+
+    U->>F: Créer un événement
+    F->>A: POST /events (+ JWT)
+    A->>DB: Insert Event + Participant
+    A-->>F: EventDetail
+
+    U->>F: Autre user rejoint
+    F->>A: POST /events/{id}/join
+    A->>DB: Insert EventParticipant
+    A-->>F: 204 No Content
+
+    U->>F: Ouvrir le chat
+    F->>H: JoinEventChat(eventId)
+    H->>DB: Charger messages
+    H-->>F: MessageHistory
+
+    U->>F: Envoyer message
+    F->>H: SendMessage(eventId, content)
+    H->>DB: Insert Message
+    H-->>F: NewMessage (broadcast)
+
+    Note over A: Event passe en "Completed"
+
+    U->>F: Noter un participant
+    F->>A: POST /events/{id}/ratings
+    A->>DB: Insert Rating + Update avg
+    A-->>F: RatingDto
+    </pre>
+  </div>
+</div>
+
+<!-- ==================== SLIDE 9: SÉCURITÉ ==================== -->
+<div class="slide" id="slide-9">
+  <span class="slide-number">09 / 11</span>
+  <h2>Sécurité et validation</h2>
+  <div class="grid-2 flex-1" style="gap: 32px;">
+    <div>
+      <div class="card mb-16">
+        <h3>Backend</h3>
+        <ul class="check-list">
+          <li class="done">JWT Bearer Authentication (tokens signés, expiration configurable)</li>
+          <li class="done">Rate Limiting — Auth: 10 req/min, API: 60 req/min</li>
+          <li class="done">CORS — Origines configurables via appsettings</li>
+          <li class="done">DataAnnotations — Required, MaxLength, Range sur DTOs</li>
+          <li class="done">Check Constraints — Score 1-5, pas d'auto-notation</li>
+          <li class="done">Exception Middleware — Gestion centralisée des erreurs</li>
+          <li class="done">Authorization — Créateur seul peut modifier/supprimer</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="card mb-16">
+        <h3>Frontend</h3>
+        <ul class="check-list">
+          <li class="done">Validation inline — Erreurs sous chaque champ</li>
+          <li class="done">Password criteria — Temps réel (8 chars, majuscule, chiffre)</li>
+          <li class="done">Date validation — Doit être dans le futur</li>
+          <li class="done">Auth guard — Redirect vers /login si non connecté</li>
+          <li class="done">Axios interceptor — 401 auto-logout + redirect</li>
+          <li class="done">Creator check — EditEvent vérifie le propriétaire</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Base de données</h3>
+        <ul class="check-list">
+          <li class="done">Unique indexes — Email, Event+User, Rating</li>
+          <li class="done">Foreign keys — Cascade deletes configurés</li>
+          <li class="done">Enum → String conversion — Status stocké lisible</li>
+          <li class="done">Timestamps auto — UpdatedAt via ChangeTracker</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SLIDE 10: AVANCEMENT ==================== -->
+<div class="slide" id="slide-10">
+  <span class="slide-number">10 / 11</span>
+  <h2>Avancement du projet</h2>
+  <div class="card mb-32" style="padding: 32px;">
+    <div class="progress-item">
+      <span class="progress-label">Authentification</span>
+      <div class="progress-bar"><div class="progress-fill green" style="width: 100%"></div></div>
+      <span class="progress-pct pct-green">100%</span>
+    </div>
+    <div class="progress-item">
+      <span class="progress-label">Événements (CRUD)</span>
+      <div class="progress-bar"><div class="progress-fill green" style="width: 100%"></div></div>
+      <span class="progress-pct pct-green">100%</span>
+    </div>
+    <div class="progress-item">
+      <span class="progress-label">Profils</span>
+      <div class="progress-bar"><div class="progress-fill green" style="width: 100%"></div></div>
+      <span class="progress-pct pct-green">100%</span>
+    </div>
+    <div class="progress-item">
+      <span class="progress-label">Chat temps réel</span>
+      <div class="progress-bar"><div class="progress-fill green" style="width: 100%"></div></div>
+      <span class="progress-pct pct-green">100%</span>
+    </div>
+    <div class="progress-item">
+      <span class="progress-label">Notation (UI + API)</span>
+      <div class="progress-bar"><div class="progress-fill green" style="width: 100%"></div></div>
+      <span class="progress-pct pct-green">100%</span>
+    </div>
+    <div class="progress-item">
+      <span class="progress-label">Validation / Sécurité</span>
+      <div class="progress-bar"><div class="progress-fill green" style="width: 90%"></div></div>
+      <span class="progress-pct pct-green">90%</span>
+    </div>
+    <div class="progress-item">
+      <span class="progress-label">Tests</span>
+      <div class="progress-bar"><div class="progress-fill amber" style="width: 65%"></div></div>
+      <span class="progress-pct pct-amber">65%</span>
+    </div>
+    <div class="progress-item">
+      <span class="progress-label">EF Migrations</span>
+      <div class="progress-bar"><div class="progress-fill amber" style="width: 30%"></div></div>
+      <span class="progress-pct pct-amber">30%</span>
+    </div>
+    <div class="progress-item">
+      <span class="progress-label">Docker / CI/CD</span>
+      <div class="progress-bar"><div class="progress-fill red" style="width: 0%"></div></div>
+      <span class="progress-pct pct-red">0%</span>
+    </div>
+    <div class="progress-item">
+      <span class="progress-label">Déploiement</span>
+      <div class="progress-bar"><div class="progress-fill red" style="width: 0%"></div></div>
+      <span class="progress-pct pct-red">0%</span>
+    </div>
+  </div>
+  <div class="grid-3">
+    <div class="card text-center">
+      <p style="font-size: 3rem;">✅</p>
+      <h3 style="color: #4ade80;">Terminé</h3>
+      <p style="font-size: 13px; color: var(--slate-300);">
+        Auth, Events, Profiles, Chat,<br>Ratings, Validation, Frontend complet
+      </p>
+    </div>
+    <div class="card text-center">
+      <p style="font-size: 3rem;">🔶</p>
+      <h3 style="color: #fbbf24;">En cours</h3>
+      <p style="font-size: 13px; color: var(--slate-300);">
+        Tests (27/~50 cible),<br>EF Migrations (schéma SQL existe)
+      </p>
+    </div>
+    <div class="card text-center">
+      <p style="font-size: 3rem;">⬜</p>
+      <h3 style="color: var(--slate-300);">À faire</h3>
+      <p style="font-size: 13px; color: var(--slate-300);">
+        Docker, CI/CD,<br>Déploiement production
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SLIDE 11: NEXT STEPS ==================== -->
+<div class="slide" id="slide-11">
+  <span class="slide-number">11 / 11</span>
+  <h2>Prochaines étapes — Itération 3</h2>
+  <div class="grid-2 flex-1" style="gap: 32px;">
+    <div>
+      <div class="card mb-16">
+        <h3>DevOps</h3>
+        <ul class="check-list">
+          <li class="todo">Dockerfile multi-stage (backend + frontend)</li>
+          <li class="todo">docker-compose.yml (API + PostgreSQL + frontend)</li>
+          <li class="todo">GitHub Actions CI pipeline (build + test)</li>
+          <li class="todo">Variables d'environnement production</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Base de données</h3>
+        <ul class="check-list">
+          <li class="todo">EF Core Migrations (code-first)</li>
+          <li class="todo">Seed data via migrations</li>
+          <li class="todo">Scripts de backup</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div class="card mb-16">
+        <h3>Fonctionnalités</h3>
+        <ul class="check-list">
+          <li class="todo">Recherche full-text événements</li>
+          <li class="todo">Notifications (nouveaux messages, événement complet)</li>
+          <li class="todo">Upload d'avatar (stockage fichiers)</li>
+          <li class="todo">Pagination API (curseur)</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Tests &amp; Qualité</h3>
+        <ul class="check-list">
+          <li class="todo">Tests d'intégration API (WebApplicationFactory)</li>
+          <li class="todo">Tests E2E (Playwright)</li>
+          <li class="todo">Coverage report (&gt; 80%)</li>
+          <li class="todo">Linting CI + format automatique</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== NAVIGATION ==================== -->
+<div class="nav">
+  <button onclick="prev()" id="btn-prev">←</button>
+  <div class="dots" id="dots"></div>
+  <button onclick="next()" id="btn-next">→</button>
+  <span class="counter" id="counter">1 / 11</span>
+</div>
+
+<script>
+  // Mermaid init
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      primaryColor: '#4f46e5',
+      primaryTextColor: '#e0e7ff',
+      primaryBorderColor: '#818cf8',
+      lineColor: '#64748b',
+      secondaryColor: '#1e293b',
+      tertiaryColor: '#0f172a',
+      fontSize: '14px'
+    },
+    flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' },
+    sequence: { useMaxWidth: true, actorMargin: 60, messageMargin: 40 }
+  });
+
+  const totalSlides = 11;
+  let current = 1;
+
+  // Build dots
+  const dotsEl = document.getElementById('dots');
+  for (let i = 1; i <= totalSlides; i++) {
+    const d = document.createElement('button');
+    d.className = 'dot' + (i === 1 ? ' active' : '');
+    d.onclick = () => goTo(i);
+    dotsEl.appendChild(d);
+  }
+
+  function goTo(n) {
+    document.getElementById('slide-' + current).classList.remove('active');
+    current = n;
+    document.getElementById('slide-' + current).classList.add('active');
+    document.getElementById('counter').textContent = current + ' / ' + totalSlides;
+    // Update dots
+    const dots = dotsEl.querySelectorAll('.dot');
+    dots.forEach((d, i) => d.classList.toggle('active', i + 1 === current));
+  }
+
+  function next() { if (current < totalSlides) goTo(current + 1); }
+  function prev() { if (current > 1) goTo(current - 1); }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); next(); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+  });
+</script>
+</body>
+</html>
