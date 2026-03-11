@@ -17,16 +17,16 @@ public class RatingService
             .FirstOrDefaultAsync(e => e.Id == eventId)
             ?? throw new KeyNotFoundException("Event not found.");
 
-        if (ev.Status != "Completed")
+        if (ev.Status != EventStatus.Completed)
             throw new InvalidOperationException("Can only rate after event is completed.");
 
         if (raterId == dto.RatedUserId)
             throw new InvalidOperationException("Cannot rate yourself.");
 
-        if (!ev.Participants.Any(p => p.UserId == raterId && p.Status == "Confirmed"))
+        if (!ev.Participants.Any(p => p.UserId == raterId && p.Status == ParticipantStatus.Confirmed))
             throw new InvalidOperationException("You did not participate in this event.");
 
-        if (!ev.Participants.Any(p => p.UserId == dto.RatedUserId && p.Status == "Confirmed"))
+        if (!ev.Participants.Any(p => p.UserId == dto.RatedUserId && p.Status == ParticipantStatus.Confirmed))
             throw new InvalidOperationException("Rated user did not participate in this event.");
 
         var exists = await _db.Ratings.AnyAsync(r =>
@@ -53,7 +53,7 @@ public class RatingService
             var ratings = await _db.Ratings
                 .Where(r => r.RatedUserId == dto.RatedUserId)
                 .ToListAsync();
-            ratedUser.RatingAvg = ratings.Average(r => r.Score);
+            ratedUser.RatingAvg = (decimal)ratings.Average(r => r.Score);
             ratedUser.RatingCount = ratings.Count;
             await _db.SaveChangesAsync();
         }

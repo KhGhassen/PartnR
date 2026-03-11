@@ -4,22 +4,25 @@ Plateforme sociale pour trouver des partenaires d'activités sportives et de loi
 
 ## Fonctionnalités
 
-- **Authentification** — Inscription, connexion, JWT
+- **Authentification** — Inscription, connexion, JWT avec rate limiting
 - **Profils** — Bio, ville, activités favorites, système de notation
-- **Événements** — Création, recherche par ville/activité, gestion des participants (2-50)
+- **Événements** — Création, modification, recherche par ville/activité, gestion des participants (2-50)
 - **Chat temps réel** — Messagerie de groupe par événement via SignalR
-- **Notation** — Évaluation post-activité entre participants (1-5 étoiles)
+- **Notation** — Évaluation post-activité entre participants (1-5 étoiles) avec UI dédiée
 - **10 activités** — Running, Randonnée, Vélo, Jeux de société, Tennis, Yoga, Natation, Escalade, Football, Badminton
 
 ## Stack technique
 
 | Couche | Technologie |
 |--------|-------------|
+| Frontend | React 19, TypeScript, Tailwind CSS 4, Vite 7 |
 | Backend API | ASP.NET Core 8, Entity Framework Core |
 | Auth | ASP.NET Identity + JWT Bearer |
 | Temps réel | SignalR |
 | Base de données | PostgreSQL (Supabase) |
 | ORM | EF Core + Npgsql |
+| Tests backend | xUnit + EF Core InMemory |
+| Tests frontend | Vitest + Testing Library |
 | Documentation | Swagger / OpenAPI |
 
 ## Structure du projet
@@ -27,32 +30,65 @@ Plateforme sociale pour trouver des partenaires d'activités sportives et de loi
 ```
 partnr/
 ├── backend/
-│   └── PartnR.Api/
-│       ├── Controllers/        # Endpoints REST
-│       │   ├── ActivitiesController.cs
-│       │   ├── AuthController.cs
-│       │   ├── EventsController.cs
-│       │   ├── ProfilesController.cs
-│       │   └── RatingsController.cs
-│       ├── DTOs/               # Objets de transfert
-│       │   ├── Auth/
-│       │   ├── Events/
-│       │   └── Profiles/
-│       ├── Entities/           # Modèles de domaine
-│       ├── Data/               # DbContext + configuration EF
-│       ├── Services/           # Logique métier
-│       ├── Hubs/               # SignalR (chat temps réel)
-│       ├── Middleware/         # Gestion globale des erreurs
-│       ├── Program.cs          # Point d'entrée + configuration
-│       └── appsettings.json    # Configuration
+│   ├── PartnR.Api/
+│   │   ├── Controllers/        # Endpoints REST
+│   │   │   ├── ActivitiesController.cs
+│   │   │   ├── AuthController.cs
+│   │   │   ├── EventsController.cs
+│   │   │   ├── ProfilesController.cs
+│   │   │   └── RatingsController.cs
+│   │   ├── DTOs/               # Objets de transfert + validations
+│   │   │   ├── Auth/
+│   │   │   ├── Events/
+│   │   │   └── Profiles/
+│   │   ├── Entities/           # Modèles de domaine
+│   │   ├── Data/               # DbContext + configuration EF
+│   │   ├── Services/           # Logique métier
+│   │   ├── Hubs/               # SignalR (chat temps réel)
+│   │   ├── Middleware/         # Gestion globale des erreurs
+│   │   ├── Program.cs          # Point d'entrée + configuration
+│   │   └── appsettings.json    # Configuration
+│   └── PartnR.Api.Tests/       # Tests unitaires backend
+│       ├── EventServiceTests.cs
+│       └── RatingServiceTests.cs
+├── frontend/
+│   └── src/
+│       ├── api/                # Couche API (Axios)
+│       ├── components/         # Composants réutilisables
+│       │   ├── EventChat.tsx
+│       │   ├── Navbar.tsx
+│       │   └── RatingForm.tsx
+│       ├── context/            # State management (AuthContext)
+│       ├── pages/              # Pages de l'application
+│       │   ├── EventList.tsx
+│       │   ├── EventDetail.tsx
+│       │   ├── CreateEvent.tsx
+│       │   ├── EditEvent.tsx
+│       │   ├── Profile.tsx
+│       │   ├── Login.tsx
+│       │   └── Register.tsx
+│       ├── types/              # Types TypeScript
+│       └── __tests__/          # Tests frontend
 └── supabase/
     └── migrations/
-        └── 00001_initial_schema.sql  # Schéma PostgreSQL complet
+        └── 00001_initial_schema.sql
 ```
+
+## Pages frontend
+
+| Route | Page | Description |
+|-------|------|-------------|
+| `/` | EventList | Liste des événements avec filtres (ville, activité) |
+| `/events/new` | CreateEvent | Créer un événement (auth requise) |
+| `/events/:id` | EventDetail | Détail, participants, chat, notation |
+| `/events/:id/edit` | EditEvent | Modifier un événement (créateur uniquement) |
+| `/profile/:id` | Profile | Profil utilisateur (vue/édition) |
+| `/login` | Login | Connexion |
+| `/register` | Register | Inscription avec validation en temps réel |
 
 ## API Endpoints
 
-### Authentification
+### Authentification (rate limited: 10 req/min)
 | Méthode | Route | Auth | Description |
 |---------|-------|------|-------------|
 | POST | `/api/auth/register` | Non | Créer un compte |
@@ -120,6 +156,7 @@ events   ──1:N── ratings
 
 ### Prérequis
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+- [Node.js 20+](https://nodejs.org/)
 - PostgreSQL 15+ (ou compte [Supabase](https://supabase.com))
 
 ### Lancer le backend
@@ -139,6 +176,29 @@ dotnet run
 
 L'API sera disponible sur `https://localhost:5001` avec Swagger UI sur `/swagger`.
 
+### Lancer le frontend
+
+```bash
+cd frontend
+
+npm install
+npm run dev
+```
+
+L'application sera disponible sur `http://localhost:5173`.
+
+### Tests
+
+```bash
+# Backend
+cd backend/PartnR.Api.Tests
+dotnet test
+
+# Frontend
+cd frontend
+npm test
+```
+
 ### Initialiser la base Supabase
 
 Si vous utilisez Supabase, exécutez le fichier de migration dans l'éditeur SQL :
@@ -146,6 +206,13 @@ Si vous utilisez Supabase, exécutez le fichier de migration dans l'éditeur SQL
 ```
 supabase/migrations/00001_initial_schema.sql
 ```
+
+## Sécurité
+
+- **Rate limiting** — Auth endpoints: 10 req/min, API globale: 60 req/min
+- **CORS** — Origines configurables via `Cors:AllowedOrigins` dans appsettings
+- **Validation** — DataAnnotations côté backend + validation inline côté frontend
+- **JWT** — Tokens signés avec expiration configurable
 
 ## Variables d'environnement
 
@@ -156,6 +223,7 @@ supabase/migrations/00001_initial_schema.sql
 | `Jwt__Issuer` | Émetteur du token | `PartnR.Api` |
 | `Jwt__Audience` | Audience du token | `PartnR.Client` |
 | `Jwt__ExpireMinutes` | Durée de validité du token | `1440` (24h) |
+| `Cors__AllowedOrigins__0` | Origine CORS autorisée | `http://localhost:5173` |
 
 ## Licence
 

@@ -4,6 +4,7 @@ import { getEvent, joinEvent, leaveEvent, deleteEvent } from '../api/events';
 import { useAuth } from '../context/AuthContext';
 import type { EventDetail as EventDetailType } from '../types';
 import EventChat from '../components/EventChat';
+import RatingForm from '../components/RatingForm';
 
 export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
@@ -13,6 +14,8 @@ export default function EventDetail() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState('');
+  const [ratingTarget, setRatingTarget] = useState<string | null>(null);
+  const [ratedUsers, setRatedUsers] = useState<Set<string>>(new Set());
 
   const fetchEvent = async () => {
     try {
@@ -195,8 +198,54 @@ export default function EventDetail() {
             ))}
         </div>
 
+        {/* Ratings section — only for completed events */}
+        {event.status === 'Completed' && isParticipant && (
+          <div className="mb-8">
+            <h2 className="text-lg font-semibold mb-3">Noter les participants</h2>
+            <div className="space-y-3">
+              {event.participants
+                .filter((p) => p.status === 'Confirmed' && p.userId !== user?.id)
+                .map((p) => (
+                  <div key={p.userId}>
+                    {ratingTarget === p.userId ? (
+                      <RatingForm
+                        eventId={event.id}
+                        ratedUserId={p.userId}
+                        ratedUserName={p.firstName}
+                        onRated={() => {
+                          setRatedUsers((prev) => new Set([...prev, p.userId]));
+                          setRatingTarget(null);
+                        }}
+                        onCancel={() => setRatingTarget(null)}
+                      />
+                    ) : (
+                      <div className="flex items-center justify-between bg-gray-50 px-4 py-3 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-sm font-medium">
+                            {p.firstName[0]}
+                          </div>
+                          <span className="text-sm font-medium">{p.firstName}</span>
+                        </div>
+                        {ratedUsers.has(p.userId) ? (
+                          <span className="text-green-600 text-sm">Noté ✓</span>
+                        ) : (
+                          <button
+                            onClick={() => setRatingTarget(p.userId)}
+                            className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+                          >
+                            Noter
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+            </div>
+          </div>
+        )}
+
         {/* Chat */}
-        {isParticipant && <EventChat eventId={event.id} />}
+        {isParticipant && event.status !== 'Completed' && <EventChat eventId={event.id} />}
       </div>
     </div>
   );

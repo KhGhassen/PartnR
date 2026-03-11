@@ -20,7 +20,7 @@ public class EventChatHub : Hub
         var eid = Guid.Parse(eventId);
 
         var isParticipant = await _db.EventParticipants
-            .AnyAsync(p => p.EventId == eid && p.UserId == userId && p.Status == "Confirmed");
+            .AnyAsync(p => p.EventId == eid && p.UserId == userId && p.Status == ParticipantStatus.Confirmed);
 
         if (!isParticipant)
             throw new HubException("You are not a participant of this event.");
@@ -46,6 +46,8 @@ public class EventChatHub : Hub
 
     public async Task SendMessage(string eventId, string content)
     {
+        if (string.IsNullOrWhiteSpace(content) || content.Length > 2000) return;
+
         var userId = Guid.Parse(Context.User!.FindFirstValue(ClaimTypes.NameIdentifier)!);
         var eid = Guid.Parse(eventId);
 
@@ -56,7 +58,7 @@ public class EventChatHub : Hub
         {
             EventId = eid,
             UserId = userId,
-            Content = content
+            Content = content.Trim()
         };
 
         _db.Messages.Add(message);

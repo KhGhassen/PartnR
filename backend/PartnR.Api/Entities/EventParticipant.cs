@@ -10,7 +10,7 @@ public class EventParticipant
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid EventId { get; set; }
-    public string UserId { get; set; } = null!;            // FK → AppUser.Id
+    public Guid UserId { get; set; }
     public ParticipantStatus Status { get; set; } = ParticipantStatus.Confirmed;
     public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
 

@@ -1,10 +1,11 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using PartnR.Api.Entities;
 
 namespace PartnR.Api.Data;
 
-public class AppDbContext : IdentityDbContext<AppUser>
+public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
@@ -26,7 +27,7 @@ public class AppDbContext : IdentityDbContext<AppUser>
             e.Property(u => u.City).HasMaxLength(100);
             e.Property(u => u.Role).HasMaxLength(10).HasDefaultValue("user");
             e.Property(u => u.RatingAvg).HasPrecision(3, 2);
-            e.Property(u => u.FavoriteActivities).HasColumnType("text[]"); // PostgreSQL array natif
+            e.Property(u => u.FavoriteActivities).HasColumnType("text[]");
         });
 
         // ── ACTIVITIES ──────────────────────────────────────
@@ -38,7 +39,6 @@ public class AppDbContext : IdentityDbContext<AppUser>
             e.Property(a => a.Slug).HasMaxLength(50);
             e.Property(a => a.Icon).HasMaxLength(10);
 
-            // Seed data
             e.HasData(
                 new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000001"), Name = "Running", Slug = "running", Icon = "🏃" },
                 new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000002"), Name = "Randonnée", Slug = "randonnee", Icon = "🥾" },
@@ -69,9 +69,9 @@ public class AppDbContext : IdentityDbContext<AppUser>
             e.HasIndex(ev => ev.ActivityId);
             e.HasIndex(ev => ev.Status);
 
-            e.HasOne(ev => ev.CreatedBy)
+            e.HasOne(ev => ev.Creator)
                 .WithMany(u => u.CreatedEvents)
-                .HasForeignKey(ev => ev.CreatedById)
+                .HasForeignKey(ev => ev.CreatorId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             e.HasOne(ev => ev.Activity)
@@ -120,12 +120,13 @@ public class AppDbContext : IdentityDbContext<AppUser>
         // ── RATINGS ─────────────────────────────────────────
         builder.Entity<Rating>(e =>
         {
-            e.HasIndex(r => new { r.EventId, r.RaterId, r.RatedId }).IsUnique();
-            e.HasIndex(r => r.RatedId); // Pour calculer la moyenne
+            e.HasIndex(r => new { r.EventId, r.RaterId, r.RatedUserId }).IsUnique();
+            e.HasIndex(r => r.RatedUserId);
 
-            // Contrainte : on ne se note pas soi-même
-            e.HasCheckConstraint("CK_Rating_NotSelf", "\"RaterId\" != \"RatedId\"");
+            e.HasCheckConstraint("CK_Rating_NotSelf", "\"RaterId\" != \"RatedUserId\"");
             e.HasCheckConstraint("CK_Rating_Score", "\"Score\" >= 1 AND \"Score\" <= 5");
+
+            e.Property(r => r.Comment).HasMaxLength(500);
 
             e.HasOne(r => r.Event)
                 .WithMany(ev => ev.Ratings)
@@ -135,11 +136,11 @@ public class AppDbContext : IdentityDbContext<AppUser>
             e.HasOne(r => r.Rater)
                 .WithMany(u => u.RatingsGiven)
                 .HasForeignKey(r => r.RaterId)
-                .OnDelete(DeleteBehavior.Restrict); // Éviter les cascades multiples
+                .OnDelete(DeleteBehavior.Restrict);
 
             e.HasOne(r => r.Rated)
                 .WithMany(u => u.RatingsReceived)
-                .HasForeignKey(r => r.RatedId)
+                .HasForeignKey(r => r.RatedUserId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }

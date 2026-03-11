@@ -4,9 +4,10 @@ public class Rating
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid EventId { get; set; }
-    public string RaterId { get; set; } = null!;           // Celui qui note
-    public string RatedId { get; set; } = null!;           // Celui qui est noté
-    public int Score { get; set; }                          // 1-5
+    public Guid RaterId { get; set; }
+    public Guid RatedUserId { get; set; }
+    public int Score { get; set; }
+    public string? Comment { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation

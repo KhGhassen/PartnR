@@ -1,0 +1,300 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using PartnR.Api.Data;
+using PartnR.Api.DTOs.Events;
+using PartnR.Api.Entities;
+using PartnR.Api.Services;
+using Xunit;
+
+namespace PartnR.Api.Tests;
+
+public class EventServiceTests : IDisposable
+{
+    private readonly AppDbContext _db;
+    private readonly EventService _service;
+    private readonly Guid _userId = Guid.NewGuid();
+    private readonly Guid _activityId = Guid.Parse("a1000000-0000-0000-0000-000000000001");
+
+    public EventServiceTests()
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+
+        _db = new AppDbContext(options);
+
+        // Seed activity
+        _db.Activities.Add(new Activity
+        {
+            Id = _activityId,
+            Name = "Running",
+            Slug = "running",
+            Icon = "🏃"
+        });
+
+        // Seed user
+        _db.Users.Add(new AppUser
+        {
+            Id = _userId,
+            UserName = "test@test.com",
+            Email = "test@test.com",
+            FirstName = "Test",
+            City = "Paris",
+            NormalizedEmail = "TEST@TEST.COM",
+            NormalizedUserName = "TEST@TEST.COM",
+            SecurityStamp = Guid.NewGuid().ToString()
+        });
+
+        _db.SaveChanges();
+        _service = new EventService(_db);
+    }
+
+    [Fact]
+    public async Task CreateAsync_CreatesEventAndAddsCreatorAsParticipant()
+    {
+        var dto = new CreateEventDto
+        {
+            Title = "Morning Run",
+            City = "Paris",
+            Date = DateTime.UtcNow.AddDays(7),
+            MaxParticipants = 5,
+            ActivityId = _activityId
+        };
+
+        var result = await _service.CreateAsync(_userId, dto);
+
+        Assert.Equal("Morning Run", result.Title);
+        Assert.Equal("Paris", result.City);
+        Assert.Equal(1, result.ParticipantCount);
+        Assert.Equal("Published", result.Status);
+        Assert.Equal(_userId, result.CreatorId);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_ReturnsEventWithParticipants()
+    {
+        var dto = new CreateEventDto
+        {
+            Title = "Yoga Session",
+            City = "Lyon",
+            Date = DateTime.UtcNow.AddDays(3),
+            MaxParticipants = 10,
+            ActivityId = _activityId
+        };
+
+        var created = await _service.CreateAsync(_userId, dto);
+        var result = await _service.GetByIdAsync(created.Id);
+
+        Assert.Equal("Yoga Session", result.Title);
+        Assert.Single(result.Participants);
+        Assert.Equal(_userId, result.Participants[0].UserId);
+    }
+
+    [Fact]
+    public async Task JoinAsync_AddsParticipant()
+    {
+        var dto = new CreateEventDto
+        {
+            Title = "Tennis Match",
+            City = "Marseille",
+            Date = DateTime.UtcNow.AddDays(5),
+            MaxParticipants = 4,
+            ActivityId = _activityId
+        };
+
+        var created = await _service.CreateAsync(_userId, dto);
+
+        var user2Id = Guid.NewGuid();
+        _db.Users.Add(new AppUser
+        {
+            Id = user2Id,
+            UserName = "user2@test.com",
+            Email = "user2@test.com",
+            FirstName = "Alice",
+            City = "Marseille",
+            NormalizedEmail = "USER2@TEST.COM",
+            NormalizedUserName = "USER2@TEST.COM",
+            SecurityStamp = Guid.NewGuid().ToString()
+        });
+        await _db.SaveChangesAsync();
+
+        await _service.JoinAsync(created.Id, user2Id);
+
+        var updated = await _service.GetByIdAsync(created.Id);
+        Assert.Equal(2, updated.ParticipantCount);
+    }
+
+    [Fact]
+    public async Task JoinAsync_ThrowsWhenFull()
+    {
+        var dto = new CreateEventDto
+        {
+            Title = "Small Event",
+            City = "Nice",
+            Date = DateTime.UtcNow.AddDays(2),
+            MaxParticipants = 2,
+            ActivityId = _activityId
+        };
+
+        var created = await _service.CreateAsync(_userId, dto);
+
+        // Add second participant
+        var user2Id = Guid.NewGuid();
+        _db.Users.Add(new AppUser
+        {
+            Id = user2Id,
+            UserName = "u2@test.com",
+            Email = "u2@test.com",
+            FirstName = "Bob",
+            City = "Nice",
+            NormalizedEmail = "U2@TEST.COM",
+            NormalizedUserName = "U2@TEST.COM",
+            SecurityStamp = Guid.NewGuid().ToString()
+        });
+        await _db.SaveChangesAsync();
+        await _service.JoinAsync(created.Id, user2Id);
+
+        // Third should fail
+        var user3Id = Guid.NewGuid();
+        _db.Users.Add(new AppUser
+        {
+            Id = user3Id,
+            UserName = "u3@test.com",
+            Email = "u3@test.com",
+            FirstName = "Charlie",
+            City = "Nice",
+            NormalizedEmail = "U3@TEST.COM",
+            NormalizedUserName = "U3@TEST.COM",
+            SecurityStamp = Guid.NewGuid().ToString()
+        });
+        await _db.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _service.JoinAsync(created.Id, user3Id));
+    }
+
+    [Fact]
+    public async Task LeaveAsync_CancelsParticipation()
+    {
+        var dto = new CreateEventDto
+        {
+            Title = "Group Hike",
+            City = "Grenoble",
+            Date = DateTime.UtcNow.AddDays(10),
+            MaxParticipants = 10,
+            ActivityId = _activityId
+        };
+
+        var created = await _service.CreateAsync(_userId, dto);
+
+        var user2Id = Guid.NewGuid();
+        _db.Users.Add(new AppUser
+        {
+            Id = user2Id,
+            UserName = "u4@test.com",
+            Email = "u4@test.com",
+            FirstName = "Diana",
+            City = "Grenoble",
+            NormalizedEmail = "U4@TEST.COM",
+            NormalizedUserName = "U4@TEST.COM",
+            SecurityStamp = Guid.NewGuid().ToString()
+        });
+        await _db.SaveChangesAsync();
+        await _service.JoinAsync(created.Id, user2Id);
+
+        await _service.LeaveAsync(created.Id, user2Id);
+
+        var updated = await _service.GetByIdAsync(created.Id);
+        Assert.Equal(1, updated.ParticipantCount);
+    }
+
+    [Fact]
+    public async Task LeaveAsync_CreatorCannotLeave()
+    {
+        var dto = new CreateEventDto
+        {
+            Title = "Creator Leave Test",
+            City = "Toulouse",
+            Date = DateTime.UtcNow.AddDays(5),
+            MaxParticipants = 5,
+            ActivityId = _activityId
+        };
+
+        var created = await _service.CreateAsync(_userId, dto);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => _service.LeaveAsync(created.Id, _userId));
+    }
+
+    [Fact]
+    public async Task DeleteAsync_OnlyCreatorCanDelete()
+    {
+        var dto = new CreateEventDto
+        {
+            Title = "Delete Test",
+            City = "Bordeaux",
+            Date = DateTime.UtcNow.AddDays(5),
+            MaxParticipants = 5,
+            ActivityId = _activityId
+        };
+
+        var created = await _service.CreateAsync(_userId, dto);
+        var otherUserId = Guid.NewGuid();
+
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(
+            () => _service.DeleteAsync(created.Id, otherUserId));
+    }
+
+    [Fact]
+    public async Task UpdateAsync_UpdatesFields()
+    {
+        var dto = new CreateEventDto
+        {
+            Title = "Original Title",
+            City = "Strasbourg",
+            Date = DateTime.UtcNow.AddDays(5),
+            MaxParticipants = 5,
+            ActivityId = _activityId
+        };
+
+        var created = await _service.CreateAsync(_userId, dto);
+
+        var updated = await _service.UpdateAsync(created.Id, _userId, new UpdateEventDto
+        {
+            Title = "Updated Title",
+            MaxParticipants = 10
+        });
+
+        Assert.Equal("Updated Title", updated.Title);
+        Assert.Equal(10, updated.MaxParticipants);
+        Assert.Equal("Strasbourg", updated.City); // unchanged
+    }
+
+    [Fact]
+    public async Task ListAsync_FiltersbyCity()
+    {
+        await _service.CreateAsync(_userId, new CreateEventDto
+        {
+            Title = "Paris Event",
+            City = "Paris",
+            Date = DateTime.UtcNow.AddDays(5),
+            MaxParticipants = 5,
+            ActivityId = _activityId
+        });
+        await _service.CreateAsync(_userId, new CreateEventDto
+        {
+            Title = "Lyon Event",
+            City = "Lyon",
+            Date = DateTime.UtcNow.AddDays(5),
+            MaxParticipants = 5,
+            ActivityId = _activityId
+        });
+
+        var parisEvents = await _service.ListAsync("paris", null, null);
+        Assert.Single(parisEvents);
+        Assert.Equal("Paris Event", parisEvents[0].Title);
+    }
+
+    public void Dispose() => _db.Dispose();
+}

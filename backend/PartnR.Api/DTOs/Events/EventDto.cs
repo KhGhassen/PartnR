@@ -1,3 +1,6 @@
+using System.ComponentModel.DataAnnotations;
+using PartnR.Api.Entities;
+
 namespace PartnR.Api.DTOs.Events;
 
 public class EventDto
@@ -34,22 +37,46 @@ public class ParticipantDto
 
 public class CreateEventDto
 {
+    [Required, MinLength(3), MaxLength(100)]
     public string Title { get; set; } = null!;
+
+    [MaxLength(1000)]
     public string? Description { get; set; }
+
+    [Required, MaxLength(100)]
     public string City { get; set; } = null!;
+
+    [MaxLength(200)]
     public string? Location { get; set; }
+
+    [Required]
     public DateTime Date { get; set; }
+
+    [Range(2, 50)]
     public int MaxParticipants { get; set; } = 2;
+
+    [Required]
     public Guid ActivityId { get; set; }
 }
 
 public class UpdateEventDto
 {
+    [MinLength(3), MaxLength(100)]
     public string? Title { get; set; }
+
+    [MaxLength(1000)]
     public string? Description { get; set; }
+
+    [MaxLength(100)]
     public string? City { get; set; }
+
+    [MaxLength(200)]
     public string? Location { get; set; }
+
     public DateTime? Date { get; set; }
+
+    [Range(2, 50)]
     public int? MaxParticipants { get; set; }
-    public string? Status { get; set; }
+
+    public EventStatus? Status { get; set; }
 }
