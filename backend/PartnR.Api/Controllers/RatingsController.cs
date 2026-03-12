@@ -1,7 +1,7 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PartnR.Api.DTOs.Events;
+using PartnR.Api.Extensions;
 using PartnR.Api.Services;
 
 namespace PartnR.Api.Controllers;
@@ -18,11 +18,12 @@ public class RatingsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<RatingDto>> Create(Guid eventId, CreateRatingDto dto)
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userId = User.GetUserId();
         var rating = await _ratingService.CreateAsync(eventId, userId, dto);
         return Created($"api/events/{eventId}/ratings/{rating.Id}", rating);
     }
 
+    [Authorize]
     [HttpGet("user/{userId:guid}")]
     public async Task<ActionResult<List<RatingDto>>> GetForUser(Guid userId)
     {

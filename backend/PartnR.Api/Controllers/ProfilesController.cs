@@ -1,7 +1,7 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PartnR.Api.DTOs.Profiles;
+using PartnR.Api.Extensions;
 using PartnR.Api.Services;
 
 namespace PartnR.Api.Controllers;
@@ -32,7 +32,7 @@ public class ProfilesController : ControllerBase
     [HttpPut("me")]
     public async Task<ActionResult<ProfileDto>> UpdateMe(UpdateProfileDto dto)
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userId = User.GetUserId();
         var profile = await _profileService.UpdateAsync(userId, dto);
         return Ok(profile);
     }

@@ -43,19 +43,30 @@ public class RatingService
             Comment = dto.Comment
         };
 
-        _db.Ratings.Add(rating);
-        await _db.SaveChangesAsync();
-
-        // Update rated user's average
-        var ratedUser = await _db.Users.FindAsync(dto.RatedUserId);
-        if (ratedUser is not null)
+        using var transaction = await _db.Database.BeginTransactionAsync();
+        try
         {
-            var ratings = await _db.Ratings
-                .Where(r => r.RatedUserId == dto.RatedUserId)
-                .ToListAsync();
-            ratedUser.RatingAvg = (decimal)ratings.Average(r => r.Score);
-            ratedUser.RatingCount = ratings.Count;
+            _db.Ratings.Add(rating);
             await _db.SaveChangesAsync();
+
+            // Update rated user's average atomically
+            var ratedUser = await _db.Users.FindAsync(dto.RatedUserId);
+            if (ratedUser is not null)
+            {
+                ratedUser.RatingAvg = await _db.Ratings
+                    .Where(r => r.RatedUserId == dto.RatedUserId)
+                    .AverageAsync(r => (decimal)r.Score);
+                ratedUser.RatingCount = await _db.Ratings
+                    .CountAsync(r => r.RatedUserId == dto.RatedUserId);
+                await _db.SaveChangesAsync();
+            }
+
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
         }
 
         return new RatingDto

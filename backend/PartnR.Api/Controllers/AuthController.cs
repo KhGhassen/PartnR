@@ -1,10 +1,10 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using PartnR.Api.DTOs.Auth;
 using PartnR.Api.Entities;
+using PartnR.Api.Extensions;
 using PartnR.Api.Services;
 
 namespace PartnR.Api.Controllers;
@@ -42,7 +42,7 @@ public class AuthController : ControllerBase
     [HttpGet("me")]
     public async Task<ActionResult<UserInfoDto>> Me()
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userId = User.GetUserId();
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user is null) return NotFound();
 

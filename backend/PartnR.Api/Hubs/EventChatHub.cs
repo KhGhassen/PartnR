@@ -1,9 +1,9 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using PartnR.Api.Data;
 using PartnR.Api.Entities;
+using PartnR.Api.Extensions;
 
 namespace PartnR.Api.Hubs;
 
@@ -16,7 +16,7 @@ public class EventChatHub : Hub
 
     public async Task JoinEventChat(string eventId)
     {
-        var userId = Guid.Parse(Context.User!.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userId = Context.User!.GetUserId();
         var eid = Guid.Parse(eventId);
 
         var isParticipant = await _db.EventParticipants
@@ -48,7 +48,7 @@ public class EventChatHub : Hub
     {
         if (string.IsNullOrWhiteSpace(content) || content.Length > 2000) return;
 
-        var userId = Guid.Parse(Context.User!.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userId = Context.User!.GetUserId();
         var eid = Guid.Parse(eventId);
 
         var user = await _db.Users.FindAsync(userId);

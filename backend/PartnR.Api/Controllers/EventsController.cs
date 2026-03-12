@@ -1,8 +1,8 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PartnR.Api.DTOs.Events;
 using PartnR.Api.Entities;
+using PartnR.Api.Extensions;
 using PartnR.Api.Services;
 
 namespace PartnR.Api.Controllers;
@@ -36,7 +36,7 @@ public class EventsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<EventDetailDto>> Create(CreateEventDto dto)
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userId = User.GetUserId();
         var ev = await _eventService.CreateAsync(userId, dto);
         return CreatedAtAction(nameof(Get), new { id = ev.Id }, ev);
     }
@@ -45,7 +45,7 @@ public class EventsController : ControllerBase
     [HttpPut("{id:guid}")]
     public async Task<ActionResult<EventDetailDto>> Update(Guid id, UpdateEventDto dto)
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userId = User.GetUserId();
         var ev = await _eventService.UpdateAsync(id, userId, dto);
         return Ok(ev);
     }
@@ -54,7 +54,7 @@ public class EventsController : ControllerBase
     [HttpPost("{id:guid}/join")]
     public async Task<IActionResult> Join(Guid id)
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userId = User.GetUserId();
         await _eventService.JoinAsync(id, userId);
         return NoContent();
     }
@@ -63,7 +63,7 @@ public class EventsController : ControllerBase
     [HttpPost("{id:guid}/leave")]
     public async Task<IActionResult> Leave(Guid id)
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userId = User.GetUserId();
         await _eventService.LeaveAsync(id, userId);
         return NoContent();
     }
@@ -72,7 +72,7 @@ public class EventsController : ControllerBase
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var userId = User.GetUserId();
         await _eventService.DeleteAsync(id, userId);
         return NoContent();
     }

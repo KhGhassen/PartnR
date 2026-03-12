@@ -99,27 +99,37 @@ public class EventService
 
     public async Task JoinAsync(Guid eventId, Guid userId)
     {
-        var ev = await _db.Events.Include(e => e.Participants)
-            .FirstOrDefaultAsync(e => e.Id == eventId)
-            ?? throw new KeyNotFoundException("Event not found.");
-
-        if (ev.Status != EventStatus.Published)
-            throw new InvalidOperationException("Cannot join this event.");
-
-        var confirmed = ev.Participants.Count(p => p.Status == ParticipantStatus.Confirmed);
-        if (confirmed >= ev.MaxParticipants)
-            throw new InvalidOperationException("Event is full.");
-
-        if (ev.Participants.Any(p => p.UserId == userId))
-            throw new InvalidOperationException("Already participating.");
-
-        ev.Participants.Add(new EventParticipant
+        using var transaction = await _db.Database.BeginTransactionAsync();
+        try
         {
-            UserId = userId,
-            Status = ParticipantStatus.Confirmed
-        });
+            var ev = await _db.Events.Include(e => e.Participants)
+                .FirstOrDefaultAsync(e => e.Id == eventId)
+                ?? throw new KeyNotFoundException("Event not found.");
 
-        await _db.SaveChangesAsync();
+            if (ev.Status != EventStatus.Published)
+                throw new InvalidOperationException("Cannot join this event.");
+
+            var confirmed = ev.Participants.Count(p => p.Status == ParticipantStatus.Confirmed);
+            if (confirmed >= ev.MaxParticipants)
+                throw new InvalidOperationException("Event is full.");
+
+            if (ev.Participants.Any(p => p.UserId == userId))
+                throw new InvalidOperationException("Already participating.");
+
+            ev.Participants.Add(new EventParticipant
+            {
+                UserId = userId,
+                Status = ParticipantStatus.Confirmed
+            });
+
+            await _db.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
     }
 
     public async Task LeaveAsync(Guid eventId, Guid userId)
