@@ -12,7 +12,16 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>(null!);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'));
+  const [token, setToken] = useState<string | null>(() => {
+    const t = localStorage.getItem('token');
+    const u = localStorage.getItem('user');
+    // If token exists but user data is missing, clear both
+    if (t && !u) {
+      localStorage.removeItem('token');
+      return null;
+    }
+    return t;
+  });
   const [user, setUser] = useState<UserInfo | null>(() => {
     const stored = localStorage.getItem('user');
     return stored ? JSON.parse(stored) : null;
@@ -31,12 +40,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null);
     setUser(null);
   };
-
-  useEffect(() => {
-    if (token && !user) {
-      logout();
-    }
-  }, [token, user]);
 
   return (
     <AuthContext.Provider value={{ user, token, setAuth, logout, isAuthenticated: !!token }}>

@@ -12,34 +12,38 @@ export default function Profile() {
   const [form, setForm] = useState({ firstName: '', city: '', bio: '' });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   const isOwn = user?.id === id;
 
   useEffect(() => {
     setLoading(true);
+    setError('');
     getProfile(id!)
       .then((p) => {
         setProfile(p);
         setForm({ firstName: p.firstName, city: p.city, bio: p.bio || '' });
       })
-      .catch(() => {})
+      .catch(() => setError('Impossible de charger le profil.'))
       .finally(() => setLoading(false));
   }, [id]);
 
   const handleSave = async () => {
     setSaving(true);
+    setError('');
     try {
       const updated = await updateMyProfile(form);
       setProfile(updated);
       setEditing(false);
     } catch {
-      // silently fail
+      setError('Erreur lors de la sauvegarde.');
     } finally {
       setSaving(false);
     }
   };
 
   if (loading) return <p className="text-center py-12 text-gray-500">Chargement...</p>;
+  if (error && !profile) return <p className="text-center py-12 text-red-500">{error}</p>;
   if (!profile) return <p className="text-center py-12 text-red-500">Profil introuvable.</p>;
 
   const stars = (rating: number) => {
@@ -129,6 +133,8 @@ export default function Profile() {
             </div>
           </div>
         )}
+
+        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
         {editing && (
           <div className="flex gap-3">

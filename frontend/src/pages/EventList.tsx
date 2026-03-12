@@ -10,9 +10,11 @@ export default function EventList() {
   const [city, setCity] = useState('');
   const [activityId, setActivityId] = useState('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   const fetchEvents = async () => {
     setLoading(true);
+    setError('');
     try {
       const data = await listEvents({
         city: city || undefined,
@@ -20,7 +22,7 @@ export default function EventList() {
       });
       setEvents(data);
     } catch {
-      // silently fail
+      setError('Impossible de charger les événements.');
     } finally {
       setLoading(false);
     }
@@ -75,6 +77,8 @@ export default function EventList() {
           Filtrer
         </button>
       </form>
+
+      {error && <p className="text-red-500 mb-4">{error}</p>}
 
       {loading ? (
         <p className="text-gray-500">Chargement...</p>

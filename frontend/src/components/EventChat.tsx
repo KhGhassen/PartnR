@@ -19,6 +19,7 @@ export default function EventChat({ eventId }: Props) {
     if (!token) return;
 
     const connection = new HubConnectionBuilder()
+      // SignalR standard: token via query string (WebSocket doesn't support Authorization header)
       .withUrl(`/hubs/event-chat?access_token=${token}`)
       .withAutomaticReconnect()
       .configureLogging(LogLevel.Warning)

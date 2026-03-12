@@ -49,6 +49,9 @@ public class EventService
         var activity = await _db.Activities.FindAsync(dto.ActivityId)
             ?? throw new KeyNotFoundException("Activity not found.");
 
+        if (dto.Date < DateTime.UtcNow)
+            throw new InvalidOperationException("Event date must be in the future.");
+
         var ev = new Event
         {
             Title = dto.Title,
@@ -125,8 +128,9 @@ public class EventService
             .FirstOrDefaultAsync(p => p.EventId == eventId && p.UserId == userId)
             ?? throw new KeyNotFoundException("Not a participant.");
 
-        var ev = await _db.Events.FindAsync(eventId)!;
-        if (ev!.CreatorId == userId)
+        var ev = await _db.Events.FindAsync(eventId)
+            ?? throw new KeyNotFoundException("Event not found.");
+        if (ev.CreatorId == userId)
             throw new InvalidOperationException("Creator cannot leave. Cancel the event instead.");
 
         participant.Status = ParticipantStatus.Cancelled;
