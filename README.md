@@ -45,6 +45,7 @@ partnr/
 │   │   ├── Data/               # DbContext + configuration EF
 │   │   ├── Services/           # Logique métier
 │   │   ├── Hubs/               # SignalR (chat temps réel)
+│   │   ├── Extensions/          # Méthodes d'extension (ClaimsPrincipal)
 │   │   ├── Middleware/         # Gestion globale des erreurs
 │   │   ├── Program.cs          # Point d'entrée + configuration
 │   │   └── appsettings.json    # Configuration
@@ -117,7 +118,7 @@ partnr/
 | Méthode | Route | Auth | Description |
 |---------|-------|------|-------------|
 | POST | `/api/events/{eventId}/ratings` | Oui | Noter un participant |
-| GET | `/api/events/{eventId}/ratings/user/{userId}` | Non | Voir les avis reçus |
+| GET | `/api/events/{eventId}/ratings/user/{userId}` | Oui | Voir les avis reçus |
 
 ### Activités
 | Méthode | Route | Auth | Description |
@@ -210,9 +211,11 @@ supabase/migrations/00001_initial_schema.sql
 ## Sécurité
 
 - **Rate limiting** — Auth endpoints: 10 req/min, API globale: 60 req/min
-- **CORS** — Origines configurables via `Cors:AllowedOrigins` dans appsettings
+- **CORS** — Origines configurables, méthodes (`GET`, `POST`, `PUT`, `DELETE`, `OPTIONS`) et headers (`Authorization`, `Content-Type`) restreints explicitement
+- **Transactions DB** — Opérations critiques (notation, inscription événement) encapsulées dans des transactions pour garantir l'atomicité
 - **Validation** — DataAnnotations côté backend + validation inline côté frontend
 - **JWT** — Tokens signés avec expiration configurable
+- **Endpoints protégés** — Tous les endpoints sensibles requièrent `[Authorize]`
 
 ## Variables d'environnement
 
