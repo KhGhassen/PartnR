@@ -1,0 +1,19 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://partnr-api.onrender.com/api/:path*"
+    },
+    {
+      "source": "/hubs/:path*",
+      "destination": "https://partnr-api.onrender.com/hubs/:path*"
+    },
+    {
+      "source": "/((?!api|hubs).*)",
+      "destination": "/index.html"
+    }
+  ]
+}

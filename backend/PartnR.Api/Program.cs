@@ -10,8 +10,16 @@ using PartnR.Api.Entities;
 using PartnR.Api.Hubs;
 using PartnR.Api.Middleware;
 using PartnR.Api.Services;
+using Serilog;
+
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .WriteTo.File("logs/partnr-.log", rollingInterval: RollingInterval.Day, retainedFileCountLimit: 14)
+    .Enrich.FromLogContext()
+    .CreateLogger();
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Host.UseSerilog();
 
 // Database
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -135,12 +143,25 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Auto-apply migrations on startup
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+
+app.UseSerilogRequestLogging();
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseCors("AllowFrontend");
 app.UseRateLimiter();

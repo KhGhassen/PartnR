@@ -3,6 +3,36 @@
 Toutes les modifications notables de ce projet sont documentées dans ce fichier.
 Format basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
+## [Itération 5] — 2026-03-30
+
+### Infrastructure
+- Ajout de Docker : `Dockerfile` backend/frontend, `docker-compose.yml` avec PostgreSQL, Nginx reverse proxy
+- Ajout de GitHub Actions CI/CD (`.github/workflows/ci.yml`) : build + test backend et frontend sur push/PR
+- Ajout de `.env.example` pour la gestion des variables d'environnement (JWT, DB, CORS)
+- Intégration de Serilog pour le logging structuré (console + fichiers rotatifs 14 jours)
+- Redirection HTTPS en production (`UseHttpsRedirection`)
+
+### Frontend
+- Pagination de la liste d'événements avec navigation (Précédent/Suivant, numéro de page)
+- Gestion d'erreurs API améliorée : messages localisés FR pour 400, 401, 403, 404, 429, 500, timeout, erreur réseau
+- Bouton « Réessayer » sur les erreurs de chargement dans `EventList`
+- Timeout API configuré à 15 secondes
+
+### Backend
+- API de pagination : `PaginatedResult<T>` avec `page`, `pageSize`, `totalCount`, `totalPages`, `hasNextPage`
+- Limite de l'historique chat à 100 derniers messages dans `EventChatHub.JoinEventChat`
+- Rate limiting `[EnableRateLimiting("api")]` sur les endpoints de recherche (events, profiles)
+
+### Tests
+- Nouveaux tests backend : `ProfileServiceTests` (5 tests), `AuthServiceTests` (5 tests)
+- Nouveaux tests frontend : `EventList.test.tsx` (5 tests), `AuthContext.test.tsx` (4 tests)
+- Fix `EventServiceTests.ListAsync_FiltersbyCity` pour `PaginatedResult` + 2 tests pagination
+
+### Sécurité
+- Sanitisation HTML des messages chat (`WebUtility.HtmlEncode`) contre XSS stocké
+- Rate limiting granulaire sur les endpoints de recherche publics
+- Logging structuré des erreurs avec contexte de requête (méthode + path)
+
 ## [Itération 4] — 2026-03-12
 
 ### Sécurité

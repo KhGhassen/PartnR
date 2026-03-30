@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { HubConnectionBuilder, LogLevel, type HubConnection } from '@microsoft/signalr';
 import { useAuth } from '../context/AuthContext';
+import { API_BASE_URL } from '../api/client';
 import type { ChatMessage } from '../types';
 
 interface Props {
@@ -20,7 +21,7 @@ export default function EventChat({ eventId }: Props) {
 
     const connection = new HubConnectionBuilder()
       // SignalR standard: token via query string (WebSocket doesn't support Authorization header)
-      .withUrl(`/hubs/event-chat?access_token=${token}`)
+      .withUrl(`${API_BASE_URL}/hubs/event-chat?access_token=${token}`)
       .withAutomaticReconnect()
       .configureLogging(LogLevel.Warning)
       .build();

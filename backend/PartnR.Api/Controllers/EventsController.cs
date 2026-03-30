@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using PartnR.Api.DTOs;
 using PartnR.Api.DTOs.Events;
 using PartnR.Api.Entities;
 using PartnR.Api.Extensions;
@@ -16,13 +18,16 @@ public class EventsController : ControllerBase
     public EventsController(EventService eventService) => _eventService = eventService;
 
     [HttpGet]
-    public async Task<ActionResult<List<EventDto>>> List(
+    [EnableRateLimiting("api")]
+    public async Task<ActionResult<PaginatedResult<EventDto>>> List(
         [FromQuery] string? city,
         [FromQuery] Guid? activityId,
-        [FromQuery] EventStatus? status)
+        [FromQuery] EventStatus? status,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20)
     {
-        var events = await _eventService.ListAsync(city, activityId, status);
-        return Ok(events);
+        var result = await _eventService.ListAsync(city, activityId, status, page, pageSize);
+        return Ok(result);
     }
 
     [HttpGet("{id:guid}")]

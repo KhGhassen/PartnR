@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PartnR.Api.Data;
+using PartnR.Api.DTOs;
 using PartnR.Api.DTOs.Events;
 using PartnR.Api.Entities;
 
@@ -11,8 +12,11 @@ public class EventService
 
     public EventService(AppDbContext db) => _db = db;
 
-    public async Task<List<EventDto>> ListAsync(string? city, Guid? activityId, EventStatus? status)
+    public async Task<PaginatedResult<EventDto>> ListAsync(string? city, Guid? activityId, EventStatus? status, int page = 1, int pageSize = 20)
     {
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 50);
+
         var query = _db.Events
             .Include(e => e.Activity)
             .Include(e => e.Creator)
@@ -28,8 +32,21 @@ public class EventService
         else
             query = query.Where(e => e.Status == EventStatus.Published);
 
-        var events = await query.OrderBy(e => e.Date).Take(50).ToListAsync();
-        return events.Select(MapToDto).ToList();
+        var totalCount = await query.CountAsync();
+
+        var events = await query
+            .OrderBy(e => e.Date)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return new PaginatedResult<EventDto>
+        {
+            Items = events.Select(MapToDto).ToList(),
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
+        };
     }
 
     public async Task<EventDetailDto> GetByIdAsync(Guid id)

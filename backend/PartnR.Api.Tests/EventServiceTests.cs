@@ -291,9 +291,55 @@ public class EventServiceTests : IDisposable
             ActivityId = _activityId
         });
 
-        var parisEvents = await _service.ListAsync("paris", null, null);
-        Assert.Single(parisEvents);
-        Assert.Equal("Paris Event", parisEvents[0].Title);
+        var result = await _service.ListAsync("paris", null, null);
+        Assert.Single(result.Items);
+        Assert.Equal("Paris Event", result.Items[0].Title);
+    }
+
+    [Fact]
+    public async Task ListAsync_ReturnsPaginatedResult()
+    {
+        for (int i = 0; i < 5; i++)
+        {
+            await _service.CreateAsync(_userId, new CreateEventDto
+            {
+                Title = $"Event {i}",
+                City = "Paris",
+                Date = DateTime.UtcNow.AddDays(i + 1),
+                MaxParticipants = 10,
+                ActivityId = _activityId
+            });
+        }
+
+        var result = await _service.ListAsync(null, null, null, page: 1, pageSize: 3);
+        Assert.Equal(3, result.Items.Count);
+        Assert.Equal(5, result.TotalCount);
+        Assert.Equal(1, result.Page);
+        Assert.Equal(3, result.PageSize);
+        Assert.Equal(2, result.TotalPages);
+        Assert.True(result.HasNextPage);
+    }
+
+    [Fact]
+    public async Task ListAsync_SecondPageReturnsRemaining()
+    {
+        for (int i = 0; i < 5; i++)
+        {
+            await _service.CreateAsync(_userId, new CreateEventDto
+            {
+                Title = $"Event {i}",
+                City = "Paris",
+                Date = DateTime.UtcNow.AddDays(i + 1),
+                MaxParticipants = 10,
+                ActivityId = _activityId
+            });
+        }
+
+        var result = await _service.ListAsync(null, null, null, page: 2, pageSize: 3);
+        Assert.Equal(2, result.Items.Count);
+        Assert.Equal(5, result.TotalCount);
+        Assert.Equal(2, result.Page);
+        Assert.False(result.HasNextPage);
     }
 
     public void Dispose() => _db.Dispose();

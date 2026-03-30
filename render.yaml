@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: partnr-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ConnectionStrings__DefaultConnection
+        sync: false # Set manually in Render dashboard
+      - key: Jwt__Key
+        sync: false
+      - key: Jwt__Issuer
+        value: PartnR.Api
+      - key: Jwt__Audience
+        value: PartnR.Client
+      - key: Cors__AllowedOrigins__0
+        sync: false # Set to your Vercel URL

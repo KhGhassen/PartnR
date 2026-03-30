@@ -27,10 +27,11 @@ public class EventChatHub : Hub
 
         await Groups.AddToGroupAsync(Context.ConnectionId, eventId);
 
-        var messages = await _db.Messages
+        var messages = (await _db.Messages
             .Include(m => m.User)
             .Where(m => m.EventId == eid)
-            .OrderBy(m => m.CreatedAt)
+            .OrderByDescending(m => m.CreatedAt)
+            .Take(100)
             .Select(m => new
             {
                 m.Id,
@@ -39,7 +40,9 @@ public class EventChatHub : Hub
                 UserId = m.UserId,
                 UserName = m.User.FirstName
             })
-            .ToListAsync();
+            .ToListAsync())
+            .OrderBy(m => m.CreatedAt)
+            .ToList();
 
         await Clients.Caller.SendAsync("MessageHistory", messages);
     }
@@ -58,7 +61,7 @@ public class EventChatHub : Hub
         {
             EventId = eid,
             UserId = userId,
-            Content = content.Trim()
+            Content = System.Net.WebUtility.HtmlEncode(content.Trim())
         };
 
         _db.Messages.Add(message);

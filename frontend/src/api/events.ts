@@ -1,8 +1,14 @@
 import api from './client';
-import type { EventSummary, EventDetail } from '../types';
+import type { EventSummary, EventDetail, PaginatedResult } from '../types';
 
-export const listEvents = (params?: { city?: string; activityId?: string; status?: string }) =>
-  api.get<EventSummary[]>('/events', { params }).then((r) => r.data);
+export const listEvents = (params?: {
+  city?: string;
+  activityId?: string;
+  status?: string;
+  page?: number;
+  pageSize?: number;
+}) =>
+  api.get<PaginatedResult<EventSummary>>('/events', { params }).then((r) => r.data);
 
 export const getEvent = (id: string) =>
   api.get<EventDetail>(`/events/${id}`).then((r) => r.data);

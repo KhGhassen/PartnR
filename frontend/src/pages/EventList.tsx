@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { listEvents } from '../api/events';
 import { listActivities } from '../api/activities';
+import { toApiError } from '../api/client';
 import type { EventSummary, Activity } from '../types';
 
 export default function EventList() {
@@ -11,18 +12,25 @@ export default function EventList() {
   const [activityId, setActivityId] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const fetchEvents = async () => {
+  const fetchEvents = async (p = page) => {
     setLoading(true);
     setError('');
     try {
-      const data = await listEvents({
+      const result = await listEvents({
         city: city || undefined,
         activityId: activityId || undefined,
+        page: p,
+        pageSize: 20,
       });
-      setEvents(data);
-    } catch {
-      setError('Impossible de charger les événements.');
+      setEvents(result.items);
+      setTotalPages(result.totalPages);
+      setPage(result.page);
+    } catch (err) {
+      const apiErr = toApiError(err);
+      setError(apiErr.message);
     } finally {
       setLoading(false);
     }
@@ -30,12 +38,17 @@ export default function EventList() {
 
   useEffect(() => {
     listActivities().then(setActivities).catch(() => {});
-    fetchEvents();
+    fetchEvents(1);
   }, []);
 
   const handleFilter = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchEvents();
+    setPage(1);
+    fetchEvents(1);
+  };
+
+  const goToPage = (p: number) => {
+    fetchEvents(p);
   };
 
   return (
@@ -78,40 +91,74 @@ export default function EventList() {
         </button>
       </form>
 
-      {error && <p className="text-red-500 mb-4">{error}</p>}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 flex items-center justify-between">
+          <p className="text-red-600">{error}</p>
+          <button
+            onClick={() => fetchEvents()}
+            className="text-red-600 underline hover:text-red-800 ml-4"
+          >
+            Réessayer
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <p className="text-gray-500">Chargement...</p>
       ) : events.length === 0 ? (
         <p className="text-gray-500">Aucun événement trouvé.</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {events.map((ev) => (
-            <Link
-              key={ev.id}
-              to={`/events/${ev.id}`}
-              className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow"
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-2xl">{ev.activityIcon}</span>
-                <span className="text-sm text-gray-500">{ev.activityName}</span>
-              </div>
-              <h2 className="text-lg font-semibold mb-2">{ev.title}</h2>
-              <div className="text-sm text-gray-500 space-y-1">
-                <p>📍 {ev.city}{ev.location ? ` — ${ev.location}` : ''}</p>
-                <p>📅 {new Date(ev.date).toLocaleDateString('fr-FR', {
-                  weekday: 'long',
-                  day: 'numeric',
-                  month: 'long',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}</p>
-                <p>👥 {ev.participantCount}/{ev.maxParticipants} participants</p>
-                <p className="text-xs text-gray-400">Par {ev.creatorName}</p>
-              </div>
-            </Link>
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {events.map((ev) => (
+              <Link
+                key={ev.id}
+                to={`/events/${ev.id}`}
+                className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow"
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-2xl">{ev.activityIcon}</span>
+                  <span className="text-sm text-gray-500">{ev.activityName}</span>
+                </div>
+                <h2 className="text-lg font-semibold mb-2">{ev.title}</h2>
+                <div className="text-sm text-gray-500 space-y-1">
+                  <p>📍 {ev.city}{ev.location ? ` — ${ev.location}` : ''}</p>
+                  <p>📅 {new Date(ev.date).toLocaleDateString('fr-FR', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}</p>
+                  <p>👥 {ev.participantCount}/{ev.maxParticipants} participants</p>
+                  <p className="text-xs text-gray-400">Par {ev.creatorName}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex justify-center gap-2 mt-8">
+              <button
+                onClick={() => goToPage(page - 1)}
+                disabled={page <= 1}
+                className="px-3 py-1 rounded border border-gray-300 disabled:opacity-40 hover:bg-gray-100"
+              >
+                Précédent
+              </button>
+              <span className="px-3 py-1 text-gray-600">
+                Page {page} / {totalPages}
+              </span>
+              <button
+                onClick={() => goToPage(page + 1)}
+                disabled={page >= totalPages}
+                className="px-3 py-1 rounded border border-gray-300 disabled:opacity-40 hover:bg-gray-100"
+              >
+                Suivant
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

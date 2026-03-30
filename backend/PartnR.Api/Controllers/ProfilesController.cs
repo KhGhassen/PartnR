@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using PartnR.Api.DTOs.Profiles;
 using PartnR.Api.Extensions;
 using PartnR.Api.Services;
@@ -22,6 +23,7 @@ public class ProfilesController : ControllerBase
     }
 
     [HttpGet]
+    [EnableRateLimiting("api")]
     public async Task<ActionResult<List<ProfileDto>>> Search([FromQuery] string? city, [FromQuery] string? activity)
     {
         var profiles = await _profileService.SearchAsync(city, activity);
