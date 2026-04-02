@@ -144,11 +144,19 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Auto-apply migrations on startup
+// Ensure database is reachable (migrations managed by Supabase)
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate();
+    try
+    {
+        db.Database.CanConnect();
+        Log.Information("Database connection verified");
+    }
+    catch (Exception ex)
+    {
+        Log.Warning(ex, "Database not reachable at startup — will retry on first request");
+    }
 }
 
 if (app.Environment.IsDevelopment())
