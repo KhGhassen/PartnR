@@ -136,7 +136,9 @@ var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
-        policy.WithOrigins(allowedOrigins)
+        policy.SetIsOriginAllowed(origin =>
+            allowedOrigins.Contains(origin) ||
+            new Uri(origin).Host.EndsWith(".vercel.app"))
               .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
               .WithHeaders("Authorization", "Content-Type")
               .AllowCredentials());
