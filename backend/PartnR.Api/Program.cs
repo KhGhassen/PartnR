@@ -144,14 +144,16 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Ensure database is reachable (migrations managed by Supabase)
+// Auto-create database schema on first startup (EF Core manages the schema)
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     try
     {
-        db.Database.CanConnect();
-        Log.Information("Database connection verified");
+        if (db.Database.EnsureCreated())
+            Log.Information("Database schema created");
+        else
+            Log.Information("Database connection verified — schema already exists");
     }
     catch (Exception ex)
     {
