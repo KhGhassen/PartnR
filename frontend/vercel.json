@@ -5,11 +5,11 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://partnr-api.onrender.com/api/:path*"
+      "destination": "https://partnr-p3rv.onrender.com/api/:path*"
     },
     {
       "source": "/hubs/:path*",
-      "destination": "https://partnr-api.onrender.com/hubs/:path*"
+      "destination": "https://partnr-p3rv.onrender.com/hubs/:path*"
     },
     {
       "source": "/((?!api|hubs).*)",
