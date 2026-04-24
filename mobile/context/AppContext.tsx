@@ -1,25 +1,54 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import * as SecureStore from 'expo-secure-store';
+import type { UserInfo } from '../api/auth';
 
 type AppContextType = {
-  userName: string;
-  setUserName: (name: string) => void;
-  isOnboarded: boolean;
-  completeOnboarding: (name: string) => void;
+  token: string | null;
+  user: UserInfo | null;
+  isLoading: boolean;
+  // Kept for onboarding pre-fill
+  pendingName: string;
+  setPendingName: (n: string) => void;
+  login: (token: string, user: UserInfo) => Promise<void>;
+  logout: () => Promise<void>;
 };
 
 const AppContext = createContext<AppContextType | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [userName, setUserName] = useState('');
-  const [isOnboarded, setIsOnboarded] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<UserInfo | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [pendingName, setPendingName] = useState('');
 
-  const completeOnboarding = (name: string) => {
-    setUserName(name);
-    setIsOnboarded(true);
+  useEffect(() => {
+    (async () => {
+      const stored = await SecureStore.getItemAsync('token');
+      const storedUser = await SecureStore.getItemAsync('user');
+      if (stored && storedUser) {
+        setToken(stored);
+        setUser(JSON.parse(storedUser));
+      }
+      setIsLoading(false);
+    })();
+  }, []);
+
+  const login = async (tok: string, u: UserInfo) => {
+    await SecureStore.setItemAsync('token', tok);
+    await SecureStore.setItemAsync('user', JSON.stringify(u));
+    setToken(tok);
+    setUser(u);
+  };
+
+  const logout = async () => {
+    await SecureStore.deleteItemAsync('token');
+    await SecureStore.deleteItemAsync('user');
+    setToken(null);
+    setUser(null);
   };
 
   return (
-    <AppContext.Provider value={{ userName, setUserName, isOnboarded, completeOnboarding }}>
+    <AppContext.Provider value={{ token, user, isLoading, pendingName, setPendingName, login, logout }}>
       {children}
     </AppContext.Provider>
   );
