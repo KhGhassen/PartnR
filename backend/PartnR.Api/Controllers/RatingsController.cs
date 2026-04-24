@@ -11,8 +11,13 @@ namespace PartnR.Api.Controllers;
 public class RatingsController : ControllerBase
 {
     private readonly RatingService _ratingService;
+    private readonly AnalyticsTracker _tracker;
 
-    public RatingsController(RatingService ratingService) => _ratingService = ratingService;
+    public RatingsController(RatingService ratingService, AnalyticsTracker tracker)
+    {
+        _ratingService = ratingService;
+        _tracker = tracker;
+    }
 
     [Authorize]
     [HttpPost]
@@ -20,6 +25,7 @@ public class RatingsController : ControllerBase
     {
         var userId = User.GetUserId();
         var rating = await _ratingService.CreateAsync(eventId, userId, dto);
+        _tracker.Track(userId, "rating_created", "event", eventId);
         return Created($"api/events/{eventId}/ratings/{rating.Id}", rating);
     }
 

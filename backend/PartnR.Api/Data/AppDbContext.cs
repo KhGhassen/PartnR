@@ -14,6 +14,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
     public DbSet<EventParticipant> EventParticipants => Set<EventParticipant>();
     public DbSet<Message> Messages => Set<Message>();
     public DbSet<Rating> Ratings => Set<Rating>();
+    public DbSet<UserAction> UserActions => Set<UserAction>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -115,6 +116,16 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
                 .WithMany(u => u.Messages)
                 .HasForeignKey(m => m.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── USER_ACTIONS ─────────────────────────────────────
+        builder.Entity<UserAction>(e =>
+        {
+            e.Property(a => a.Action).HasMaxLength(50);
+            e.Property(a => a.EntityType).HasMaxLength(50);
+            e.Property(a => a.Metadata).HasMaxLength(500);
+            e.HasIndex(a => new { a.UserId, a.CreatedAt });
+            e.HasIndex(a => a.Action);
         });
 
         // ── RATINGS ─────────────────────────────────────────

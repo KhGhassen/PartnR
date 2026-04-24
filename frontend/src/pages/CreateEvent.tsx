@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { createEvent } from '../api/events';
 import { listActivities } from '../api/activities';
 import { useAuth } from '../context/AuthContext';
+import { trackAction } from '../api/analytics';
 import type { Activity } from '../types';
 
 export default function CreateEvent() {
@@ -56,6 +57,7 @@ export default function CreateEvent() {
         ...form,
         maxParticipants: Number(form.maxParticipants),
       });
+      trackAction({ action: 'event_created', entityType: 'event', entityId: ev.id });
       navigate(`/events/${ev.id}`);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Erreur lors de la création');

@@ -14,8 +14,13 @@ namespace PartnR.Api.Controllers;
 public class EventsController : ControllerBase
 {
     private readonly EventService _eventService;
+    private readonly AnalyticsTracker _tracker;
 
-    public EventsController(EventService eventService) => _eventService = eventService;
+    public EventsController(EventService eventService, AnalyticsTracker tracker)
+    {
+        _eventService = eventService;
+        _tracker = tracker;
+    }
 
     [HttpGet]
     [EnableRateLimiting("api")]
@@ -43,6 +48,7 @@ public class EventsController : ControllerBase
     {
         var userId = User.GetUserId();
         var ev = await _eventService.CreateAsync(userId, dto);
+        _tracker.Track(userId, "event_created", "event", ev.Id);
         return CreatedAtAction(nameof(Get), new { id = ev.Id }, ev);
     }
 
@@ -52,6 +58,7 @@ public class EventsController : ControllerBase
     {
         var userId = User.GetUserId();
         var ev = await _eventService.UpdateAsync(id, userId, dto);
+        _tracker.Track(userId, "event_updated", "event", id);
         return Ok(ev);
     }
 
@@ -61,6 +68,7 @@ public class EventsController : ControllerBase
     {
         var userId = User.GetUserId();
         await _eventService.JoinAsync(id, userId);
+        _tracker.Track(userId, "event_joined", "event", id);
         return NoContent();
     }
 
@@ -70,6 +78,7 @@ public class EventsController : ControllerBase
     {
         var userId = User.GetUserId();
         await _eventService.LeaveAsync(id, userId);
+        _tracker.Track(userId, "event_left", "event", id);
         return NoContent();
     }
 
@@ -79,6 +88,7 @@ public class EventsController : ControllerBase
     {
         var userId = User.GetUserId();
         await _eventService.DeleteAsync(id, userId);
+        _tracker.Track(userId, "event_deleted", "event", id);
         return NoContent();
     }
 }

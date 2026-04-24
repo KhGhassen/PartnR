@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { listEvents } from '../api/events';
 import { listActivities } from '../api/activities';
 import { toApiError } from '../api/client';
+import { trackAction } from '../api/analytics';
 import type { EventSummary, Activity } from '../types';
 
 export default function EventList() {
@@ -45,6 +46,7 @@ export default function EventList() {
     e.preventDefault();
     setPage(1);
     fetchEvents(1);
+    trackAction({ action: 'events_searched', metadata: JSON.stringify({ city, activityId }) });
   };
 
   const goToPage = (p: number) => {

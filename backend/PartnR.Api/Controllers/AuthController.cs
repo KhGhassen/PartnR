@@ -16,17 +16,20 @@ public class AuthController : ControllerBase
 {
     private readonly AuthService _authService;
     private readonly UserManager<AppUser> _userManager;
+    private readonly AnalyticsTracker _tracker;
 
-    public AuthController(AuthService authService, UserManager<AppUser> userManager)
+    public AuthController(AuthService authService, UserManager<AppUser> userManager, AnalyticsTracker tracker)
     {
         _authService = authService;
         _userManager = userManager;
+        _tracker = tracker;
     }
 
     [HttpPost("register")]
     public async Task<ActionResult<AuthResponseDto>> Register(RegisterDto dto)
     {
         var response = await _authService.RegisterAsync(dto);
+        _tracker.Track(response.User.Id, "user_registered", "user", response.User.Id);
         return Ok(response);
     }
 
@@ -34,6 +37,7 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<AuthResponseDto>> Login(LoginDto dto)
     {
         var response = await _authService.LoginAsync(dto);
+        _tracker.Track(response.User.Id, "user_login", "user", response.User.Id);
         return Ok(response);
     }
 
@@ -52,7 +56,8 @@ public class AuthController : ControllerBase
             FirstName = user.FirstName,
             Email = user.Email!,
             AvatarUrl = user.AvatarUrl,
-            City = user.City
+            City = user.City,
+            Role = user.Role
         });
     }
 }

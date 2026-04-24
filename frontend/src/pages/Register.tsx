@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { register } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
+import { trackAction } from '../api/analytics';
 
 const PASSWORD_RULES = [
   { test: (p: string) => p.length >= 8, label: '8 caractères minimum' },
@@ -29,6 +30,7 @@ export default function Register() {
     try {
       const res = await register(form);
       setAuth(res.token, res.user);
+      trackAction({ action: 'user_registered', entityType: 'user', entityId: res.user.id });
       navigate('/');
     } catch (err: any) {
       setError(err.response?.data?.error || "Erreur lors de l'inscription");

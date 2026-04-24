@@ -14,4 +14,5 @@ public class UserInfoDto
     public string Email { get; set; } = null!;
     public string? AvatarUrl { get; set; }
     public string City { get; set; } = null!;
+    public string Role { get; set; } = "user";
 }
