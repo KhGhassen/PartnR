@@ -12,8 +12,13 @@ namespace PartnR.Api.Controllers;
 public class ProfilesController : ControllerBase
 {
     private readonly ProfileService _profileService;
+    private readonly AnalyticsTracker _tracker;
 
-    public ProfilesController(ProfileService profileService) => _profileService = profileService;
+    public ProfilesController(ProfileService profileService, AnalyticsTracker tracker)
+    {
+        _profileService = profileService;
+        _tracker = tracker;
+    }
 
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ProfileDto>> Get(Guid id)
@@ -36,6 +41,7 @@ public class ProfilesController : ControllerBase
     {
         var userId = User.GetUserId();
         var profile = await _profileService.UpdateAsync(userId, dto);
+        _tracker.Track(userId, "profile_updated", "user", userId);
         return Ok(profile);
     }
 }

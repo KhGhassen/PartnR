@@ -8,27 +8,38 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
 import EditEvent from './pages/EditEvent';
+import AnalyticsDashboardPage from './pages/AnalyticsDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/ErrorBoundary';
+import { useAnalytics } from './hooks/useAnalytics';
+
+function AppRoutes() {
+  useAnalytics();
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <ErrorBoundary>
+        <Routes>
+          <Route path="/" element={<EventList />} />
+          <Route path="/events/new" element={<ProtectedRoute><CreateEvent /></ProtectedRoute>} />
+          <Route path="/events/:id/edit" element={<ProtectedRoute><EditEvent /></ProtectedRoute>} />
+          <Route path="/events/:id" element={<EventDetail />} />
+          <Route path="/profile/:id" element={<Profile />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/admin/analytics" element={<ProtectedRoute><AnalyticsDashboardPage /></ProtectedRoute>} />
+        </Routes>
+      </ErrorBoundary>
+    </div>
+  );
+}
 
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <div className="min-h-screen bg-gray-50">
-          <Navbar />
-          <ErrorBoundary>
-          <Routes>
-            <Route path="/" element={<EventList />} />
-            <Route path="/events/new" element={<ProtectedRoute><CreateEvent /></ProtectedRoute>} />
-            <Route path="/events/:id/edit" element={<ProtectedRoute><EditEvent /></ProtectedRoute>} />
-            <Route path="/events/:id" element={<EventDetail />} />
-            <Route path="/profile/:id" element={<Profile />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-          </Routes>
-          </ErrorBoundary>
-        </div>
+        <AppRoutes />
       </BrowserRouter>
     </AuthProvider>
   );

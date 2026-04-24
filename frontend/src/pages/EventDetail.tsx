@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { getEvent, joinEvent, leaveEvent, deleteEvent } from '../api/events';
 import { useAuth } from '../context/AuthContext';
+import { trackAction } from '../api/analytics';
 import type { EventDetail as EventDetailType } from '../types';
 import EventChat from '../components/EventChat';
 import RatingForm from '../components/RatingForm';
@@ -45,6 +46,7 @@ export default function EventDetail() {
     setActionLoading(true);
     try {
       await joinEvent(event.id);
+      trackAction({ action: 'event_joined', entityType: 'event', entityId: event.id });
       await fetchEvent();
     } catch (err: any) {
       setError(err.response?.data?.error || 'Erreur');
@@ -57,6 +59,7 @@ export default function EventDetail() {
     setActionLoading(true);
     try {
       await leaveEvent(event.id);
+      trackAction({ action: 'event_left', entityType: 'event', entityId: event.id });
       await fetchEvent();
     } catch (err: any) {
       setError(err.response?.data?.error || 'Erreur');

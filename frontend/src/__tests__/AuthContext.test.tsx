@@ -9,7 +9,7 @@ function TestConsumer() {
       <p data-testid="auth">{isAuthenticated ? 'yes' : 'no'}</p>
       <p data-testid="token">{token ?? 'null'}</p>
       <p data-testid="user">{user ? user.firstName : 'null'}</p>
-      <button onClick={() => setAuth('tok123', { id: '1', firstName: 'Alice', email: 'a@b.com', avatarUrl: null, city: 'Paris' })}>
+      <button onClick={() => setAuth('tok123', { id: '1', firstName: 'Alice', email: 'a@b.com', avatarUrl: null, city: 'Paris', role: 'user' })}>
         login
       </button>
       <button onClick={logout}>logout</button>
@@ -73,7 +73,7 @@ describe('AuthContext', () => {
   });
 
   it('initializes from localStorage', () => {
-    const user = { id: '1', firstName: 'Bob', email: 'b@b.com', avatarUrl: null, city: 'Lyon' };
+    const user = { id: '1', firstName: 'Bob', email: 'b@b.com', avatarUrl: null, city: 'Lyon', role: 'user' };
     localStorage.setItem('token', 'stored-tok');
     localStorage.setItem('user', JSON.stringify(user));
 

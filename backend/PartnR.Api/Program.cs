@@ -99,6 +99,8 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ProfileService>();
 builder.Services.AddScoped<EventService>();
 builder.Services.AddScoped<RatingService>();
+builder.Services.AddSingleton<AnalyticsTracker>();
+builder.Services.AddScoped<AnalyticsService>();
 
 // SignalR
 builder.Services.AddSignalR();

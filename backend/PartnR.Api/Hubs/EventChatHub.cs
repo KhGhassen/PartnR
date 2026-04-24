@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using PartnR.Api.Data;
 using PartnR.Api.Entities;
 using PartnR.Api.Extensions;
+using PartnR.Api.Services;
 
 namespace PartnR.Api.Hubs;
 
@@ -11,8 +12,13 @@ namespace PartnR.Api.Hubs;
 public class EventChatHub : Hub
 {
     private readonly AppDbContext _db;
+    private readonly AnalyticsTracker _tracker;
 
-    public EventChatHub(AppDbContext db) => _db = db;
+    public EventChatHub(AppDbContext db, AnalyticsTracker tracker)
+    {
+        _db = db;
+        _tracker = tracker;
+    }
 
     public async Task JoinEventChat(string eventId)
     {
@@ -66,6 +72,8 @@ public class EventChatHub : Hub
 
         _db.Messages.Add(message);
         await _db.SaveChangesAsync();
+
+        _tracker.Track(userId, "message_sent", "event", eid);
 
         await Clients.Group(eventId).SendAsync("NewMessage", new
         {

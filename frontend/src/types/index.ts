@@ -4,6 +4,7 @@ export interface UserInfo {
   email: string;
   avatarUrl: string | null;
   city: string;
+  role: string;
 }
 
 export interface AuthResponse {
@@ -86,4 +87,32 @@ export interface PaginatedResult<T> {
   pageSize: number;
   totalPages: number;
   hasNextPage: boolean;
+}
+
+export interface ActionByDay {
+  date: string;
+  count: number;
+}
+
+export interface ActionByType {
+  action: string;
+  count: number;
+}
+
+export interface TopEvent {
+  id: string;
+  title: string;
+  city: string;
+  participantCount: number;
+}
+
+export interface AnalyticsDashboard {
+  totalUsers: number;
+  totalEvents: number;
+  totalActions: number;
+  todayActions: number;
+  newUsersLast7Days: number;
+  actionsByDay: ActionByDay[];
+  actionsByType: ActionByType[];
+  topEvents: TopEvent[];
 }
