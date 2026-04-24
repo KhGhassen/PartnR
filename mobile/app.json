@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "PartnR",
+    "slug": "partnr",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "partnr",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#FAFAF7"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.partnr.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#FAFAF7"
+      },
+      "package": "com.partnr.app"
+    },
+    "plugins": ["expo-router", "expo-font"]
+  }
+}
