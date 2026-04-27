@@ -1,169 +1,186 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   View, Text, ScrollView, TextInput, TouchableOpacity,
-  StyleSheet, KeyboardAvoidingView, Platform,
+  StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { T } from '../../constants/tokens';
-import { MESSAGES } from '../../constants/data';
-import Avatar from '../../components/Avatar';
+import { getEvent, type EventDetail } from '../../api/events';
+import { useApp } from '../../context/AppContext';
+import { useEventChat } from '../../hooks/useEventChat';
 import BackBtn from '../../components/BackBtn';
-
-type ChatMessage = { id: number; me: boolean; text: string; time: string };
-
-const INITIAL_MESSAGES: Record<number, ChatMessage[]> = {
-  1: [
-    { id: 1, me: false, text: 'Hey! Looking forward to it 🎉', time: '9:30 AM' },
-    { id: 2, me: false, text: 'Meet at the south entrance?',   time: '9:34 AM' },
-    { id: 3, me: true,  text: "Sounds perfect! I'll be there at 7.", time: '9:40 AM' },
-    { id: 4, me: false, text: 'See you at the park entrance!', time: '9:42 AM' },
-  ],
-  2: [
-    { id: 1, me: false, text: 'Who else is coming tonight?',        time: 'Yesterday' },
-    { id: 2, me: true,  text: "I'll be there around 8!",            time: 'Yesterday' },
-    { id: 3, me: false, text: 'I got us a table near the stage 🎷', time: 'Yesterday' },
-  ],
-  3: [
-    { id: 1, me: false, text: 'Are you joining the brunch on Sunday?', time: 'Tue' },
-    { id: 2, me: true,  text: 'Definitely! What time?',               time: 'Tue' },
-  ],
-};
+import Avatar from '../../components/Avatar';
 
 export default function ChatDetail() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const numId = Number(id);
-  const chat = MESSAGES.find((m) => m.id === numId);
+  const { user } = useApp();
   const scrollRef = useRef<ScrollView>(null);
 
-  const [messages, setMessages] = useState<ChatMessage[]>(
-    INITIAL_MESSAGES[numId] ?? []
-  );
+  const [event, setEvent] = useState<EventDetail | null>(null);
   const [text, setText] = useState('');
 
-  const send = () => {
-    const trimmed = text.trim();
-    if (!trimmed) return;
-    setMessages((prev) => [...prev, { id: Date.now(), me: true, text: trimmed, time: 'now' }]);
+  const { messages, connected, error, sendMessage } = useEventChat(id!);
+
+  useEffect(() => {
+    getEvent(id!).then(setEvent).catch(() => {});
+  }, [id]);
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80);
+    }
+  }, [messages]);
+
+  const send = async () => {
+    const content = text.trim();
+    if (!content || !connected) return;
     setText('');
-    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80);
+    await sendMessage(content);
   };
-
-  if (!chat) {
-    return (
-      <View style={[styles.screen, { paddingTop: insets.top }]}>
-        <Text style={styles.notFound}>Chat not found.</Text>
-      </View>
-    );
-  }
-
-  const isEmoji = chat.avatar.length <= 2 && /\p{Emoji}/u.test(chat.avatar);
 
   return (
     <KeyboardAvoidingView
       style={styles.screen}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={0}
     >
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <BackBtn onPress={() => router.back()} />
-        <Avatar
-          initials={isEmoji ? undefined : chat.avatar}
-          emoji={isEmoji ? chat.avatar : undefined}
-          color={chat.color}
-          size={32}
-        />
-        <View style={{ flex: 1 }}>
-          <Text style={styles.headerName}>{chat.sender}</Text>
-          <Text style={styles.headerSub}>#{chat.activity}</Text>
+        <View style={[styles.eventIcon, { backgroundColor: T.coralL }]}>
+          <Text style={{ fontSize: 18 }}>{event?.activityIcon ?? '💬'}</Text>
         </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.headerName} numberOfLines={1}>
+            {event?.title ?? '…'}
+          </Text>
+          <Text style={styles.headerSub}>
+            {connected ? `${event?.participantCount ?? '…'} participants` : 'Connexion…'}
+          </Text>
+        </View>
+        {!connected && !error && <ActivityIndicator size="small" color={T.coral} />}
       </View>
 
-      {/* Messages */}
-      <ScrollView
-        ref={scrollRef}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[styles.messageList, { paddingBottom: 16 }]}
-        onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
-      >
-        {messages.map((m) => (
-          <View key={m.id} style={[styles.bubbleRow, m.me ? styles.bubbleRowMe : styles.bubbleRowThem]}>
-            <View style={[styles.bubble, m.me ? styles.bubbleMe : styles.bubbleThem]}>
-              <Text style={[styles.bubbleText, m.me ? styles.bubbleTextMe : styles.bubbleTextThem]}>
-                {m.text}
-              </Text>
-            </View>
+      {/* Error state */}
+      {error ? (
+        <View style={styles.errorBox}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      ) : (
+        <>
+          {/* Messages */}
+          <ScrollView
+            ref={scrollRef}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[styles.messageList, { paddingBottom: 16 }]}
+            onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
+          >
+            {messages.length === 0 && connected && (
+              <Text style={styles.empty}>Aucun message. Lancez la conversation !</Text>
+            )}
+            {messages.map((m) => {
+              const isMe = m.userId === user?.id;
+              return (
+                <View key={m.id} style={[styles.bubbleRow, isMe ? styles.rowMe : styles.rowThem]}>
+                  {!isMe && (
+                    <Avatar initials={m.userName[0]} color={T.coralL} size={28} />
+                  )}
+                  <View style={styles.bubbleWrap}>
+                    {!isMe && (
+                      <Text style={styles.senderName}>{m.userName}</Text>
+                    )}
+                    <View style={[styles.bubble, isMe ? styles.bubbleMe : styles.bubbleThem]}>
+                      <Text style={[styles.bubbleText, isMe ? styles.textMe : styles.textThem]}>
+                        {m.content}
+                      </Text>
+                    </View>
+                    <Text style={[styles.timestamp, isMe ? styles.tsMe : styles.tsThem]}>
+                      {new Date(m.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                    </Text>
+                  </View>
+                </View>
+              );
+            })}
+          </ScrollView>
+
+          {/* Input bar */}
+          <View style={[styles.inputBar, { paddingBottom: insets.bottom + 8 }]}>
+            <TextInput
+              value={text}
+              onChangeText={setText}
+              onSubmitEditing={send}
+              placeholder={connected ? 'Message…' : 'Connexion en cours…'}
+              placeholderTextColor={T.textSub}
+              returnKeyType="send"
+              editable={connected}
+              style={[styles.input, !connected && styles.inputDisabled]}
+            />
+            <TouchableOpacity
+              onPress={send}
+              activeOpacity={0.8}
+              disabled={!connected || !text.trim()}
+              style={[styles.sendBtn, (!connected || !text.trim()) && styles.sendBtnDisabled]}
+            >
+              <Ionicons name="arrow-forward" size={16} color="#fff" />
+            </TouchableOpacity>
           </View>
-        ))}
-      </ScrollView>
-
-      {/* Input bar */}
-      <View style={[styles.inputBar, { paddingBottom: insets.bottom + 8 }]}>
-        <TextInput
-          value={text}
-          onChangeText={setText}
-          onSubmitEditing={send}
-          placeholder="Message…"
-          placeholderTextColor={T.textSub}
-          returnKeyType="send"
-          style={styles.input}
-        />
-        <TouchableOpacity onPress={send} activeOpacity={0.8} style={styles.sendBtn}>
-          <Ionicons name="arrow-forward" size={16} color="#fff" />
-        </TouchableOpacity>
-      </View>
+        </>
+      )}
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: T.bg },
-  notFound: { padding: 20, color: T.textMid, textAlign: 'center', fontFamily: 'DMSans_400Regular' },
 
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-    backgroundColor: T.card,
-    borderBottomWidth: 1,
-    borderBottomColor: T.border,
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingHorizontal: 16, paddingBottom: 12,
+    backgroundColor: T.card, borderBottomWidth: 1, borderBottomColor: T.border,
   },
+  eventIcon:  { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   headerName: { fontSize: 14, fontWeight: '600', color: T.text, fontFamily: 'DMSans_600SemiBold' },
   headerSub:  { fontSize: 11, color: T.textSub, fontFamily: 'DMSans_400Regular' },
 
-  messageList: { paddingHorizontal: 16, paddingTop: 16 },
-  bubbleRow:   { marginBottom: 8 },
-  bubbleRowMe:   { alignItems: 'flex-end' },
-  bubbleRowThem: { alignItems: 'flex-start' },
-  bubble: { maxWidth: '72%', paddingHorizontal: 13, paddingVertical: 9 },
-  bubbleMe:   { backgroundColor: T.coral, borderRadius: 16, borderBottomRightRadius: 4 },
-  bubbleThem: { backgroundColor: T.card,  borderRadius: 16, borderBottomLeftRadius: 4,
-    shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 4, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
-  bubbleText:     { fontSize: 13, lineHeight: 19, fontFamily: 'DMSans_400Regular' },
-  bubbleTextMe:   { color: '#fff' },
-  bubbleTextThem: { color: T.text },
+  errorBox:  { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
+  errorText: { fontSize: 14, color: T.textMid, textAlign: 'center', fontFamily: 'DMSans_400Regular' },
+
+  messageList: { paddingHorizontal: 14, paddingTop: 16 },
+  empty: { textAlign: 'center', color: T.textSub, marginTop: 40, fontFamily: 'DMSans_400Regular', fontSize: 13 },
+
+  bubbleRow: { flexDirection: 'row', marginBottom: 10, gap: 8 },
+  rowMe:    { justifyContent: 'flex-end' },
+  rowThem:  { justifyContent: 'flex-start', alignItems: 'flex-end' },
+  bubbleWrap: { maxWidth: '72%' },
+  senderName: { fontSize: 11, color: T.coral, fontWeight: '600', marginBottom: 2, fontFamily: 'DMSans_600SemiBold' },
+  bubble:     { paddingHorizontal: 13, paddingVertical: 9 },
+  bubbleMe:   { backgroundColor: T.coral,  borderRadius: 16, borderBottomRightRadius: 4 },
+  bubbleThem: {
+    backgroundColor: T.card, borderRadius: 16, borderBottomLeftRadius: 4,
+    shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 4, shadowOffset: { width: 0, height: 1 }, elevation: 1,
+  },
+  bubbleText: { fontSize: 13, lineHeight: 19, fontFamily: 'DMSans_400Regular' },
+  textMe:     { color: '#fff' },
+  textThem:   { color: T.text },
+  timestamp:  { fontSize: 10, color: T.textSub, marginTop: 2, fontFamily: 'DMSans_400Regular' },
+  tsMe:       { textAlign: 'right' },
+  tsThem:     { textAlign: 'left' },
 
   inputBar: {
-    flexDirection: 'row',
-    gap: 8,
-    paddingHorizontal: 14,
-    paddingTop: 8,
-    backgroundColor: T.card,
-    borderTopWidth: 1,
-    borderTopColor: T.border,
+    flexDirection: 'row', gap: 8, paddingHorizontal: 14, paddingTop: 8,
+    backgroundColor: T.card, borderTopWidth: 1, borderTopColor: T.border,
   },
   input: {
     flex: 1, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 999,
     borderWidth: 1.5, borderColor: T.border, fontSize: 13,
     fontFamily: 'DMSans_400Regular', color: T.text,
   },
+  inputDisabled: { opacity: 0.5 },
   sendBtn: {
     width: 38, height: 38, borderRadius: 19, backgroundColor: T.coral,
     alignItems: 'center', justifyContent: 'center',
   },
+  sendBtnDisabled: { opacity: 0.4 },
 });
