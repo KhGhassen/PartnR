@@ -7,18 +7,21 @@ Plateforme sociale pour trouver des partenaires d'activités sportives et de loi
 - **Authentification** — Inscription, connexion, JWT avec rate limiting
 - **Profils** — Bio, ville, activités favorites, système de notation
 - **Événements** — Création, modification, recherche par ville/activité, gestion des participants (2-50)
-- **Chat temps réel** — Messagerie de groupe par événement via SignalR
+- **Chat temps réel** — Messagerie de groupe par événement via SignalR (web + mobile)
 - **Notation** — Évaluation post-activité entre participants (1-5 étoiles) avec UI dédiée
+- **Analytics** — Tracking d'actions utilisateur (fire-and-forget), dashboard admin avec graphiques
+- **Application mobile** — iOS/Android natif via Expo React Native, parité fonctionnelle avec le web
 - **10 activités** — Running, Randonnée, Vélo, Jeux de société, Tennis, Yoga, Natation, Escalade, Football, Badminton
 
 ## Stack technique
 
 | Couche | Technologie |
 |--------|-------------|
-| Frontend | React 19, TypeScript, Tailwind CSS 4, Vite 7 |
+| Frontend web | React 19, TypeScript, Tailwind CSS 4, Vite 7 |
+| Application mobile | Expo SDK 51, React Native 0.74, Expo Router v3 |
 | Backend API | ASP.NET Core 8, Entity Framework Core |
 | Auth | ASP.NET Identity + JWT Bearer |
-| Temps réel | SignalR |
+| Temps réel | SignalR (web + mobile) |
 | Base de données | PostgreSQL (Supabase) |
 | ORM | EF Core + Npgsql |
 | Tests backend | xUnit + EF Core InMemory |
@@ -33,6 +36,7 @@ partnr/
 │   ├── PartnR.Api/
 │   │   ├── Controllers/        # Endpoints REST
 │   │   │   ├── ActivitiesController.cs
+│   │   │   ├── AnalyticsController.cs
 │   │   │   ├── AuthController.cs
 │   │   │   ├── EventsController.cs
 │   │   │   ├── ProfilesController.cs
@@ -44,8 +48,14 @@ partnr/
 │   │   ├── Entities/           # Modèles de domaine
 │   │   ├── Data/               # DbContext + configuration EF
 │   │   ├── Services/           # Logique métier
+│   │   │   ├── AnalyticsService.cs
+│   │   │   ├── AnalyticsTracker.cs  # Singleton fire-and-forget
+│   │   │   ├── AuthService.cs
+│   │   │   ├── EventService.cs
+│   │   │   ├── ProfileService.cs
+│   │   │   └── RatingService.cs
 │   │   ├── Hubs/               # SignalR (chat temps réel)
-│   │   ├── Extensions/          # Méthodes d'extension (ClaimsPrincipal)
+│   │   ├── Extensions/         # Méthodes d'extension (ClaimsPrincipal)
 │   │   ├── Middleware/         # Gestion globale des erreurs
 │   │   ├── Program.cs          # Point d'entrée + configuration
 │   │   └── appsettings.json    # Configuration
@@ -60,6 +70,7 @@ partnr/
 │       │   ├── Navbar.tsx
 │       │   └── RatingForm.tsx
 │       ├── context/            # State management (AuthContext)
+│       ├── hooks/              # useAnalytics (batching + sendBeacon)
 │       ├── pages/              # Pages de l'application
 │       │   ├── EventList.tsx
 │       │   ├── EventDetail.tsx
@@ -70,6 +81,24 @@ partnr/
 │       │   └── Register.tsx
 │       ├── types/              # Types TypeScript
 │       └── __tests__/          # Tests frontend
+├── mobile/
+│   ├── app/                    # Écrans (Expo Router file-based)
+│   │   ├── (tabs)/             # Onglets principaux
+│   │   │   ├── index.tsx       # Accueil — liste des événements
+│   │   │   ├── messages.tsx    # Liste des chats
+│   │   │   └── profile.tsx     # Profil utilisateur
+│   │   ├── activity/[id].tsx   # Détail d'un événement
+│   │   ├── chat/[id].tsx       # Chat temps réel (SignalR)
+│   │   ├── create.tsx          # Créer un événement (3 étapes)
+│   │   ├── onboarding.tsx      # Onboarding (3 étapes)
+│   │   ├── login.tsx           # Connexion
+│   │   └── register.tsx        # Inscription
+│   ├── api/                    # Couche API (Axios, mêmes endpoints que web)
+│   ├── components/             # Composants réutilisables (Avatar, BackBtn, CTAButton…)
+│   ├── constants/              # Design tokens (tokens.ts)
+│   ├── context/                # AppContext (JWT + user state)
+│   ├── hooks/                  # useEventChat (SignalR)
+│   └── config.ts               # API_URL
 └── supabase/
     └── migrations/
         └── 00001_initial_schema.sql
@@ -106,13 +135,20 @@ partnr/
 ### Événements
 | Méthode | Route | Auth | Description |
 |---------|-------|------|-------------|
-| GET | `/api/events?city=&activityId=&status=` | Non | Lister les événements |
+| GET | `/api/events?city=&activityId=&status=&mine=` | Non/Opt | Lister les événements (`mine=true` → mes événements, auth requise) |
 | GET | `/api/events/{id}` | Non | Détail d'un événement |
 | POST | `/api/events` | Oui | Créer un événement |
 | PUT | `/api/events/{id}` | Oui | Modifier (créateur uniquement) |
 | DELETE | `/api/events/{id}` | Oui | Supprimer (créateur uniquement) |
 | POST | `/api/events/{id}/join` | Oui | Rejoindre un événement |
 | POST | `/api/events/{id}/leave` | Oui | Quitter un événement |
+
+### Analytics
+| Méthode | Route | Auth | Description |
+|---------|-------|------|-------------|
+| GET | `/api/analytics/summary` | Oui (admin) | Stats globales (utilisateurs, événements, messages) |
+| GET | `/api/analytics/events` | Oui (admin) | Événements par jour (30 derniers jours) |
+| GET | `/api/analytics/actions` | Oui (admin) | Top actions utilisateur |
 
 ### Notations
 | Méthode | Route | Auth | Description |
@@ -188,6 +224,27 @@ npm run dev
 
 L'application sera disponible sur `http://localhost:5173`.
 
+### Lancer l'application mobile
+
+```bash
+cd mobile
+
+npm install
+
+# Lancer Metro Bundler
+npx expo start
+
+# Scanner le QR code avec l'app Expo Go (iOS/Android)
+# ou appuyer sur 'a' pour Android Emulator, 'i' pour iOS Simulator
+```
+
+L'application se connecte par défaut à `https://partnr-p3rv.onrender.com`.
+Pour pointer vers un backend local, modifier `mobile/config.ts` :
+
+```typescript
+export const API_URL = 'http://YOUR_LOCAL_IP:5001';
+```
+
 ### Tests
 
 ```bash
@@ -219,6 +276,8 @@ supabase/migrations/00001_initial_schema.sql
 
 ## Variables d'environnement
 
+**Backend (ASP.NET Core)**
+
 | Variable | Description | Défaut |
 |----------|-------------|--------|
 | `ConnectionStrings__DefaultConnection` | Chaîne de connexion PostgreSQL | `localhost` |
@@ -227,6 +286,18 @@ supabase/migrations/00001_initial_schema.sql
 | `Jwt__Audience` | Audience du token | `PartnR.Client` |
 | `Jwt__ExpireMinutes` | Durée de validité du token | `1440` (24h) |
 | `Cors__AllowedOrigins__0` | Origine CORS autorisée | `http://localhost:5173` |
+
+**Frontend web**
+
+| Variable | Description | Défaut |
+|----------|-------------|--------|
+| `VITE_API_URL` | URL du backend | `http://localhost:5001` |
+
+**Mobile (Expo)**
+
+| Fichier | Variable | Description |
+|---------|----------|-------------|
+| `mobile/config.ts` | `API_URL` | URL du backend (modifiable directement) |
 
 ## Licence
 

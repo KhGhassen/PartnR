@@ -28,10 +28,12 @@ public class EventsController : ControllerBase
         [FromQuery] string? city,
         [FromQuery] Guid? activityId,
         [FromQuery] EventStatus? status,
+        [FromQuery] bool mine = false,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20)
     {
-        var result = await _eventService.ListAsync(city, activityId, status, page, pageSize);
+        Guid? userId = mine && User.Identity?.IsAuthenticated == true ? User.GetUserId() : null;
+        var result = await _eventService.ListAsync(city, activityId, status, page, pageSize, mine, userId);
         return Ok(result);
     }
 

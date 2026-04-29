@@ -12,7 +12,7 @@ public class EventService
 
     public EventService(AppDbContext db) => _db = db;
 
-    public async Task<PaginatedResult<EventDto>> ListAsync(string? city, Guid? activityId, EventStatus? status, int page = 1, int pageSize = 20)
+    public async Task<PaginatedResult<EventDto>> ListAsync(string? city, Guid? activityId, EventStatus? status, int page = 1, int pageSize = 20, bool mine = false, Guid? userId = null)
     {
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 50);
@@ -22,6 +22,9 @@ public class EventService
             .Include(e => e.Creator)
             .Include(e => e.Participants)
             .AsQueryable();
+
+        if (mine && userId.HasValue)
+            query = query.Where(e => e.Participants.Any(p => p.UserId == userId.Value && p.Status == ParticipantStatus.Confirmed));
 
         if (!string.IsNullOrEmpty(city))
             query = query.Where(e => e.City.ToLower() == city.ToLower());
