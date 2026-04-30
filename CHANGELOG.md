@@ -3,6 +3,53 @@
 Toutes les modifications notables de ce projet sont documentées dans ce fichier.
 Format basé sur [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/).
 
+## [Itération 9] — 2026-04-29
+
+### Mobile — Chat temps réel
+- Nouveau hook `useEventChat(eventId)` — connexion SignalR, `JoinEventChat`, `SendMessage`, `LeaveEventChat` avec nettoyage sur démontage
+- Authentification SignalR via `?access_token=` en query string (WebSocket ne supporte pas Authorization header)
+- Reconnexion automatique (`withAutomaticReconnect`) et gestion des erreurs (not a participant → message localisé)
+- Nouvel écran `app/chat/[id].tsx` — bulles coral (soi) / blanches (autres), nom de l'expéditeur, timestamps, input désactivé en attendant la connexion
+- Écran `app/(tabs)/messages.tsx` — liste des événements comme salles de chat
+
+### Backend
+- `GET /api/events?mine=true` — filtre les événements où l'utilisateur connecté est participant confirmé
+- Paramètre `mine` optionnel (bool) dans `EventsController.List` + `EventService.ListAsync`, sans authentification requise (ignoré si non authentifié)
+
+## [Itération 8] — 2026-04-29
+
+### Mobile — Auth + Intégration API réelle
+- `AppContext` refondu : `token`, `user` (UserInfo), `isLoading`, `login()`, `logout()` avec persistance SecureStore
+- `api/client.ts` — instance Axios avec intercepteur JWT (Bearer token) + gestion auto-logout sur 401
+- `api/auth.ts` — `login()` + `register()` → `AuthResponse { token, user }`
+- `api/events.ts` — `listEvents()`, `getEvent()`, `joinEvent()`, `leaveEvent()`, `createEvent()`
+- `api/profiles.ts` — `getProfile()`, `updateMyProfile()`
+- `api/activities.ts` — `listActivities()`
+- Écrans `login.tsx` + `register.tsx` — formulaires avec validation, gestion d'erreurs API
+- Écran `onboarding.tsx` — flux 3 étapes → redirige vers register avec `pendingName` pré-rempli
+- Écrans `(tabs)/index.tsx`, `activity/[id].tsx`, `(tabs)/profile.tsx`, `create.tsx` connectés à l'API réelle
+
+## [Itération 7] — 2026-04-14
+
+### Mobile — Application Expo React Native
+- Initialisation du projet Expo SDK 51 + Expo Router v3 dans `mobile/`
+- Navigation par onglets (Accueil, Messages, Profil) avec FAB "Créer" central en coral
+- Design system : tokens de couleur (`constants/tokens.ts`), typographie DM Sans
+- 8 écrans prototypés : Onboarding (3 étapes), Login, Register, Accueil, Détail événement, Créer activité (3 étapes), Messages, Profil
+- Composants réutilisables : `Avatar`, `BackBtn`, `CTAButton`, `CustomTabBar`
+- Config backend : `mobile/config.ts` avec `API_URL = 'https://partnr-p3rv.onrender.com'`
+- Dépendances ajoutées : `expo-secure-store`, `axios`, `@microsoft/signalr`
+
+## [Itération 6] — 2026-04-14
+
+### Backend — Module Analytics
+- Nouveau `AnalyticsController` avec 3 endpoints : summary, events/jour, top actions
+- `AnalyticsService` (Scoped) — agrégations EF Core sur `AnalyticsEvents`
+- `AnalyticsTracker` (Singleton) — tracking fire-and-forget via `IServiceScopeFactory`, sans bloquer les requêtes
+- Entité `AnalyticsEvent` : userId, action, entityType, entityId, timestamp
+- Tracking automatique : `event_created`, `event_joined`, `event_left`, `event_deleted`, `message_sent`, `user_registered`, `user_login`
+- CORS élargi pour accepter les origines `*.vercel.app` en production
+
 ## [Itération 5] — 2026-03-30
 
 ### Infrastructure

@@ -23,7 +23,9 @@
     "react-native-screens": "~3.31.1",
     "react-native-svg": "~15.2.0",
     "expo-secure-store": "~13.0.2",
-    "axios": "^1.7.2"
+<<<<<<< HEAD
+    "axios": "^1.7.2",
+    "@microsoft/signalr": "^8.0.7"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

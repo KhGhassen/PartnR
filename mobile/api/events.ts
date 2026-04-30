@@ -47,6 +47,16 @@ export const listEvents = (params?: {
 export const getEvent = (id: string) =>
   client.get<EventDetail>(`/events/${id}`).then((r) => r.data);
 
+export const createEvent = (data: {
+  title: string;
+  description?: string;
+  city: string;
+  location?: string;
+  date: string;
+  maxParticipants: number;
+  activityId: string;
+}) => client.post<EventDetail>('/events', data).then((r) => r.data);
+
 export const joinEvent = (id: string) =>
   client.post(`/events/${id}/join`);
 
