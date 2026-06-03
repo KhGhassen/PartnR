@@ -57,7 +57,44 @@ public class AuthController : ControllerBase
             Email = user.Email!,
             AvatarUrl = user.AvatarUrl,
             City = user.City,
-            Role = user.Role
+            Role = user.Role,
+            EmailConfirmed = user.EmailConfirmed
         });
+    }
+
+    [HttpPost("confirm-email")]
+    public async Task<IActionResult> ConfirmEmail(ConfirmEmailDto dto)
+    {
+        await _authService.ConfirmEmailAsync(dto.UserId, dto.Token);
+        return Ok(new { message = "Email confirmé avec succès." });
+    }
+
+    [HttpPost("resend-confirmation")]
+    public async Task<IActionResult> ResendConfirmation(ResendConfirmationDto dto)
+    {
+        await _authService.ResendConfirmationAsync(dto.Email);
+        return Ok(new { message = "Si ce compte existe et n'est pas encore vérifié, un email a été envoyé." });
+    }
+
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordDto dto)
+    {
+        await _authService.ForgotPasswordAsync(dto.Email);
+        return Ok(new { message = "Si ce compte existe, un email de réinitialisation a été envoyé." });
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword(ResetPasswordDto dto)
+    {
+        await _authService.ResetPasswordAsync(dto.Email, dto.Token, dto.NewPassword);
+        return Ok(new { message = "Mot de passe réinitialisé avec succès." });
+    }
+
+    [Authorize]
+    [HttpPost("change-password")]
+    public async Task<IActionResult> ChangePassword(ChangePasswordDto dto)
+    {
+        await _authService.ChangePasswordAsync(User.GetUserId(), dto.CurrentPassword, dto.NewPassword);
+        return Ok(new { message = "Mot de passe modifié avec succès." });
     }
 }

@@ -23,3 +23,6 @@ export const register = (data: { firstName: string; email: string; password: str
 
 export const getMe = () =>
   client.get<UserInfo>('/auth/me').then((r) => r.data);
+
+export const forgotPassword = (email: string) =>
+  client.post('/auth/forgot-password', { email }).then((r) => r.data);

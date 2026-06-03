@@ -95,6 +95,7 @@ builder.Services.AddRateLimiter(options =>
 });
 
 // Services
+builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ProfileService>();
 builder.Services.AddScoped<EventService>();

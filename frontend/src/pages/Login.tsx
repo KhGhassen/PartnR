@@ -56,6 +56,11 @@ export default function Login() {
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
             />
           </div>
+          <div className="flex justify-end">
+            <Link to="/forgot-password" className="text-xs text-indigo-600 hover:underline">
+              Mot de passe oublié ?
+            </Link>
+          </div>
           <button
             type="submit"
             disabled={loading}
