@@ -136,8 +136,9 @@ public class EventService
             if (ev.Participants.Any(p => p.UserId == userId))
                 throw new InvalidOperationException("Already participating.");
 
-            ev.Participants.Add(new EventParticipant
+            _db.EventParticipants.Add(new EventParticipant
             {
+                EventId = eventId,
                 UserId = userId,
                 Status = ParticipantStatus.Confirmed
             });

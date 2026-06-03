@@ -32,8 +32,8 @@ export default function Register() {
       setAuth(res.token, res.user);
       trackAction({ action: 'user_registered', entityType: 'user', entityId: res.user.id });
       navigate('/');
-    } catch (err: any) {
-      setError(err.response?.data?.error || "Erreur lors de l'inscription");
+    } catch (err) {
+      setError((err as {response?: {data?: {error?: string}}}).response?.data?.error || "Erreur lors de l'inscription");
     } finally {
       setLoading(false);
     }

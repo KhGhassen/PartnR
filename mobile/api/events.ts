@@ -39,6 +39,8 @@ export type PaginatedResult<T> = {
 export const listEvents = (params?: {
   city?: string;
   activityId?: string;
+  status?: string;
+  mine?: boolean;
   page?: number;
   pageSize?: number;
 }) =>

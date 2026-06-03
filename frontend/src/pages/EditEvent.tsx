@@ -78,8 +78,8 @@ export default function EditEvent() {
         status: form.status,
       });
       navigate(`/events/${id}`);
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Erreur lors de la modification');
+    } catch (err) {
+      setError((err as {response?: {data?: {error?: string}}}).response?.data?.error || 'Erreur lors de la modification');
     } finally {
       setLoading(false);
     }

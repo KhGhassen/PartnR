@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using PartnR.Api.Data;
 using PartnR.Api.DTOs.Events;
 using PartnR.Api.Entities;
@@ -21,6 +22,7 @@ public class RatingServiceTests : IDisposable
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
             .Options;
 
         _db = new AppDbContext(options);

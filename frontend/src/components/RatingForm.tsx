@@ -30,8 +30,8 @@ export default function RatingForm({ eventId, ratedUserId, ratedUserName, onRate
         comment: comment.trim() || undefined,
       });
       onRated();
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Erreur lors de la notation');
+    } catch (err) {
+      setError((err as {response?: {data?: {error?: string}}}).response?.data?.error || 'Erreur lors de la notation');
     } finally {
       setLoading(false);
     }
