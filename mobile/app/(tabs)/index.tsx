@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -18,22 +18,26 @@ export default function HomeScreen() {
   const [activeFilter, setActiveFilter] = useState('All');
   const [events, setEvents] = useState<EventSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
 
   const fetchEvents = useCallback(async () => {
-    setLoading(true);
     setError('');
     try {
       const result = await listEvents({ pageSize: 20 });
       setEvents(result.items);
     } catch {
       setError('Impossible de charger les événements.');
-    } finally {
-      setLoading(false);
     }
   }, []);
 
-  useEffect(() => { fetchEvents(); }, [fetchEvents]);
+  useEffect(() => { fetchEvents().finally(() => setLoading(false)); }, [fetchEvents]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchEvents();
+    setRefreshing(false);
+  }, [fetchEvents]);
 
   const filtered = activeFilter === 'All'
     ? events
@@ -63,7 +67,11 @@ export default function HomeScreen() {
       </ScrollView>
 
       {/* Feed */}
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.feed}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.feed}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.coral} />}
+      >
         <LinearGradient colors={[T.coral, T.violet]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.banner}>
           <Text style={styles.bannerSub}>📍 Near you · New York</Text>
           <Text style={styles.bannerMain}>{events.length} activités cette semaine</Text>

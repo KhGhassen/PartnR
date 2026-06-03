@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
-  View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator,
+  View, Text, ScrollView, TouchableOpacity, StyleSheet,
+  ActivityIndicator, RefreshControl,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,20 +12,34 @@ export default function MessagesScreen() {
   const insets = useSafeAreaInsets();
   const [events, setEvents] = useState<EventSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    listEvents({ status: 'Published', pageSize: 30 })
-      .then((r) => setEvents(r.items))
-      .catch(() => setError('Impossible de charger les événements.'))
-      .finally(() => setLoading(false));
+  const load = useCallback(async () => {
+    try {
+      const r = await listEvents({ mine: true, pageSize: 50 });
+      setEvents(r.items);
+      setError('');
+    } catch {
+      setError('Impossible de charger vos événements.');
+    }
   }, []);
+
+  useEffect(() => {
+    load().finally(() => setLoading(false));
+  }, [load]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  }, [load]);
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Text style={styles.title}>Messages</Text>
-        <Text style={styles.sub}>Chats des événements</Text>
+        <Text style={styles.sub}>Vos événements</Text>
       </View>
 
       {loading ? (
@@ -32,7 +47,11 @@ export default function MessagesScreen() {
       ) : error ? (
         <Text style={styles.errorText}>{error}</Text>
       ) : (
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.list}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.list}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.coral} />}
+        >
           {events.map((ev) => (
             <TouchableOpacity
               key={ev.id}
@@ -57,7 +76,11 @@ export default function MessagesScreen() {
             </TouchableOpacity>
           ))}
           {events.length === 0 && (
-            <Text style={styles.empty}>Aucun événement disponible.</Text>
+            <View style={styles.emptyBox}>
+              <Text style={styles.emptyIcon}>💬</Text>
+              <Text style={styles.emptyTitle}>Aucun chat pour l'instant</Text>
+              <Text style={styles.emptySub}>Rejoignez un événement pour accéder à son chat.</Text>
+            </View>
           )}
         </ScrollView>
       )}
@@ -88,5 +111,9 @@ const styles = StyleSheet.create({
   activity:{ fontSize: 10, color: T.coral, fontWeight: '500', marginTop: 2, fontFamily: 'DMSans_500Medium' },
   dot:     { width: 8, height: 8, borderRadius: 4, backgroundColor: T.coral },
   errorText:{ textAlign: 'center', color: T.textMid, marginTop: 40, fontFamily: 'DMSans_400Regular' },
-  empty:   { textAlign: 'center', color: T.textSub, marginTop: 40, fontFamily: 'DMSans_400Regular' },
+
+  emptyBox:  { alignItems: 'center', marginTop: 60, paddingHorizontal: 32 },
+  emptyIcon: { fontSize: 40, marginBottom: 12 },
+  emptyTitle:{ fontSize: 15, fontWeight: '600', color: T.text, fontFamily: 'DMSans_600SemiBold', marginBottom: 6 },
+  emptySub:  { fontSize: 13, color: T.textSub, fontFamily: 'DMSans_400Regular', textAlign: 'center', lineHeight: 19 },
 });
