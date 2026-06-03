@@ -7,13 +7,12 @@ export default function VerifyEmail() {
   const userId = params.get('userId') ?? '';
   const token = params.get('token') ?? '';
 
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>(
+    () => (!userId || !token ? 'error' : 'loading')
+  );
 
   useEffect(() => {
-    if (!userId || !token) {
-      setStatus('error');
-      return;
-    }
+    if (!userId || !token) return;
     confirmEmail({ userId, token })
       .then(() => setStatus('success'))
       .catch(() => setStatus('error'));
