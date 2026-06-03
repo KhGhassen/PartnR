@@ -59,8 +59,8 @@ export default function CreateEvent() {
       });
       trackAction({ action: 'event_created', entityType: 'event', entityId: ev.id });
       navigate(`/events/${ev.id}`);
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Erreur lors de la création');
+    } catch (err) {
+      setError((err as {response?: {data?: {error?: string}}}).response?.data?.error || 'Erreur lors de la création');
     } finally {
       setLoading(false);
     }

@@ -48,8 +48,8 @@ export default function EventDetail() {
       await joinEvent(event.id);
       trackAction({ action: 'event_joined', entityType: 'event', entityId: event.id });
       await fetchEvent();
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Erreur');
+    } catch (err) {
+      setError((err as {response?: {data?: {error?: string}}}).response?.data?.error || 'Erreur');
     } finally {
       setActionLoading(false);
     }
@@ -61,8 +61,8 @@ export default function EventDetail() {
       await leaveEvent(event.id);
       trackAction({ action: 'event_left', entityType: 'event', entityId: event.id });
       await fetchEvent();
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Erreur');
+    } catch (err) {
+      setError((err as {response?: {data?: {error?: string}}}).response?.data?.error || 'Erreur');
     } finally {
       setActionLoading(false);
     }
@@ -73,8 +73,8 @@ export default function EventDetail() {
     try {
       await deleteEvent(event.id);
       navigate('/');
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Erreur');
+    } catch (err) {
+      setError((err as {response?: {data?: {error?: string}}}).response?.data?.error || 'Erreur');
     }
   };
 

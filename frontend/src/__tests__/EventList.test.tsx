@@ -44,11 +44,11 @@ const mockPaginatedResult = {
 describe('EventList', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (listActivities as any).mockResolvedValue([]);
+    vi.mocked(listActivities).mockResolvedValue([]);
   });
 
   it('renders loading state initially', () => {
-    (listEvents as any).mockReturnValue(new Promise(() => {})); // never resolves
+    vi.mocked(listEvents).mockReturnValue(new Promise(() => {})); // never resolves
     render(
       <MemoryRouter>
         <EventList />
@@ -58,7 +58,7 @@ describe('EventList', () => {
   });
 
   it('renders events after fetch', async () => {
-    (listEvents as any).mockResolvedValue(mockPaginatedResult);
+    vi.mocked(listEvents).mockResolvedValue(mockPaginatedResult);
 
     render(
       <MemoryRouter>
@@ -74,7 +74,7 @@ describe('EventList', () => {
   });
 
   it('shows error with retry button on fetch failure', async () => {
-    (listEvents as any).mockRejectedValue(new Error('Network error'));
+    vi.mocked(listEvents).mockRejectedValue(new Error('Network error'));
 
     render(
       <MemoryRouter>
@@ -88,7 +88,7 @@ describe('EventList', () => {
   });
 
   it('shows empty state when no events', async () => {
-    (listEvents as any).mockResolvedValue({
+    vi.mocked(listEvents).mockResolvedValue({
       items: [],
       totalCount: 0,
       page: 1,
@@ -109,7 +109,7 @@ describe('EventList', () => {
   });
 
   it('calls listEvents with filter params on submit', async () => {
-    (listEvents as any).mockResolvedValue(mockPaginatedResult);
+    vi.mocked(listEvents).mockResolvedValue(mockPaginatedResult);
 
     render(
       <MemoryRouter>

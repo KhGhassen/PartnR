@@ -50,7 +50,7 @@ describe('RatingForm', () => {
 
   it('calls createRating on valid submit', async () => {
     const onRated = vi.fn();
-    (createRating as any).mockResolvedValueOnce({ id: '1', score: 4 });
+    vi.mocked(createRating).mockResolvedValueOnce({ id: '1', score: 4 });
 
     render(<RatingForm {...defaultProps} onRated={onRated} />);
 
@@ -76,7 +76,7 @@ describe('RatingForm', () => {
   });
 
   it('sends comment when provided', async () => {
-    (createRating as any).mockResolvedValueOnce({ id: '1', score: 5 });
+    vi.mocked(createRating).mockResolvedValueOnce({ id: '1', score: 5 });
 
     render(<RatingForm {...defaultProps} />);
 

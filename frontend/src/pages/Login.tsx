@@ -19,8 +19,8 @@ export default function Login() {
       const res = await login({ email, password });
       setAuth(res.token, res.user);
       navigate('/');
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Erreur de connexion');
+    } catch (err) {
+      setError((err as {response?: {data?: {error?: string}}}).response?.data?.error || 'Erreur de connexion');
     } finally {
       setLoading(false);
     }
