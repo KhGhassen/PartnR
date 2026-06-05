@@ -5,6 +5,7 @@ export interface UserInfo {
   avatarUrl: string | null;
   city: string;
   role: string;
+  emailConfirmed: boolean;
 }
 
 export interface AuthResponse {

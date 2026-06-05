@@ -9,3 +9,18 @@ export const login = (data: { email: string; password: string }) =>
 
 export const getMe = () =>
   api.get('/auth/me').then((r) => r.data);
+
+export const confirmEmail = (data: { userId: string; token: string }) =>
+  api.post('/auth/confirm-email', data).then((r) => r.data);
+
+export const resendConfirmation = (email: string) =>
+  api.post('/auth/resend-confirmation', { email }).then((r) => r.data);
+
+export const forgotPassword = (email: string) =>
+  api.post('/auth/forgot-password', { email }).then((r) => r.data);
+
+export const resetPassword = (data: { email: string; token: string; newPassword: string }) =>
+  api.post('/auth/reset-password', data).then((r) => r.data);
+
+export const changePassword = (data: { currentPassword: string; newPassword: string }) =>
+  api.post('/auth/change-password', data).then((r) => r.data);

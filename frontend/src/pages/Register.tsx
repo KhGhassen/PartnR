@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { register } from '../api/auth';
+import { register, resendConfirmation } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
 import { trackAction } from '../api/analytics';
 
@@ -14,6 +14,8 @@ export default function Register() {
   const [form, setForm] = useState({ firstName: '', email: '', password: '', city: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [registered, setRegistered] = useState(false);
+  const [resent, setResent] = useState(false);
   const { setAuth } = useAuth();
   const navigate = useNavigate();
 
@@ -31,7 +33,7 @@ export default function Register() {
       const res = await register(form);
       setAuth(res.token, res.user);
       trackAction({ action: 'user_registered', entityType: 'user', entityId: res.user.id });
-      navigate('/');
+      setRegistered(true);
     } catch (err) {
       setError((err as {response?: {data?: {error?: string}}}).response?.data?.error || "Erreur lors de l'inscription");
     } finally {
@@ -39,8 +41,48 @@ export default function Register() {
     }
   };
 
+  const handleResend = async () => {
+    try {
+      await resendConfirmation(form.email);
+      setResent(true);
+    } catch {
+      // fail silently
+    }
+  };
+
   const update = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
+
+  if (registered) {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center">
+        <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 w-full max-w-md text-center">
+          <div className="text-5xl mb-4">📬</div>
+          <h1 className="text-2xl font-bold mb-2">Vérifiez votre email</h1>
+          <p className="text-gray-500 mb-6">
+            Un lien de confirmation a été envoyé à <span className="font-medium text-gray-800">{form.email}</span>.
+            Cliquez sur ce lien pour activer votre compte.
+          </p>
+          {resent ? (
+            <p className="text-green-600 text-sm mb-4">Email renvoyé !</p>
+          ) : (
+            <button
+              onClick={handleResend}
+              className="text-indigo-600 hover:underline text-sm mb-4 block mx-auto"
+            >
+              Renvoyer l'email
+            </button>
+          )}
+          <button
+            onClick={() => navigate('/')}
+            className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700"
+          >
+            Accéder à l'application
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center">

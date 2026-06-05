@@ -47,7 +47,7 @@ public class AuthServiceTests : IDisposable
 
         _serviceProvider = services.BuildServiceProvider();
         var userManager = _serviceProvider.GetRequiredService<UserManager<AppUser>>();
-        _service = new AuthService(userManager, config);
+        _service = new AuthService(userManager, config, new NoOpEmailService());
     }
 
     [Fact]

@@ -73,6 +73,10 @@ export default function LoginScreen() {
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
+          <TouchableOpacity onPress={() => router.push('/forgot-password')} style={styles.forgotBtn}>
+            <Text style={styles.forgotText}>Mot de passe oublié ?</Text>
+          </TouchableOpacity>
+
           <CTAButton
             label={loading ? 'Connexion…' : 'Se connecter'}
             onPress={handleLogin}
@@ -114,4 +118,6 @@ const styles = StyleSheet.create({
   footer:     { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 28 },
   footerText: { fontSize: 14, color: T.textMid, fontFamily: 'DMSans_400Regular' },
   footerLink: { fontSize: 14, color: T.coral, fontWeight: '600', fontFamily: 'DMSans_600SemiBold' },
+  forgotBtn:  { alignSelf: 'flex-end' },
+  forgotText: { fontSize: 13, color: T.violet, fontFamily: 'DMSans_400Regular' },
 });

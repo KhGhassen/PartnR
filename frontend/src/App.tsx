@@ -9,6 +9,9 @@ import Register from './pages/Register';
 import Profile from './pages/Profile';
 import EditEvent from './pages/EditEvent';
 import AnalyticsDashboardPage from './pages/AnalyticsDashboard';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import VerifyEmail from './pages/VerifyEmail';
 import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/ErrorBoundary';
 import { useAnalytics } from './hooks/useAnalytics';
@@ -28,6 +31,9 @@ function AppRoutes() {
           <Route path="/profile/:id" element={<Profile />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/admin/analytics" element={<ProtectedRoute><AnalyticsDashboardPage /></ProtectedRoute>} />
         </Routes>
       </ErrorBoundary>
