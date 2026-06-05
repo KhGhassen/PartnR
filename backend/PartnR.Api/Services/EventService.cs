@@ -69,7 +69,8 @@ public class EventService
         var activity = await _db.Activities.FindAsync(dto.ActivityId)
             ?? throw new KeyNotFoundException("Activity not found.");
 
-        if (dto.Date < DateTime.UtcNow)
+        var date = DateTime.SpecifyKind(dto.Date, DateTimeKind.Utc);
+        if (date < DateTime.UtcNow)
             throw new InvalidOperationException("Event date must be in the future.");
 
         var ev = new Event
@@ -78,7 +79,7 @@ public class EventService
             Description = dto.Description ?? string.Empty,
             City = dto.City,
             Location = dto.Location ?? string.Empty,
-            Date = dto.Date,
+            Date = date,
             MaxParticipants = dto.MaxParticipants,
             ActivityId = dto.ActivityId,
             CreatorId = creatorId,
@@ -109,7 +110,7 @@ public class EventService
         if (dto.Description is not null) ev.Description = dto.Description;
         if (dto.City is not null) ev.City = dto.City;
         if (dto.Location is not null) ev.Location = dto.Location;
-        if (dto.Date.HasValue) ev.Date = dto.Date.Value;
+        if (dto.Date.HasValue) ev.Date = DateTime.SpecifyKind(dto.Date.Value, DateTimeKind.Utc);
         if (dto.MaxParticipants.HasValue) ev.MaxParticipants = dto.MaxParticipants.Value;
         if (dto.Status.HasValue) ev.Status = dto.Status.Value;
 
