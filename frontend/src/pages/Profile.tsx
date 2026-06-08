@@ -1,16 +1,18 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { getProfile, updateMyProfile } from '../api/profiles';
+import { listActivities } from '../api/activities';
 import { useAuth } from '../context/AuthContext';
 import ChangePasswordForm from '../components/ChangePasswordForm';
-import type { Profile as ProfileType } from '../types';
+import type { Activity, Profile as ProfileType } from '../types';
 
 export default function Profile() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const [profile, setProfile] = useState<ProfileType | null>(null);
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ firstName: '', city: '', bio: '' });
+  const [form, setForm] = useState({ firstName: '', city: '', bio: '', avatarUrl: '', favoriteActivities: [] as string[] });
+  const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -24,11 +26,40 @@ export default function Profile() {
     getProfile(id!)
       .then((p) => {
         setProfile(p);
-        setForm({ firstName: p.firstName, city: p.city, bio: p.bio || '' });
+        setForm({
+          firstName: p.firstName,
+          city: p.city,
+          bio: p.bio || '',
+          avatarUrl: p.avatarUrl || '',
+          favoriteActivities: p.favoriteActivities,
+        });
       })
       .catch(() => setError('Impossible de charger le profil.'))
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(() => {
+    if (isOwn) listActivities().then(setActivities).catch(() => {});
+  }, [isOwn]);
+
+  const toggleFavoriteActivity = (name: string) =>
+    setForm((f) => ({
+      ...f,
+      favoriteActivities: f.favoriteActivities.includes(name)
+        ? f.favoriteActivities.filter((a) => a !== name)
+        : [...f.favoriteActivities, name],
+    }));
+
+  const handleCancel = () => {
+    setForm({
+      firstName: profile!.firstName,
+      city: profile!.city,
+      bio: profile!.bio || '',
+      avatarUrl: profile!.avatarUrl || '',
+      favoriteActivities: profile!.favoriteActivities,
+    });
+    setEditing(false);
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -57,16 +88,32 @@ export default function Profile() {
     <div className="max-w-2xl mx-auto px-4 py-8">
       <div className="bg-white rounded-xl border border-gray-200 p-8">
         <div className="flex items-center gap-4 mb-6">
-          <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-2xl font-bold">
-            {profile.firstName[0]}
-          </div>
-          <div>
+          {(editing ? form.avatarUrl : profile.avatarUrl) ? (
+            <img
+              src={editing ? form.avatarUrl : profile.avatarUrl!}
+              alt={profile.firstName}
+              className="w-16 h-16 rounded-full object-cover bg-gray-100"
+            />
+          ) : (
+            <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-2xl font-bold">
+              {profile.firstName[0]}
+            </div>
+          )}
+          <div className="flex-1">
             {editing ? (
-              <input
-                value={form.firstName}
-                onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
-                className="text-xl font-bold border border-gray-300 rounded px-2 py-1"
-              />
+              <div className="space-y-2">
+                <input
+                  value={form.firstName}
+                  onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
+                  className="text-xl font-bold border border-gray-300 rounded px-2 py-1"
+                />
+                <input
+                  value={form.avatarUrl}
+                  onChange={(e) => setForm((f) => ({ ...f, avatarUrl: e.target.value }))}
+                  placeholder="URL de la photo de profil (optionnel)"
+                  className="block w-full text-sm border border-gray-300 rounded px-2 py-1 text-gray-600"
+                />
+              </div>
             ) : (
               <h1 className="text-2xl font-bold">{profile.firstName}</h1>
             )}
@@ -123,17 +170,42 @@ export default function Profile() {
           )}
         </div>
 
-        {profile.favoriteActivities.length > 0 && (
+        {editing ? (
           <div className="mb-6">
             <h2 className="text-sm text-gray-400 mb-2">Activités favorites</h2>
             <div className="flex flex-wrap gap-2">
-              {profile.favoriteActivities.map((a) => (
-                <span key={a} className="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full text-sm">
-                  {a}
-                </span>
-              ))}
+              {activities.map((a) => {
+                const active = form.favoriteActivities.includes(a.name);
+                return (
+                  <button
+                    key={a.id}
+                    type="button"
+                    onClick={() => toggleFavoriteActivity(a.name)}
+                    className={`px-3 py-1 rounded-full text-sm border transition-colors ${
+                      active
+                        ? 'bg-indigo-600 text-white border-indigo-600'
+                        : 'bg-white text-gray-600 border-gray-300 hover:border-indigo-400'
+                    }`}
+                  >
+                    {a.icon} {a.name}
+                  </button>
+                );
+              })}
             </div>
           </div>
+        ) : (
+          profile.favoriteActivities.length > 0 && (
+            <div className="mb-6">
+              <h2 className="text-sm text-gray-400 mb-2">Activités favorites</h2>
+              <div className="flex flex-wrap gap-2">
+                {profile.favoriteActivities.map((a) => (
+                  <span key={a} className="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full text-sm">
+                    {a}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )
         )}
 
         {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
@@ -148,7 +220,7 @@ export default function Profile() {
               {saving ? 'Sauvegarde...' : 'Sauvegarder'}
             </button>
             <button
-              onClick={() => setEditing(false)}
+              onClick={handleCancel}
               className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300"
             >
               Annuler
