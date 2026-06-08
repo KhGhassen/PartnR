@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
+import EmailVerificationBanner from './components/EmailVerificationBanner';
 import EventList from './pages/EventList';
 import EventDetail from './pages/EventDetail';
 import CreateEvent from './pages/CreateEvent';
@@ -22,6 +23,7 @@ function AppRoutes() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
+      <EmailVerificationBanner />
       <ErrorBoundary>
         <Routes>
           <Route path="/" element={<EventList />} />

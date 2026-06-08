@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { getProfile, updateMyProfile } from '../api/profiles';
 import { useAuth } from '../context/AuthContext';
+import ChangePasswordForm from '../components/ChangePasswordForm';
 import type { Profile as ProfileType } from '../types';
 
 export default function Profile() {
@@ -13,6 +14,7 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
 
   const isOwn = user?.id === id;
 
@@ -154,6 +156,27 @@ export default function Profile() {
           </div>
         )}
       </div>
+
+      {isOwn && (
+        <div className="bg-white rounded-xl border border-gray-200 p-8 mt-6">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-lg font-bold">Sécurité</h2>
+            {!changingPassword && (
+              <button
+                onClick={() => setChangingPassword(true)}
+                className="text-sm text-indigo-600 hover:underline"
+              >
+                Changer le mot de passe
+              </button>
+            )}
+          </div>
+          {changingPassword ? (
+            <ChangePasswordForm onClose={() => setChangingPassword(false)} />
+          ) : (
+            <p className="text-sm text-gray-500">Modifiez votre mot de passe à tout moment.</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
