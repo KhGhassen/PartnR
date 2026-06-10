@@ -102,6 +102,7 @@ builder.Services.AddScoped<EventService>();
 builder.Services.AddScoped<RatingService>();
 builder.Services.AddSingleton<AnalyticsTracker>();
 builder.Services.AddScoped<AnalyticsService>();
+builder.Services.AddScoped<AdminService>();
 
 // SignalR
 builder.Services.AddSignalR();

@@ -27,6 +27,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
             e.Property(u => u.Bio).HasMaxLength(300);
             e.Property(u => u.City).HasMaxLength(100);
             e.Property(u => u.Role).HasMaxLength(10).HasDefaultValue("user");
+            e.Property(u => u.IsBanned).HasDefaultValue(false);
             e.Property(u => u.RatingAvg).HasPrecision(3, 2);
             e.Property(u => u.FavoriteActivities).HasColumnType("text[]");
         });

@@ -81,6 +81,17 @@ export interface ChatMessage {
   userName: string;
 }
 
+export interface AdminUser {
+  id: string;
+  firstName: string;
+  email: string;
+  city: string;
+  role: string;
+  isBanned: boolean;
+  emailConfirmed: boolean;
+  createdAt: string;
+}
+
 export interface PaginatedResult<T> {
   items: T[];
   totalCount: number;
