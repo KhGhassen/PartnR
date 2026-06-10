@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using PartnR.Api.DTOs.Profiles;
 using PartnR.Api.Extensions;
-using PartnR.Api.Services;
+using PartnR.Application.DTOs.Profiles;
+using PartnR.Application.Interfaces.Services;
 
 namespace PartnR.Api.Controllers;
 
@@ -11,10 +11,10 @@ namespace PartnR.Api.Controllers;
 [Route("api/[controller]")]
 public class ProfilesController : ControllerBase
 {
-    private readonly ProfileService _profileService;
-    private readonly AnalyticsTracker _tracker;
+    private readonly IProfileService _profileService;
+    private readonly IAnalyticsTracker _tracker;
 
-    public ProfilesController(ProfileService profileService, AnalyticsTracker tracker)
+    public ProfilesController(IProfileService profileService, IAnalyticsTracker tracker)
     {
         _profileService = profileService;
         _tracker = tracker;

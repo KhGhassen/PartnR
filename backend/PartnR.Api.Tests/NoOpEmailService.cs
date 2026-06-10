@@ -1,4 +1,4 @@
-using PartnR.Api.Services;
+using PartnR.Application.Interfaces.Services;
 
 namespace PartnR.Api.Tests;
 

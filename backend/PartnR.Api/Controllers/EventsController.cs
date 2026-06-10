@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using PartnR.Api.DTOs;
-using PartnR.Api.DTOs.Events;
-using PartnR.Api.Entities;
 using PartnR.Api.Extensions;
-using PartnR.Api.Services;
+using PartnR.Application.DTOs;
+using PartnR.Application.DTOs.Events;
+using PartnR.Application.Interfaces.Services;
+using PartnR.Domain.Entities;
 
 namespace PartnR.Api.Controllers;
 
@@ -13,10 +13,10 @@ namespace PartnR.Api.Controllers;
 [Route("api/[controller]")]
 public class EventsController : ControllerBase
 {
-    private readonly EventService _eventService;
-    private readonly AnalyticsTracker _tracker;
+    private readonly IEventService _eventService;
+    private readonly IAnalyticsTracker _tracker;
 
-    public EventsController(EventService eventService, AnalyticsTracker tracker)
+    public EventsController(IEventService eventService, IAnalyticsTracker tracker)
     {
         _eventService = eventService;
         _tracker = tracker;

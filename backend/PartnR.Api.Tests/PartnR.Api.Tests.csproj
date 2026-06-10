@@ -17,6 +17,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\PartnR.Api\PartnR.Api.csproj" />
+    <ProjectReference Include="..\PartnR.Application\PartnR.Application.csproj" />
+    <ProjectReference Include="..\PartnR.Infrastructure\PartnR.Infrastructure.csproj" />
+    <ProjectReference Include="..\PartnR.Domain\PartnR.Domain.csproj" />
   </ItemGroup>
 
 </Project>

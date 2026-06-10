@@ -1,11 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
-using PartnR.Api.DTOs.Auth;
-using PartnR.Api.Entities;
 using PartnR.Api.Extensions;
-using PartnR.Api.Services;
+using PartnR.Application.DTOs.Auth;
+using PartnR.Application.Interfaces.Services;
 
 namespace PartnR.Api.Controllers;
 
@@ -14,14 +12,12 @@ namespace PartnR.Api.Controllers;
 [EnableRateLimiting("auth")]
 public class AuthController : ControllerBase
 {
-    private readonly AuthService _authService;
-    private readonly UserManager<AppUser> _userManager;
-    private readonly AnalyticsTracker _tracker;
+    private readonly IAuthService _authService;
+    private readonly IAnalyticsTracker _tracker;
 
-    public AuthController(AuthService authService, UserManager<AppUser> userManager, AnalyticsTracker tracker)
+    public AuthController(IAuthService authService, IAnalyticsTracker tracker)
     {
         _authService = authService;
-        _userManager = userManager;
         _tracker = tracker;
     }
 
@@ -46,20 +42,8 @@ public class AuthController : ControllerBase
     [HttpGet("me")]
     public async Task<ActionResult<UserInfoDto>> Me()
     {
-        var userId = User.GetUserId();
-        var user = await _userManager.FindByIdAsync(userId.ToString());
-        if (user is null) return NotFound();
-
-        return Ok(new UserInfoDto
-        {
-            Id = user.Id,
-            FirstName = user.FirstName,
-            Email = user.Email!,
-            AvatarUrl = user.AvatarUrl,
-            City = user.City,
-            Role = user.Role,
-            EmailConfirmed = user.EmailConfirmed
-        });
+        var user = await _authService.GetCurrentUserAsync(User.GetUserId());
+        return Ok(user);
     }
 
     [HttpPost("confirm-email")]

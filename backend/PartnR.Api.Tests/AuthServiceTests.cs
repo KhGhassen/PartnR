@@ -2,10 +2,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using PartnR.Api.Data;
-using PartnR.Api.DTOs.Auth;
-using PartnR.Api.Entities;
-using PartnR.Api.Services;
+using PartnR.Application.DTOs.Auth;
+using PartnR.Application.Services;
+using PartnR.Domain.Entities;
+using PartnR.Infrastructure.Data;
 using Xunit;
 
 namespace PartnR.Api.Tests;

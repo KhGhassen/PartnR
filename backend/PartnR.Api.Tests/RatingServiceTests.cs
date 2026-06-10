@@ -1,9 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using PartnR.Api.Data;
-using PartnR.Api.DTOs.Events;
-using PartnR.Api.Entities;
-using PartnR.Api.Services;
+using PartnR.Application.DTOs.Events;
+using PartnR.Application.Services;
+using PartnR.Domain.Entities;
+using PartnR.Infrastructure.Data;
+using PartnR.Infrastructure.Repositories;
 using Xunit;
 
 namespace PartnR.Api.Tests;
@@ -12,7 +13,6 @@ public class RatingServiceTests : IDisposable
 {
     private readonly AppDbContext _db;
     private readonly RatingService _ratingService;
-    private readonly EventService _eventService;
     private readonly Guid _user1Id = Guid.NewGuid();
     private readonly Guid _user2Id = Guid.NewGuid();
     private readonly Guid _activityId = Guid.Parse("a1000000-0000-0000-0000-000000000001");
@@ -26,8 +26,7 @@ public class RatingServiceTests : IDisposable
             .Options;
 
         _db = new AppDbContext(options);
-        _ratingService = new RatingService(_db);
-        _eventService = new EventService(_db);
+        _ratingService = new RatingService(new EventRepository(_db), new RatingRepository(_db), new UserRepository(_db), new UnitOfWork(_db));
 
         // Seed
         _db.Activities.Add(new Activity { Id = _activityId, Name = "Running", Slug = "running", Icon = "🏃" });

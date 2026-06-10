@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using PartnR.Api.DTOs.Events;
 using PartnR.Api.Extensions;
-using PartnR.Api.Services;
+using PartnR.Application.DTOs.Events;
+using PartnR.Application.Interfaces.Services;
 
 namespace PartnR.Api.Controllers;
 
@@ -10,10 +10,10 @@ namespace PartnR.Api.Controllers;
 [Route("api/events/{eventId:guid}/[controller]")]
 public class RatingsController : ControllerBase
 {
-    private readonly RatingService _ratingService;
-    private readonly AnalyticsTracker _tracker;
+    private readonly IRatingService _ratingService;
+    private readonly IAnalyticsTracker _tracker;
 
-    public RatingsController(RatingService ratingService, AnalyticsTracker tracker)
+    public RatingsController(IRatingService ratingService, IAnalyticsTracker tracker)
     {
         _ratingService = ratingService;
         _tracker = tracker;

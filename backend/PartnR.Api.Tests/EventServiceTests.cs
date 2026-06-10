@@ -1,11 +1,10 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using Microsoft.Extensions.DependencyInjection;
-using PartnR.Api.Data;
-using PartnR.Api.DTOs.Events;
-using PartnR.Api.Entities;
-using PartnR.Api.Services;
+using PartnR.Application.DTOs.Events;
+using PartnR.Application.Services;
+using PartnR.Domain.Entities;
+using PartnR.Infrastructure.Data;
+using PartnR.Infrastructure.Repositories;
 using Xunit;
 
 namespace PartnR.Api.Tests;
@@ -49,7 +48,12 @@ public class EventServiceTests : IDisposable
         });
 
         _db.SaveChanges();
-        _service = new EventService(_db);
+        var unitOfWork = new UnitOfWork(_db);
+        _service = new EventService(
+            new EventRepository(_db),
+            new ActivityRepository(_db),
+            new EventParticipantRepository(_db),
+            unitOfWork);
     }
 
     [Fact]

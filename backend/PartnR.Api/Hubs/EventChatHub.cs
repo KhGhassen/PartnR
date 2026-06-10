@@ -1,22 +1,19 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.EntityFrameworkCore;
-using PartnR.Api.Data;
-using PartnR.Api.Entities;
 using PartnR.Api.Extensions;
-using PartnR.Api.Services;
+using PartnR.Application.Interfaces.Services;
 
 namespace PartnR.Api.Hubs;
 
 [Authorize]
 public class EventChatHub : Hub
 {
-    private readonly AppDbContext _db;
-    private readonly AnalyticsTracker _tracker;
+    private readonly IEventChatService _chatService;
+    private readonly IAnalyticsTracker _tracker;
 
-    public EventChatHub(AppDbContext db, AnalyticsTracker tracker)
+    public EventChatHub(IEventChatService chatService, IAnalyticsTracker tracker)
     {
-        _db = db;
+        _chatService = chatService;
         _tracker = tracker;
     }
 
@@ -25,64 +22,32 @@ public class EventChatHub : Hub
         var userId = Context.User!.GetUserId();
         var eid = Guid.Parse(eventId);
 
-        var isParticipant = await _db.EventParticipants
-            .AnyAsync(p => p.EventId == eid && p.UserId == userId && p.Status == ParticipantStatus.Confirmed);
-
-        if (!isParticipant)
-            throw new HubException("You are not a participant of this event.");
+        try
+        {
+            await _chatService.EnsureParticipantAsync(eid, userId);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            throw new HubException(ex.Message);
+        }
 
         await Groups.AddToGroupAsync(Context.ConnectionId, eventId);
 
-        var messages = (await _db.Messages
-            .Include(m => m.User)
-            .Where(m => m.EventId == eid)
-            .OrderByDescending(m => m.CreatedAt)
-            .Take(100)
-            .Select(m => new
-            {
-                m.Id,
-                m.Content,
-                m.CreatedAt,
-                UserId = m.UserId,
-                UserName = m.User.FirstName
-            })
-            .ToListAsync())
-            .OrderBy(m => m.CreatedAt)
-            .ToList();
-
+        var messages = await _chatService.GetHistoryAsync(eid);
         await Clients.Caller.SendAsync("MessageHistory", messages);
     }
 
     public async Task SendMessage(string eventId, string content)
     {
-        if (string.IsNullOrWhiteSpace(content) || content.Length > 2000) return;
-
         var userId = Context.User!.GetUserId();
         var eid = Guid.Parse(eventId);
 
-        var user = await _db.Users.FindAsync(userId);
-        if (user is null) return;
-
-        var message = new Message
-        {
-            EventId = eid,
-            UserId = userId,
-            Content = System.Net.WebUtility.HtmlEncode(content.Trim())
-        };
-
-        _db.Messages.Add(message);
-        await _db.SaveChangesAsync();
+        var message = await _chatService.SendMessageAsync(eid, userId, content);
+        if (message is null) return;
 
         _tracker.Track(userId, "message_sent", "event", eid);
 
-        await Clients.Group(eventId).SendAsync("NewMessage", new
-        {
-            message.Id,
-            message.Content,
-            message.CreatedAt,
-            UserId = userId,
-            UserName = user.FirstName
-        });
+        await Clients.Group(eventId).SendAsync("NewMessage", message);
     }
 
     public async Task LeaveEventChat(string eventId)

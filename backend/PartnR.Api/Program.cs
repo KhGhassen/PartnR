@@ -2,15 +2,13 @@ using System.Text;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using PartnR.Api.Data;
-using PartnR.Api.Entities;
 using PartnR.Api.Hubs;
 using PartnR.Api.Middleware;
-using PartnR.Api.Services;
+using PartnR.Application;
+using PartnR.Infrastructure;
+using PartnR.Infrastructure.Data;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -22,20 +20,9 @@ Log.Logger = new LoggerConfiguration()
 var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog();
 
-// Database
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// Identity
-builder.Services.AddIdentity<AppUser, IdentityRole<Guid>>(options =>
-{
-    options.Password.RequireDigit = true;
-    options.Password.RequireUppercase = true;
-    options.Password.RequiredLength = 8;
-    options.User.RequireUniqueEmail = true;
-})
-.AddEntityFrameworkStores<AppDbContext>()
-.AddDefaultTokenProviders();
+// Application + Infrastructure (DbContext, Identity, repositories, services)
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure(builder.Configuration);
 
 // JWT
 var jwtConfig = builder.Configuration.GetSection("Jwt");
@@ -93,16 +80,6 @@ builder.Services.AddRateLimiter(options =>
         opt.Window = TimeSpan.FromMinutes(1);
     });
 });
-
-// Services
-builder.Services.AddScoped<IEmailService, SmtpEmailService>();
-builder.Services.AddScoped<AuthService>();
-builder.Services.AddScoped<ProfileService>();
-builder.Services.AddScoped<EventService>();
-builder.Services.AddScoped<RatingService>();
-builder.Services.AddSingleton<AnalyticsTracker>();
-builder.Services.AddScoped<AnalyticsService>();
-builder.Services.AddScoped<AdminService>();
 
 // SignalR
 builder.Services.AddSignalR();
