@@ -1,5 +1,7 @@
 using System.Net;
 using System.Net.Mail;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using PartnR.Application.Interfaces.Services;
 
 namespace PartnR.Infrastructure.Services;

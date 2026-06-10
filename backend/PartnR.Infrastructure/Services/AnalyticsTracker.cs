@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using PartnR.Application.Interfaces.Services;
 using PartnR.Domain.Entities;
 using PartnR.Infrastructure.Data;
