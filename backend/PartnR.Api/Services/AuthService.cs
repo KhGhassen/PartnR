@@ -53,6 +53,9 @@ public class AuthService
         if (!valid)
             throw new UnauthorizedAccessException("Invalid credentials.");
 
+        if (user.IsBanned)
+            throw new UnauthorizedAccessException("Votre compte a été suspendu.");
+
         return GenerateResponse(user);
     }
 
@@ -152,6 +155,7 @@ public class AuthService
                 Email = user.Email!,
                 AvatarUrl = user.AvatarUrl,
                 City = user.City,
+                Role = user.Role,
                 EmailConfirmed = user.EmailConfirmed
             }
         };

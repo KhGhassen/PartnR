@@ -31,9 +31,14 @@ export default function Navbar() {
                 Profil
               </Link>
               {user?.role === 'admin' && (
-                <Link to="/admin/analytics" className="text-indigo-600 hover:text-indigo-800 font-medium">
-                  Analytics
-                </Link>
+                <>
+                  <Link to="/admin/analytics" className="text-indigo-600 hover:text-indigo-800 font-medium">
+                    Analytics
+                  </Link>
+                  <Link to="/admin/users" className="text-indigo-600 hover:text-indigo-800 font-medium">
+                    Utilisateurs
+                  </Link>
+                </>
               )}
               <button
                 onClick={handleLogout}

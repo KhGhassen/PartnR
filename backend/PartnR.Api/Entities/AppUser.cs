@@ -11,6 +11,7 @@ public class AppUser : IdentityUser<Guid>
     public List<string> FavoriteActivities { get; set; } = [];
     public bool PhoneVerified { get; set; }
     public string Role { get; set; } = "user";
+    public bool IsBanned { get; set; }
     public decimal RatingAvg { get; set; }
     public int RatingCount { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
