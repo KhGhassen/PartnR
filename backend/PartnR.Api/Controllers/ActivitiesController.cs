@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using PartnR.Api.Data;
+using PartnR.Application.Interfaces.Services;
 
 namespace PartnR.Api.Controllers;
 
@@ -8,17 +7,14 @@ namespace PartnR.Api.Controllers;
 [Route("api/[controller]")]
 public class ActivitiesController : ControllerBase
 {
-    private readonly AppDbContext _db;
+    private readonly IActivityService _activityService;
 
-    public ActivitiesController(AppDbContext db) => _db = db;
+    public ActivitiesController(IActivityService activityService) => _activityService = activityService;
 
     [HttpGet]
     public async Task<IActionResult> List()
     {
-        var activities = await _db.Activities
-            .OrderBy(a => a.Name)
-            .Select(a => new { a.Id, a.Name, a.Slug, a.Icon })
-            .ToListAsync();
+        var activities = await _activityService.ListAsync();
         return Ok(activities);
     }
 }

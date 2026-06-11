@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using PartnR.Api.DTOs.Analytics;
 using PartnR.Api.Extensions;
-using PartnR.Api.Services;
+using PartnR.Application.DTOs.Analytics;
+using PartnR.Application.Interfaces.Services;
 
 namespace PartnR.Api.Controllers;
 
@@ -10,10 +10,10 @@ namespace PartnR.Api.Controllers;
 [Route("api/[controller]")]
 public class AnalyticsController : ControllerBase
 {
-    private readonly AnalyticsTracker _tracker;
-    private readonly AnalyticsService _analyticsService;
+    private readonly IAnalyticsTracker _tracker;
+    private readonly IAnalyticsService _analyticsService;
 
-    public AnalyticsController(AnalyticsTracker tracker, AnalyticsService analyticsService)
+    public AnalyticsController(IAnalyticsTracker tracker, IAnalyticsService analyticsService)
     {
         _tracker = tracker;
         _analyticsService = analyticsService;
@@ -32,14 +32,7 @@ public class AnalyticsController : ControllerBase
     [HttpGet("dashboard")]
     public async Task<ActionResult<DashboardDto>> Dashboard()
     {
-        var userId = User.GetUserId();
-        var user = HttpContext.RequestServices
-            .GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<Entities.AppUser>>();
-        var appUser = await user.FindByIdAsync(userId.ToString());
-        if (appUser is null || appUser.Role != "admin")
-            return Forbid();
-
-        var dashboard = await _analyticsService.GetDashboardAsync();
+        var dashboard = await _analyticsService.GetDashboardAsync(User.GetUserId());
         return Ok(dashboard);
     }
 }

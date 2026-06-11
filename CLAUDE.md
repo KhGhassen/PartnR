@@ -12,25 +12,39 @@ partnr/
 └── supabase/         # Migrations PostgreSQL
 ```
 
-## Backend (`backend/PartnR.Api/`)
+## Backend (`backend/`)
 
 **Stack :** ASP.NET Core 8, EF Core, PostgreSQL (Supabase), ASP.NET Identity, JWT, SignalR, Serilog
 
-**Pattern :** Controller → Service → DbContext. Pas de Repository pattern — les Services injectent directement `AppDbContext`.
+**Architecture en clean architecture, 4 projets :**
+
+```
+backend/
+├── PartnR.Domain/          # Entités (AppUser, Event, Activity, Rating, Message, UserAction...)
+├── PartnR.Application/      # DTOs, interfaces (Services + Repositories), implémentations des services
+├── PartnR.Infrastructure/    # AppDbContext, repositories EF Core, AnalyticsTracker, SmtpEmailService
+└── PartnR.Api/               # Controllers, Hubs, Program.cs, Middleware (composition root)
+```
+
+**Pattern :** Controller → Service (interface dans `Application/Interfaces/Services`) → Repository (interface dans `Application/Interfaces/Repositories`, implém. dans `Infrastructure/Repositories`) → `AppDbContext`.
+
+- `IRepository<T>` générique : `Query()` (IQueryable\<T\>), `FindAsync(keys)`, `Add(T)`, `Remove(T)`. Interfaces par entité (ex. `IEventRepository`) sans membres additionnels — les services composent du LINQ via `.Query()`.
+- `IUnitOfWork` : `SaveChangesAsync()` + `BeginTransactionAsync()` (retourne `ITransaction`, wrapper autour de `IDbContextTransaction`).
+- Les autorisations (ex. vérification `Role == "admin"`) sont faites **dans les services** (`IAdminService`, `IAnalyticsService`), qui prennent `Guid requestingUserId` en premier paramètre et lèvent `UnauthorizedAccessException` (→ 403 via `ExceptionMiddleware`).
+- `PartnR.Application/DependencyInjection.cs` (`AddApplication()`) et `PartnR.Infrastructure/DependencyInjection.cs` (`AddInfrastructure()`) enregistrent tous les services/repositories. `Program.cs` appelle juste ces deux extensions.
 
 **Couches :**
-- `Controllers/` — REST + `[Authorize]` sur les endpoints sensibles
-- `Services/` — Logique métier (AuthService, EventService, ProfileService, RatingService, AnalyticsService)
-- `Services/AnalyticsTracker.cs` — **Singleton** fire-and-forget via `IServiceScopeFactory`. Injecté dans tous les controllers et hubs.
-- `DTOs/` — Validation avec DataAnnotations. Jamais d'entités exposées directement.
-- `Entities/` — AppUser hérite de IdentityUser\<Guid\>
-- `Hubs/EventChatHub.cs` — SignalR. Auth via query string `?access_token=` (WebSocket ne supporte pas Authorization header)
-- `Middleware/ExceptionMiddleware.cs` — Gestion globale des erreurs
+- `PartnR.Api/Controllers/` — REST + `[Authorize]` sur les endpoints sensibles
+- `PartnR.Api/Hubs/EventChatHub.cs` — SignalR, délègue à `IEventChatService`. Auth via query string `?access_token=` (WebSocket ne supporte pas Authorization header)
+- `PartnR.Api/Middleware/ExceptionMiddleware.cs` — Gestion globale des erreurs
+- `PartnR.Application/Services/` — Logique métier (AuthService, EventService, ProfileService, RatingService, AdminService, AnalyticsService, ActivityService, EventChatService)
+- `PartnR.Application/DTOs/` — Validation avec DataAnnotations. Jamais d'entités exposées directement.
+- `PartnR.Infrastructure/Services/AnalyticsTracker.cs` — **Singleton** fire-and-forget via `IServiceScopeFactory`. Injecté via `IAnalyticsTracker`.
+- `PartnR.Domain/Entities/` — AppUser hérite de IdentityUser\<Guid\>
 
 **DI lifetimes à respecter :**
-- `AnalyticsTracker` → Singleton
-- `AnalyticsService` → Scoped
-- Tous les autres Services → Scoped
+- `IAnalyticsTracker` (AnalyticsTracker) → Singleton
+- Repositories, `IUnitOfWork`, tous les Services → Scoped
 
 **Auth :** JWT Bearer. `User.GetUserId()` via `ClaimsPrincipalExtensions`.
 

@@ -1,8 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using PartnR.Api.Data;
-using PartnR.Api.DTOs.Profiles;
-using PartnR.Api.Entities;
-using PartnR.Api.Services;
+using PartnR.Application.DTOs.Profiles;
+using PartnR.Application.Services;
+using PartnR.Domain.Entities;
+using PartnR.Infrastructure.Data;
+using PartnR.Infrastructure.Repositories;
 using Xunit;
 
 namespace PartnR.Api.Tests;
@@ -35,7 +36,7 @@ public class ProfileServiceTests : IDisposable
         });
         _db.SaveChanges();
 
-        _service = new ProfileService(_db);
+        _service = new ProfileService(new UserRepository(_db), new UnitOfWork(_db));
     }
 
     [Fact]
