@@ -26,3 +26,6 @@ export const getMe = () =>
 
 export const forgotPassword = (email: string) =>
   client.post('/auth/forgot-password', { email }).then((r) => r.data);
+
+export const resetPassword = (data: { email: string; token: string; newPassword: string }) =>
+  client.post('/auth/reset-password', data).then((r) => r.data);
