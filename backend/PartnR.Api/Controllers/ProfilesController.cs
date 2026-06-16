@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using PartnR.Api.Extensions;
+using PartnR.Application.DTOs.Events;
 using PartnR.Application.DTOs.Profiles;
 using PartnR.Application.Interfaces.Services;
 
@@ -13,11 +14,13 @@ public class ProfilesController : ControllerBase
 {
     private readonly IProfileService _profileService;
     private readonly IAnalyticsTracker _tracker;
+    private readonly IRatingService _ratingService;
 
-    public ProfilesController(IProfileService profileService, IAnalyticsTracker tracker)
+    public ProfilesController(IProfileService profileService, IAnalyticsTracker tracker, IRatingService ratingService)
     {
         _profileService = profileService;
         _tracker = tracker;
+        _ratingService = ratingService;
     }
 
     [HttpGet("{id:guid}")]
@@ -25,6 +28,13 @@ public class ProfilesController : ControllerBase
     {
         var profile = await _profileService.GetByIdAsync(id);
         return Ok(profile);
+    }
+
+    [HttpGet("{id:guid}/ratings")]
+    public async Task<ActionResult<List<RatingDto>>> GetRatings(Guid id)
+    {
+        var ratings = await _ratingService.GetForUserAsync(id);
+        return Ok(ratings);
     }
 
     [HttpGet]
