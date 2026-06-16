@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { getProfile, updateMyProfile } from '../api/profiles';
+import { getProfile, updateMyProfile, getRatingsForUser } from '../api/profiles';
 import { listActivities } from '../api/activities';
 import { useAuth } from '../context/AuthContext';
 import ChangePasswordForm from '../components/ChangePasswordForm';
-import type { Activity, Profile as ProfileType } from '../types';
+import type { Activity, Profile as ProfileType, RatingDto } from '../types';
 
 export default function Profile() {
   const { id } = useParams<{ id: string }>();
@@ -17,6 +17,7 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
+  const [ratings, setRatings] = useState<RatingDto[]>([]);
 
   const isOwn = user?.id === id;
 
@@ -41,6 +42,10 @@ export default function Profile() {
   useEffect(() => {
     if (isOwn) listActivities().then(setActivities).catch(() => {});
   }, [isOwn]);
+
+  useEffect(() => {
+    if (id) getRatingsForUser(id).then(setRatings).catch(() => {});
+  }, [id]);
 
   const toggleFavoriteActivity = (name: string) =>
     setForm((f) => ({
@@ -249,6 +254,30 @@ export default function Profile() {
           )}
         </div>
       )}
+
+      <div className="bg-white rounded-xl border border-gray-200 p-8 mt-6">
+        <h2 className="text-lg font-bold mb-4">Avis reçus</h2>
+        {ratings.length === 0 ? (
+          <p className="text-sm text-gray-500">Aucun avis pour l'instant.</p>
+        ) : (
+          <div className="space-y-4">
+            {ratings.map((r) => (
+              <div key={r.id} className="border border-gray-100 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-medium text-gray-800">{r.raterName}</span>
+                  <span className="text-xs text-gray-400">
+                    {new Date(r.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </span>
+                </div>
+                <span className="text-yellow-500 text-sm">{stars(r.score)}</span>
+                {r.comment && (
+                  <p className="text-sm text-gray-600 mt-1">{r.comment}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

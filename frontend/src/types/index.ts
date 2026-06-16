@@ -73,6 +73,16 @@ export interface Rating {
   createdAt: string;
 }
 
+export interface RatingDto {
+  id: string;
+  raterId: string;
+  raterName: string;
+  ratedUserId: string;
+  score: number;
+  comment?: string;
+  createdAt: string;
+}
+
 export interface ChatMessage {
   id: string;
   content: string;
