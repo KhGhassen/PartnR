@@ -8,9 +8,16 @@ interface Props {
   eventId: string;
 }
 
+type SystemMessage = { id: string; type: 'system'; content: string };
+type DisplayMessage = ChatMessage | SystemMessage;
+
+function isSystem(msg: DisplayMessage): msg is SystemMessage {
+  return (msg as SystemMessage).type === 'system';
+}
+
 export default function EventChat({ eventId }: Props) {
   const { token, user } = useAuth();
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<DisplayMessage[]>([]);
   const [input, setInput] = useState('');
   const [connected, setConnected] = useState(false);
   const connectionRef = useRef<HubConnection | null>(null);
@@ -34,6 +41,20 @@ export default function EventChat({ eventId }: Props) {
 
     connection.on('NewMessage', (msg: ChatMessage) => {
       setMessages((prev) => [...prev, msg]);
+    });
+
+    connection.on('ParticipantJoined', (data: { userId: string; firstName: string }) => {
+      setMessages((prev) => [
+        ...prev,
+        { id: `sys-${Date.now()}`, type: 'system', content: `${data.firstName} a rejoint l'événement` },
+      ]);
+    });
+
+    connection.on('ParticipantLeft', (data: { userId: string; firstName: string }) => {
+      setMessages((prev) => [
+        ...prev,
+        { id: `sys-${Date.now()}`, type: 'system', content: `${data.firstName} a quitté l'événement` },
+      ]);
     });
 
     connection.start().then(() => {
@@ -75,6 +96,15 @@ export default function EventChat({ eventId }: Props) {
           </p>
         )}
         {messages.map((msg) => {
+          if (isSystem(msg)) {
+            return (
+              <div key={msg.id} className="flex justify-center">
+                <span className="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
+                  {msg.content}
+                </span>
+              </div>
+            );
+          }
           const isOwn = msg.userId === user?.id;
           return (
             <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>

@@ -1,7 +1,10 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.SignalR;
 using PartnR.Api.Extensions;
+using PartnR.Api.Hubs;
 using PartnR.Application.DTOs;
 using PartnR.Application.DTOs.Events;
 using PartnR.Application.Interfaces.Services;
@@ -15,11 +18,13 @@ public class EventsController : ControllerBase
 {
     private readonly IEventService _eventService;
     private readonly IAnalyticsTracker _tracker;
+    private readonly IHubContext<EventChatHub> _hubContext;
 
-    public EventsController(IEventService eventService, IAnalyticsTracker tracker)
+    public EventsController(IEventService eventService, IAnalyticsTracker tracker, IHubContext<EventChatHub> hubContext)
     {
         _eventService = eventService;
         _tracker = tracker;
+        _hubContext = hubContext;
     }
 
     [HttpGet]
@@ -69,8 +74,11 @@ public class EventsController : ControllerBase
     public async Task<IActionResult> Join(Guid id)
     {
         var userId = User.GetUserId();
+        var firstName = User.FindFirstValue(ClaimTypes.Name) ?? "Quelqu'un";
         await _eventService.JoinAsync(id, userId);
         _tracker.Track(userId, "event_joined", "event", id);
+        await _hubContext.Clients.Group(id.ToString())
+            .SendAsync("ParticipantJoined", new { userId, firstName });
         return NoContent();
     }
 
@@ -79,8 +87,11 @@ public class EventsController : ControllerBase
     public async Task<IActionResult> Leave(Guid id)
     {
         var userId = User.GetUserId();
+        var firstName = User.FindFirstValue(ClaimTypes.Name) ?? "Quelqu'un";
         await _eventService.LeaveAsync(id, userId);
         _tracker.Track(userId, "event_left", "event", id);
+        await _hubContext.Clients.Group(id.ToString())
+            .SendAsync("ParticipantLeft", new { userId, firstName });
         return NoContent();
     }
 
