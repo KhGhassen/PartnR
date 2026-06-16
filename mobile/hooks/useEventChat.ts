@@ -45,6 +45,20 @@ export function useEventChat(eventId: string) {
         setMessages((prev) => [...prev, msg]);
       });
 
+      conn.on('ParticipantJoined', (data: { userId: string; firstName: string }) => {
+        setMessages((prev) => [
+          ...prev,
+          { id: `sys-${Date.now()}`, content: `${data.firstName} a rejoint l'événement`, createdAt: new Date().toISOString(), userId: 'system', userName: '' },
+        ]);
+      });
+
+      conn.on('ParticipantLeft', (data: { userId: string; firstName: string }) => {
+        setMessages((prev) => [
+          ...prev,
+          { id: `sys-${Date.now()}`, content: `${data.firstName} a quitté l'événement`, createdAt: new Date().toISOString(), userId: 'system', userName: '' },
+        ]);
+      });
+
       try {
         await conn.start();
         await conn.invoke('JoinEventChat', eventId);

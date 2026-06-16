@@ -81,6 +81,13 @@ export default function ChatDetail() {
               <Text style={styles.empty}>Aucun message. Lancez la conversation !</Text>
             )}
             {messages.map((m) => {
+              if (m.userId === 'system') {
+                return (
+                  <View key={m.id} style={styles.systemRow}>
+                    <Text style={styles.systemText}>{m.content}</Text>
+                  </View>
+                );
+              }
               const isMe = m.userId === user?.id;
               return (
                 <View key={m.id} style={[styles.bubbleRow, isMe ? styles.rowMe : styles.rowThem]}>
@@ -183,4 +190,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   sendBtnDisabled: { opacity: 0.4 },
+
+  systemRow: { alignItems: 'center', marginVertical: 4 },
+  systemText: { fontSize: 11, color: T.textSub, backgroundColor: T.border, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 999, fontFamily: 'DMSans_400Regular' },
 });
