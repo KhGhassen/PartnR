@@ -123,7 +123,7 @@ builder.Services.AddCors(options =>
             allowedOrigins.Contains(origin) ||
             new Uri(origin).Host.EndsWith(".vercel.app"))
               .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-              .WithHeaders("Authorization", "Content-Type")
+              .AllowAnyHeader()
               .AllowCredentials());
 });
 
