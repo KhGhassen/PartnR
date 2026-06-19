@@ -57,7 +57,9 @@ export default function EditEvent() {
     const errors: Record<string, string> = {};
     if (form.title.length < 3) errors.title = 'Le titre doit contenir au moins 3 caractères';
     if (!form.city.trim()) errors.city = 'La ville est requise';
-    if (form.date && new Date(form.date) < new Date()) errors.date = 'La date doit être dans le futur';
+    if (form.date && form.status === 'Published' && new Date(form.date) < new Date()) {
+      errors.date = 'La date doit être dans le futur';
+    }
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
