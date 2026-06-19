@@ -11,6 +11,7 @@ import Profile from './pages/Profile';
 import EditEvent from './pages/EditEvent';
 import AnalyticsDashboardPage from './pages/AnalyticsDashboard';
 import AdminUsersPage from './pages/AdminUsers';
+import AdminEventsPage from './pages/AdminEvents';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import VerifyEmail from './pages/VerifyEmail';
@@ -39,6 +40,7 @@ function AppRoutes() {
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/admin/analytics" element={<ProtectedRoute><AnalyticsDashboardPage /></ProtectedRoute>} />
           <Route path="/admin/users" element={<ProtectedRoute><AdminUsersPage /></ProtectedRoute>} />
+          <Route path="/admin/events" element={<ProtectedRoute><AdminEventsPage /></ProtectedRoute>} />
         </Routes>
       </ErrorBoundary>
     </div>

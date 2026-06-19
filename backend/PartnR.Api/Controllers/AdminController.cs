@@ -4,6 +4,7 @@ using PartnR.Api.Extensions;
 using PartnR.Application.DTOs;
 using PartnR.Application.DTOs.Admin;
 using PartnR.Application.Interfaces.Services;
+using PartnR.Domain.Entities;
 
 namespace PartnR.Api.Controllers;
 
@@ -43,5 +44,29 @@ public class AdminController : ControllerBase
         var user = await _adminService.UnbanUserAsync(User.GetUserId(), id);
         _tracker.Track(User.GetUserId(), "user_unbanned", "user", id);
         return Ok(user);
+    }
+
+    [HttpGet("events")]
+    public async Task<ActionResult<PaginatedResult<AdminEventDto>>> ListEvents(
+        [FromQuery] string? search, [FromQuery] EventStatus? status, [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+    {
+        var events = await _adminService.ListEventsAsync(User.GetUserId(), search, status, page, pageSize);
+        return Ok(events);
+    }
+
+    [HttpPost("events/{id:guid}/cancel")]
+    public async Task<ActionResult<AdminEventDto>> CancelEvent(Guid id)
+    {
+        var ev = await _adminService.CancelEventAsync(User.GetUserId(), id);
+        _tracker.Track(User.GetUserId(), "event_cancelled_by_admin", "event", id);
+        return Ok(ev);
+    }
+
+    [HttpDelete("events/{id:guid}")]
+    public async Task<IActionResult> DeleteEvent(Guid id)
+    {
+        await _adminService.DeleteEventAsync(User.GetUserId(), id);
+        _tracker.Track(User.GetUserId(), "event_deleted_by_admin", "event", id);
+        return NoContent();
     }
 }
