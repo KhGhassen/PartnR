@@ -10,11 +10,13 @@ namespace PartnR.Application.Services;
 public class AdminService : IAdminService
 {
     private readonly IUserRepository _users;
+    private readonly IEventRepository _events;
     private readonly IUnitOfWork _unitOfWork;
 
-    public AdminService(IUserRepository users, IUnitOfWork unitOfWork)
+    public AdminService(IUserRepository users, IEventRepository events, IUnitOfWork unitOfWork)
     {
         _users = users;
+        _events = events;
         _unitOfWork = unitOfWork;
     }
 
@@ -79,6 +81,85 @@ public class AdminService : IAdminService
 
         return MapToDto(user);
     }
+
+    public async Task<PaginatedResult<AdminEventDto>> ListEventsAsync(Guid requestingUserId, string? search, EventStatus? status, int page = 1, int pageSize = 20)
+    {
+        await EnsureAdminAsync(requestingUserId);
+
+        var query = _events.Query()
+            .Include(e => e.Activity)
+            .Include(e => e.Creator)
+            .Include(e => e.Participants)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToLower();
+            query = query.Where(e => e.Title.ToLower().Contains(term) || e.City.ToLower().Contains(term));
+        }
+
+        if (status.HasValue)
+            query = query.Where(e => e.Status == status.Value);
+
+        var totalCount = await query.CountAsync();
+
+        var events = await query
+            .OrderByDescending(e => e.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return new PaginatedResult<AdminEventDto>
+        {
+            Items = events.Select(MapToEventDto).ToList(),
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
+        };
+    }
+
+    public async Task<AdminEventDto> CancelEventAsync(Guid requestingUserId, Guid eventId)
+    {
+        await EnsureAdminAsync(requestingUserId);
+
+        var ev = await _events.Query()
+            .Include(e => e.Activity)
+            .Include(e => e.Creator)
+            .Include(e => e.Participants)
+            .FirstOrDefaultAsync(e => e.Id == eventId)
+            ?? throw new KeyNotFoundException("Event not found.");
+
+        ev.Status = EventStatus.Cancelled;
+        await _unitOfWork.SaveChangesAsync();
+
+        return MapToEventDto(ev);
+    }
+
+    public async Task DeleteEventAsync(Guid requestingUserId, Guid eventId)
+    {
+        await EnsureAdminAsync(requestingUserId);
+
+        var ev = await _events.FindAsync(eventId)
+            ?? throw new KeyNotFoundException("Event not found.");
+
+        _events.Remove(ev);
+        await _unitOfWork.SaveChangesAsync();
+    }
+
+    private static AdminEventDto MapToEventDto(Event e) => new()
+    {
+        Id = e.Id,
+        Title = e.Title,
+        City = e.City,
+        Date = e.Date,
+        MaxParticipants = e.MaxParticipants,
+        Status = e.Status.ToString(),
+        ActivityName = e.Activity.Name,
+        CreatorId = e.CreatorId,
+        CreatorName = e.Creator.FirstName,
+        ParticipantCount = e.Participants.Count(p => p.Status == ParticipantStatus.Confirmed),
+        CreatedAt = e.CreatedAt
+    };
 
     private async Task EnsureAdminAsync(Guid requestingUserId)
     {

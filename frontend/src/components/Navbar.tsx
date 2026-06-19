@@ -38,6 +38,9 @@ export default function Navbar() {
                   <Link to="/admin/users" className="text-indigo-600 hover:text-indigo-800 font-medium">
                     Utilisateurs
                   </Link>
+                  <Link to="/admin/events" className="text-indigo-600 hover:text-indigo-800 font-medium">
+                    Événements
+                  </Link>
                 </>
               )}
               <button

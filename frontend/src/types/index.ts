@@ -102,6 +102,20 @@ export interface AdminUser {
   createdAt: string;
 }
 
+export interface AdminEvent {
+  id: string;
+  title: string;
+  city: string;
+  date: string;
+  maxParticipants: number;
+  status: string;
+  activityName: string;
+  creatorId: string;
+  creatorName: string;
+  participantCount: number;
+  createdAt: string;
+}
+
 export interface PaginatedResult<T> {
   items: T[];
   totalCount: number;
