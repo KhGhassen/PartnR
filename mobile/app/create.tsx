@@ -7,6 +7,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { T } from '../constants/tokens';
 import { listActivities, type Activity } from '../api/activities';
+import { listCities } from '../api/cities';
 import { createEvent } from '../api/events';
 import { toApiError } from '../api/client';
 import BackBtn from '../components/BackBtn';
@@ -30,6 +31,7 @@ export default function CreateScreen() {
   const [step, setStep] = useState(0);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loadingActivities, setLoadingActivities] = useState(true);
+  const [cities, setCities] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [form, setForm] = useState<FormState>({
@@ -42,6 +44,7 @@ export default function CreateScreen() {
       .then(setActivities)
       .catch(() => {})
       .finally(() => setLoadingActivities(false));
+    listCities().then(setCities).catch(() => {});
   }, []);
 
   const isValid = [
@@ -127,7 +130,6 @@ export default function CreateScreen() {
             <View style={styles.fields}>
               {[
                 { label: 'Titre *',       key: 'title' as const,       placeholder: 'Ex: Footing matinal au parc' },
-                { label: 'Ville *',        key: 'city' as const,        placeholder: 'Paris, Lyon…' },
                 { label: 'Lieu / RDV',    key: 'location' as const,    placeholder: 'Ex: Entrée du parc' },
                 { label: 'Description',   key: 'description' as const, placeholder: 'Décrivez votre activité…' },
               ].map((field) => (
@@ -144,6 +146,26 @@ export default function CreateScreen() {
                   />
                 </View>
               ))}
+              <View>
+                <Text style={styles.fieldLabel}>Ville *</Text>
+                <View style={styles.cityGrid}>
+                  {cities.map((c) => {
+                    const active = form.city === c;
+                    return (
+                      <TouchableOpacity
+                        key={c}
+                        onPress={() => setForm((f) => ({ ...f, city: c }))}
+                        activeOpacity={0.75}
+                        style={[styles.cityChip, active ? styles.chipActive : styles.chipInactive]}
+                      >
+                        <Text style={[styles.chipText, active ? styles.chipTextActive : styles.chipTextInactive]}>
+                          {c}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
               <View>
                 <Text style={styles.fieldLabel}>Date et heure *</Text>
                 <TextInput
@@ -239,6 +261,14 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_400Regular', color: T.text, backgroundColor: '#fff',
   },
   fieldInputMulti: { minHeight: 80, textAlignVertical: 'top' },
+
+  cityGrid:  { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  cityChip:  { borderRadius: 999, borderWidth: 1.5, paddingHorizontal: 14, paddingVertical: 7 },
+  chipActive:    { borderColor: T.coral, backgroundColor: T.coralL },
+  chipInactive:  { borderColor: T.border, backgroundColor: '#fff' },
+  chipText:         { fontSize: 13, fontWeight: '500', fontFamily: 'DMSans_500Medium' },
+  chipTextActive:   { color: T.coralD },
+  chipTextInactive: { color: T.textMid },
 
   prefs: { gap: 16 },
   prefCard: { backgroundColor: T.card, borderRadius: 16, padding: 16, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 2 },

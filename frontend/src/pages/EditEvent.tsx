@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getEvent, updateEvent } from '../api/events';
+import { listCities } from '../api/cities';
 import { useAuth } from '../context/AuthContext';
 
 export default function EditEvent() {
@@ -10,6 +11,7 @@ export default function EditEvent() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
+  const [cities, setCities] = useState<string[]>([]);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [form, setForm] = useState({
     title: '',
@@ -26,6 +28,8 @@ export default function EditEvent() {
       navigate('/login');
       return;
     }
+
+    listCities().then(setCities).catch(() => {});
 
     getEvent(id!).then((ev) => {
       if (ev.creatorId !== user?.id) {
@@ -128,15 +132,19 @@ export default function EditEvent() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Ville</label>
-            <input
-              type="text"
+            <select
               required
               value={form.city}
               onChange={update('city')}
               className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none ${
                 validationErrors.city ? 'border-red-400' : 'border-gray-300'
               }`}
-            />
+            >
+              <option value="">Sélectionner une ville</option>
+              {cities.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
             {validationErrors.city && <p className="text-red-500 text-xs mt-1">{validationErrors.city}</p>}
           </div>
           <div>

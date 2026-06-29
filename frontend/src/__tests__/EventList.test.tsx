@@ -12,8 +12,13 @@ vi.mock('../api/activities', () => ({
   listActivities: vi.fn(),
 }));
 
+vi.mock('../api/cities', () => ({
+  listCities: vi.fn(),
+}));
+
 import { listEvents } from '../api/events';
 import { listActivities } from '../api/activities';
+import { listCities } from '../api/cities';
 
 const mockPaginatedResult = {
   items: [
@@ -45,6 +50,7 @@ describe('EventList', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(listActivities).mockResolvedValue([]);
+    vi.mocked(listCities).mockResolvedValue(['Paris', 'Lyon']);
   });
 
   it('renders loading state initially', () => {
@@ -121,8 +127,11 @@ describe('EventList', () => {
       expect(listEvents).toHaveBeenCalledTimes(1);
     });
 
-    const cityInput = screen.getByPlaceholderText('Ville...');
-    await userEvent.type(cityInput, 'Lyon');
+    await waitFor(() => {
+      expect(screen.getByText('Lyon')).toBeInTheDocument();
+    });
+    const citySelect = screen.getByText('Toutes les villes').closest('select')!;
+    await userEvent.selectOptions(citySelect, 'Lyon');
     await userEvent.click(screen.getByText('Filtrer'));
 
     await waitFor(() => {

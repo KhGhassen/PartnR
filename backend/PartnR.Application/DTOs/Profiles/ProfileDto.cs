@@ -1,3 +1,5 @@
+using PartnR.Application.Validation;
+
 namespace PartnR.Application.DTOs.Profiles;
 
 public class ProfileDto
@@ -16,6 +18,8 @@ public class ProfileDto
 public class UpdateProfileDto
 {
     public string? FirstName { get; set; }
+
+    [AllowedCity]
     public string? City { get; set; }
     public string? Bio { get; set; }
     public string? AvatarUrl { get; set; }

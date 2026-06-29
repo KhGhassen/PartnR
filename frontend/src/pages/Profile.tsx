@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { getProfile, updateMyProfile, getRatingsForUser } from '../api/profiles';
 import { listActivities } from '../api/activities';
+import { listCities } from '../api/cities';
 import { useAuth } from '../context/AuthContext';
 import ChangePasswordForm from '../components/ChangePasswordForm';
 import type { Activity, Profile as ProfileType, RatingDto } from '../types';
@@ -13,6 +14,7 @@ export default function Profile() {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ firstName: '', city: '', bio: '', avatarUrl: '', favoriteActivities: [] as string[] });
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [cities, setCities] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -40,7 +42,10 @@ export default function Profile() {
   }, [id]);
 
   useEffect(() => {
-    if (isOwn) listActivities().then(setActivities).catch(() => {});
+    if (isOwn) {
+      listActivities().then(setActivities).catch(() => {});
+      listCities().then(setCities).catch(() => {});
+    }
   }, [isOwn]);
 
   useEffect(() => {
@@ -140,11 +145,16 @@ export default function Profile() {
           <div className="bg-gray-50 p-4 rounded-lg">
             <span className="text-sm text-gray-400">Ville</span>
             {editing ? (
-              <input
+              <select
                 value={form.city}
                 onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
                 className="block w-full border border-gray-300 rounded px-2 py-1 mt-1"
-              />
+              >
+                <option value="">Sélectionner une ville</option>
+                {cities.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
             ) : (
               <p className="font-medium">{profile.city}</p>
             )}
