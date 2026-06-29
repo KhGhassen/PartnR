@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using PartnR.Application.Validation;
 using PartnR.Domain.Entities;
 
 namespace PartnR.Application.DTOs.Events;
@@ -43,7 +44,7 @@ public class CreateEventDto
     [MaxLength(1000)]
     public string? Description { get; set; }
 
-    [Required, MaxLength(100)]
+    [Required, MaxLength(100), AllowedCity]
     public string City { get; set; } = null!;
 
     [MaxLength(200)]
@@ -67,7 +68,7 @@ public class UpdateEventDto
     [MaxLength(1000)]
     public string? Description { get; set; }
 
-    [MaxLength(100)]
+    [MaxLength(100), AllowedCity]
     public string? City { get; set; }
 
     [MaxLength(200)]

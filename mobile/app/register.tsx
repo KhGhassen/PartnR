@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   KeyboardAvoidingView, Platform, ScrollView,
@@ -7,6 +7,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { T } from '../constants/tokens';
 import { register as apiRegister } from '../api/auth';
+import { listCities } from '../api/cities';
 import { toApiError } from '../api/client';
 import { useApp } from '../context/AppContext';
 import CTAButton from '../components/CTAButton';
@@ -19,8 +20,13 @@ export default function RegisterScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [city, setCity] = useState('');
+  const [cities, setCities] = useState<string[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    listCities().then(setCities).catch(() => {});
+  }, []);
 
   const handleRegister = async () => {
     if (!firstName.trim() || !email.trim() || !password || !city.trim()) return;
@@ -46,7 +52,6 @@ export default function RegisterScreen() {
     { label: 'Prénom',         value: firstName, set: setFirstName, placeholder: 'Votre prénom',           secure: false, keyboard: 'default' as const },
     { label: 'Email',          value: email,     set: setEmail,     placeholder: 'votre@email.com',        secure: false, keyboard: 'email-address' as const },
     { label: 'Mot de passe',   value: password,  set: setPassword,  placeholder: '8 caractères minimum',  secure: true,  keyboard: 'default' as const },
-    { label: 'Ville',          value: city,      set: setCity,      placeholder: 'Paris, Lyon…',           secure: false, keyboard: 'default' as const },
   ];
 
   const isValid = firstName.trim() && email.trim() && password.length >= 8 && city.trim();
@@ -77,6 +82,27 @@ export default function RegisterScreen() {
               />
             </View>
           ))}
+
+          <View>
+            <Text style={styles.label}>Ville</Text>
+            <View style={styles.cityGrid}>
+              {cities.map((c) => {
+                const active = city === c;
+                return (
+                  <TouchableOpacity
+                    key={c}
+                    onPress={() => setCity(c)}
+                    activeOpacity={0.75}
+                    style={[styles.cityChip, active ? styles.chipActive : styles.chipInactive]}
+                  >
+                    <Text style={[styles.chipText, active ? styles.chipTextActive : styles.chipTextInactive]}>
+                      {c}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
@@ -115,6 +141,14 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_400Regular', color: T.text, backgroundColor: '#fff',
   },
   error: { fontSize: 13, color: '#E53E3E', fontFamily: 'DMSans_400Regular', textAlign: 'center' },
+
+  cityGrid:  { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  cityChip:  { borderRadius: 999, borderWidth: 1.5, paddingHorizontal: 14, paddingVertical: 7 },
+  chipActive:    { borderColor: T.coral, backgroundColor: T.coralL },
+  chipInactive:  { borderColor: T.border, backgroundColor: '#fff' },
+  chipText:         { fontSize: 13, fontWeight: '500', fontFamily: 'DMSans_500Medium' },
+  chipTextActive:   { color: T.coralD },
+  chipTextInactive: { color: T.textMid },
 
   footer:     { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 24 },
   footerText: { fontSize: 14, color: T.textMid, fontFamily: 'DMSans_400Regular' },

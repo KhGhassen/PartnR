@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { listEvents } from '../api/events';
 import { listActivities } from '../api/activities';
+import { listCities } from '../api/cities';
 import { toApiError } from '../api/client';
 import { trackAction } from '../api/analytics';
 import type { EventSummary, Activity } from '../types';
@@ -9,6 +10,7 @@ import type { EventSummary, Activity } from '../types';
 export default function EventList() {
   const [events, setEvents] = useState<EventSummary[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [cities, setCities] = useState<string[]>([]);
   const [city, setCity] = useState('');
   const [activityId, setActivityId] = useState('');
   const [loading, setLoading] = useState(true);
@@ -39,6 +41,7 @@ export default function EventList() {
 
   useEffect(() => {
     listActivities().then(setActivities).catch(() => {});
+    listCities().then(setCities).catch(() => {});
     fetchEvents(1);
   }, []);
 
@@ -66,13 +69,16 @@ export default function EventList() {
       </div>
 
       <form onSubmit={handleFilter} className="flex gap-3 mb-8">
-        <input
-          type="text"
-          placeholder="Ville..."
+        <select
           value={city}
           onChange={(e) => setCity(e.target.value)}
           className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
-        />
+        >
+          <option value="">Toutes les villes</option>
+          {cities.map((c) => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </select>
         <select
           value={activityId}
           onChange={(e) => setActivityId(e.target.value)}

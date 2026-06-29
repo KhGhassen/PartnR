@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createEvent } from '../api/events';
 import { listActivities } from '../api/activities';
+import { listCities } from '../api/cities';
 import { useAuth } from '../context/AuthContext';
 import { trackAction } from '../api/analytics';
 import type { Activity } from '../types';
@@ -10,6 +11,7 @@ export default function CreateEvent() {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [cities, setCities] = useState<string[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
@@ -29,6 +31,7 @@ export default function CreateEvent() {
       return;
     }
     listActivities().then(setActivities).catch(() => {});
+    listCities().then(setCities).catch(() => {});
   }, [isAuthenticated, navigate]);
 
   const update = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -128,13 +131,17 @@ export default function CreateEvent() {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Ville</label>
-            <input
-              type="text"
+            <select
               required
               value={form.city}
               onChange={update('city')}
               className={inputClass('city')}
-            />
+            >
+              <option value="">Sélectionner une ville</option>
+              {cities.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
             {validationErrors.city && <p className="text-red-500 text-xs mt-1">{validationErrors.city}</p>}
           </div>
           <div>

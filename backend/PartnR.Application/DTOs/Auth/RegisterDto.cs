@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using PartnR.Application.Validation;
 
 namespace PartnR.Application.DTOs.Auth;
 
@@ -13,6 +14,6 @@ public class RegisterDto
     [Required, MinLength(8)]
     public string Password { get; set; } = null!;
 
-    [Required, MaxLength(100)]
+    [Required, MaxLength(100), AllowedCity]
     public string City { get; set; } = null!;
 }

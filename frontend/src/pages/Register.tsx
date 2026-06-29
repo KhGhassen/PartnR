@@ -1,8 +1,9 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { register, resendConfirmation } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
 import { trackAction } from '../api/analytics';
+import { listCities } from '../api/cities';
 
 const PASSWORD_RULES = [
   { test: (p: string) => p.length >= 8, label: '8 caractères minimum' },
@@ -12,12 +13,17 @@ const PASSWORD_RULES = [
 
 export default function Register() {
   const [form, setForm] = useState({ firstName: '', email: '', password: '', city: '' });
+  const [cities, setCities] = useState<string[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [registered, setRegistered] = useState(false);
   const [resent, setResent] = useState(false);
   const { setAuth } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    listCities().then(setCities).catch(() => {});
+  }, []);
 
   const passwordValid = PASSWORD_RULES.every((r) => r.test(form.password));
 
@@ -50,7 +56,7 @@ export default function Register() {
     }
   };
 
-  const update = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
+  const update = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
   if (registered) {
@@ -145,13 +151,17 @@ export default function Register() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Ville</label>
-            <input
-              type="text"
+            <select
               required
               value={form.city}
               onChange={update('city')}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-            />
+            >
+              <option value="">Sélectionner une ville</option>
+              {cities.map((city) => (
+                <option key={city} value={city}>{city}</option>
+              ))}
+            </select>
           </div>
           <button
             type="submit"
