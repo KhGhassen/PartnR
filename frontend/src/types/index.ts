@@ -21,6 +21,7 @@ export interface Profile {
   bio: string | null;
   avatarUrl: string | null;
   favoriteActivities: string[];
+  profileType: string | null;
   ratingAvg: number;
   ratingCount: number;
   createdAt: string;

@@ -7,12 +7,21 @@ import { useAuth } from '../context/AuthContext';
 import ChangePasswordForm from '../components/ChangePasswordForm';
 import type { Activity, Profile as ProfileType, RatingDto } from '../types';
 
+const PROFILE_TYPES = [
+  { value: 'Aventurier', label: 'Aventurier' },
+  { value: 'Social', label: 'Social' },
+  { value: 'Detente', label: 'Détente' },
+  { value: 'Sportif', label: 'Sportif' },
+  { value: 'Creatif', label: 'Créatif' },
+  { value: 'Calme', label: 'Calme' },
+];
+
 export default function Profile() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const [profile, setProfile] = useState<ProfileType | null>(null);
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ firstName: '', city: '', bio: '', avatarUrl: '', favoriteActivities: [] as string[] });
+  const [form, setForm] = useState({ firstName: '', city: '', bio: '', avatarUrl: '', favoriteActivities: [] as string[], profileType: '' });
   const [activities, setActivities] = useState<Activity[]>([]);
   const [cities, setCities] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,6 +44,7 @@ export default function Profile() {
           bio: p.bio || '',
           avatarUrl: p.avatarUrl || '',
           favoriteActivities: p.favoriteActivities,
+          profileType: p.profileType || '',
         });
       })
       .catch(() => setError('Impossible de charger le profil.'))
@@ -67,6 +77,7 @@ export default function Profile() {
       bio: profile!.bio || '',
       avatarUrl: profile!.avatarUrl || '',
       favoriteActivities: profile!.favoriteActivities,
+      profileType: profile!.profileType || '',
     });
     setEditing(false);
   };
@@ -75,7 +86,7 @@ export default function Profile() {
     setSaving(true);
     setError('');
     try {
-      const updated = await updateMyProfile(form);
+      const updated = await updateMyProfile({ ...form, profileType: form.profileType || null });
       setProfile(updated);
       setEditing(false);
     } catch {
@@ -184,6 +195,40 @@ export default function Profile() {
             <p className="text-gray-700">{profile.bio || 'Pas encore de bio.'}</p>
           )}
         </div>
+
+        {editing ? (
+          <div className="mb-6">
+            <h2 className="text-sm text-gray-400 mb-2">Catégorie de profil</h2>
+            <div className="flex flex-wrap gap-2">
+              {PROFILE_TYPES.map((pt) => {
+                const active = form.profileType === pt.value;
+                return (
+                  <button
+                    key={pt.value}
+                    type="button"
+                    onClick={() => setForm((f) => ({ ...f, profileType: active ? '' : pt.value }))}
+                    className={`px-3 py-1 rounded-full text-sm border transition-colors ${
+                      active
+                        ? 'bg-indigo-600 text-white border-indigo-600'
+                        : 'bg-white text-gray-600 border-gray-300 hover:border-indigo-400'
+                    }`}
+                  >
+                    {pt.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          profile.profileType && (
+            <div className="mb-6">
+              <h2 className="text-sm text-gray-400 mb-2">Catégorie de profil</h2>
+              <span className="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full text-sm">
+                {PROFILE_TYPES.find((pt) => pt.value === profile.profileType)?.label || profile.profileType}
+              </span>
+            </div>
+          )
+        )}
 
         {editing ? (
           <div className="mb-6">

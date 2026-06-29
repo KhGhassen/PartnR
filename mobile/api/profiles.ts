@@ -7,6 +7,7 @@ export type Profile = {
   bio: string | null;
   avatarUrl: string | null;
   favoriteActivities: string[];
+  profileType: string | null;
   ratingAvg: number;
   ratingCount: number;
   createdAt: string;
@@ -15,5 +16,5 @@ export type Profile = {
 export const getProfile = (id: string) =>
   client.get<Profile>(`/profiles/${id}`).then((r) => r.data);
 
-export const updateMyProfile = (data: Partial<Pick<Profile, 'bio' | 'city' | 'favoriteActivities'>>) =>
+export const updateMyProfile = (data: Partial<Pick<Profile, 'bio' | 'city' | 'favoriteActivities' | 'profileType'>>) =>
   client.put<Profile>('/profiles/me', data).then((r) => r.data);
