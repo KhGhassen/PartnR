@@ -30,6 +30,9 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
             e.Property(u => u.IsBanned).HasDefaultValue(false);
             e.Property(u => u.RatingAvg).HasPrecision(3, 2);
             e.Property(u => u.FavoriteActivities).HasColumnType("text[]");
+            e.Property(u => u.ProfileType)
+                .HasConversion<string>()
+                .HasMaxLength(20);
         });
 
         // ── ACTIVITIES ──────────────────────────────────────

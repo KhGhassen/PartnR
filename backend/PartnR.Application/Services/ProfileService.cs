@@ -35,6 +35,7 @@ public class ProfileService : IProfileService
         if (dto.Bio is not null) user.Bio = dto.Bio;
         if (dto.AvatarUrl is not null) user.AvatarUrl = dto.AvatarUrl;
         if (dto.FavoriteActivities is not null) user.FavoriteActivities = dto.FavoriteActivities;
+        if (dto.ProfileType.HasValue) user.ProfileType = dto.ProfileType.Value;
 
         await _unitOfWork.SaveChangesAsync();
         return MapToDto(user);
@@ -62,6 +63,7 @@ public class ProfileService : IProfileService
         Bio = u.Bio,
         AvatarUrl = u.AvatarUrl,
         FavoriteActivities = u.FavoriteActivities,
+        ProfileType = u.ProfileType?.ToString(),
         RatingAvg = (double)u.RatingAvg,
         RatingCount = u.RatingCount,
         CreatedAt = u.CreatedAt

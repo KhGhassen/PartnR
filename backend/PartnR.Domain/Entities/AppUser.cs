@@ -2,6 +2,16 @@ using Microsoft.AspNetCore.Identity;
 
 namespace PartnR.Domain.Entities;
 
+public enum ProfileType
+{
+    Aventurier,
+    Social,
+    Detente,
+    Sportif,
+    Creatif,
+    Calme
+}
+
 public class AppUser : IdentityUser<Guid>
 {
     public string FirstName { get; set; } = string.Empty;
@@ -9,6 +19,7 @@ public class AppUser : IdentityUser<Guid>
     public string City { get; set; } = string.Empty;
     public string Bio { get; set; } = string.Empty;
     public List<string> FavoriteActivities { get; set; } = [];
+    public ProfileType? ProfileType { get; set; }
     public bool PhoneVerified { get; set; }
     public string Role { get; set; } = "user";
     public bool IsBanned { get; set; }

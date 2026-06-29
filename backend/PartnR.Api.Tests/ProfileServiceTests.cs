@@ -71,6 +71,17 @@ public class ProfileServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task UpdateAsync_UpdatesProfileType()
+    {
+        var updated = await _service.UpdateAsync(_userId, new UpdateProfileDto
+        {
+            ProfileType = ProfileType.Aventurier
+        });
+
+        Assert.Equal("Aventurier", updated.ProfileType);
+    }
+
+    [Fact]
     public async Task SearchAsync_FiltersByCity()
     {
         // Add another user in a different city

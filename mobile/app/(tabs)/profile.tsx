@@ -6,24 +6,57 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { T } from '../../constants/tokens';
-import { getProfile, type Profile } from '../../api/profiles';
+import { getProfile, updateMyProfile, type Profile } from '../../api/profiles';
 import { useApp } from '../../context/AppContext';
 import Pill from '../../components/Pill';
 import CTAButton from '../../components/CTAButton';
+
+const PROFILE_TYPES = [
+  { value: 'Aventurier', label: 'Aventurier' },
+  { value: 'Social', label: 'Social' },
+  { value: 'Detente', label: 'Détente' },
+  { value: 'Sportif', label: 'Sportif' },
+  { value: 'Creatif', label: 'Créatif' },
+  { value: 'Calme', label: 'Calme' },
+];
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { user, logout } = useApp();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [editingType, setEditingType] = useState(false);
+  const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [savingType, setSavingType] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     getProfile(user.id)
-      .then(setProfile)
+      .then((p) => {
+        setProfile(p);
+        setSelectedType(p.profileType);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [user]);
+
+  const handleSaveType = async () => {
+    setSavingType(true);
+    try {
+      const updated = await updateMyProfile({ profileType: selectedType });
+      setProfile(updated);
+      setEditingType(false);
+    } catch {
+      // keep edit mode open so the user can retry
+    } finally {
+      setSavingType(false);
+    }
+  };
+
+  const handleCancelType = () => {
+    setSelectedType(profile?.profileType ?? null);
+    setEditingType(false);
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -97,6 +130,39 @@ export default function ProfileScreen() {
                 </View>
               </View>
             )}
+
+            {/* Profile category */}
+            <View style={styles.section}>
+              <View style={styles.sectionHeaderRow}>
+                <Text style={styles.sectionTitle}>Catégorie de profil</Text>
+                {!editingType && (
+                  <TouchableOpacity onPress={() => setEditingType(true)}>
+                    <Text style={styles.editLink}>Modifier</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+              <View style={styles.interestRow}>
+                {PROFILE_TYPES.map((pt) => (
+                  <Pill
+                    key={pt.value}
+                    label={pt.label}
+                    active={selectedType === pt.value}
+                    small
+                    onPress={editingType ? () => setSelectedType(selectedType === pt.value ? null : pt.value) : undefined}
+                  />
+                ))}
+              </View>
+              {editingType && (
+                <View style={styles.editActionsRow}>
+                  <TouchableOpacity onPress={handleSaveType} disabled={savingType}>
+                    <Text style={styles.saveLink}>{savingType ? 'Sauvegarde...' : 'Enregistrer'}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={handleCancelType}>
+                    <Text style={styles.cancelLink}>Annuler</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
           </>
         )}
 
@@ -144,4 +210,10 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 13, fontWeight: '600', color: T.text, marginBottom: 10, fontFamily: 'DMSans_600SemiBold' },
   bioText:      { fontSize: 13, color: T.textMid, lineHeight: 20, fontFamily: 'DMSans_400Regular' },
   interestRow:  { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+
+  sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  editLink:     { fontSize: 12, color: T.coral, fontFamily: 'DMSans_600SemiBold' },
+  editActionsRow: { flexDirection: 'row', gap: 16, marginTop: 12 },
+  saveLink:     { fontSize: 12, color: T.coral, fontFamily: 'DMSans_600SemiBold' },
+  cancelLink:   { fontSize: 12, color: T.textSub, fontFamily: 'DMSans_500Medium' },
 });
