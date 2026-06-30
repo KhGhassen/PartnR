@@ -48,6 +48,16 @@ export interface EventSummary {
   creatorId: string;
   creatorName: string;
   participantCount: number;
+  photoUrl: string | null;
+  createdAt: string;
+}
+
+export interface EventPhoto {
+  id: string;
+  eventId: string;
+  url: string;
+  uploaderId: string;
+  uploaderName: string;
   createdAt: string;
 }
 
@@ -61,6 +71,7 @@ export interface Participant {
 
 export interface EventDetail extends EventSummary {
   participants: Participant[];
+  photos: EventPhoto[];
 }
 
 export interface Rating {

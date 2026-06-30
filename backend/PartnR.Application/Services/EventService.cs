@@ -72,6 +72,7 @@ public class EventService : IEventService
             .Include(e => e.Activity)
             .Include(e => e.Creator)
             .Include(e => e.Participants).ThenInclude(p => p.User)
+            .Include(e => e.Photos).ThenInclude(p => p.Uploader)
             .FirstOrDefaultAsync(e => e.Id == id)
             ?? throw new KeyNotFoundException("Event not found.");
 
@@ -97,7 +98,8 @@ public class EventService : IEventService
             MaxParticipants = dto.MaxParticipants,
             ActivityId = dto.ActivityId,
             CreatorId = creatorId,
-            Status = EventStatus.Published
+            Status = EventStatus.Published,
+            PhotoUrl = dto.PhotoUrl
         };
 
         ev.Participants.Add(new EventParticipant
@@ -127,6 +129,7 @@ public class EventService : IEventService
         if (dto.Date.HasValue) ev.Date = DateTime.SpecifyKind(dto.Date.Value, DateTimeKind.Utc);
         if (dto.MaxParticipants.HasValue) ev.MaxParticipants = dto.MaxParticipants.Value;
         if (dto.Status.HasValue) ev.Status = dto.Status.Value;
+        if (dto.PhotoUrl is not null) ev.PhotoUrl = dto.PhotoUrl;
 
         await _unitOfWork.SaveChangesAsync();
         return await GetByIdAsync(ev.Id);
@@ -211,6 +214,7 @@ public class EventService : IEventService
         CreatorId = e.CreatorId,
         CreatorName = e.Creator.FirstName,
         ParticipantCount = e.Participants.Count(p => p.Status == ParticipantStatus.Confirmed),
+        PhotoUrl = e.PhotoUrl,
         CreatedAt = e.CreatedAt
     };
 
@@ -229,6 +233,7 @@ public class EventService : IEventService
         CreatorId = e.CreatorId,
         CreatorName = e.Creator.FirstName,
         ParticipantCount = e.Participants.Count(p => p.Status == ParticipantStatus.Confirmed),
+        PhotoUrl = e.PhotoUrl,
         CreatedAt = e.CreatedAt,
         Participants = e.Participants.Select(p => new ParticipantDto
         {
@@ -237,6 +242,15 @@ public class EventService : IEventService
             AvatarUrl = p.User.AvatarUrl,
             Status = p.Status.ToString(),
             JoinedAt = p.JoinedAt
+        }).ToList(),
+        Photos = e.Photos.OrderByDescending(p => p.CreatedAt).Select(p => new EventPhotoDto
+        {
+            Id = p.Id,
+            EventId = p.EventId,
+            Url = p.Url,
+            UploaderId = p.UploaderId,
+            UploaderName = p.Uploader.FirstName,
+            CreatedAt = p.CreatedAt
         }).ToList()
     };
 }

@@ -14,6 +14,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
     public DbSet<EventParticipant> EventParticipants => Set<EventParticipant>();
     public DbSet<Message> Messages => Set<Message>();
     public DbSet<Rating> Ratings => Set<Rating>();
+    public DbSet<EventPhoto> EventPhotos => Set<EventPhoto>();
     public DbSet<UserAction> UserActions => Set<UserAction>();
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -69,6 +70,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
                 .HasConversion<string>()
                 .HasMaxLength(20)
                 .HasDefaultValue(EventStatus.Published);
+            e.Property(ev => ev.PhotoUrl).HasMaxLength(500);
 
             e.HasIndex(ev => new { ev.City, ev.Date });
             e.HasIndex(ev => ev.ActivityId);
@@ -156,6 +158,23 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
             e.HasOne(r => r.Rated)
                 .WithMany(u => u.RatingsReceived)
                 .HasForeignKey(r => r.RatedUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ── EVENT_PHOTOS ──────────────────────────────────────
+        builder.Entity<EventPhoto>(e =>
+        {
+            e.Property(p => p.Url).HasMaxLength(500);
+            e.HasIndex(p => p.EventId);
+
+            e.HasOne(p => p.Event)
+                .WithMany(ev => ev.Photos)
+                .HasForeignKey(p => p.EventId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(p => p.Uploader)
+                .WithMany(u => u.UploadedPhotos)
+                .HasForeignKey(p => p.UploaderId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
     }

@@ -20,6 +20,7 @@ public class Event
     public DateTime Date { get; set; }
     public int MaxParticipants { get; set; }
     public EventStatus Status { get; set; } = EventStatus.Published;
+    public string? PhotoUrl { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
@@ -29,4 +30,5 @@ public class Event
     public ICollection<EventParticipant> Participants { get; set; } = [];
     public ICollection<Message> Messages { get; set; } = [];
     public ICollection<Rating> Ratings { get; set; } = [];
+    public ICollection<EventPhoto> Photos { get; set; } = [];
 }

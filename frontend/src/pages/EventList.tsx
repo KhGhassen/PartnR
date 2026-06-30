@@ -122,24 +122,33 @@ export default function EventList() {
               <Link
                 key={ev.id}
                 to={`/events/${ev.id}`}
-                className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md transition-shadow"
+                className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
               >
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-2xl">{ev.activityIcon}</span>
-                  <span className="text-sm text-gray-500">{ev.activityName}</span>
-                </div>
-                <h2 className="text-lg font-semibold mb-2">{ev.title}</h2>
-                <div className="text-sm text-gray-500 space-y-1">
-                  <p>📍 {ev.city}{ev.location ? ` — ${ev.location}` : ''}</p>
-                  <p>📅 {new Date(ev.date).toLocaleDateString('fr-FR', {
-                    weekday: 'long',
-                    day: 'numeric',
-                    month: 'long',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}</p>
-                  <p>👥 {ev.participantCount}/{ev.maxParticipants} participants</p>
-                  <p className="text-xs text-gray-400">Par {ev.creatorName}</p>
+                {ev.photoUrl && (
+                  <img
+                    src={ev.photoUrl}
+                    alt={ev.title}
+                    className="w-full h-36 object-cover bg-gray-100"
+                  />
+                )}
+                <div className="p-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-2xl">{ev.activityIcon}</span>
+                    <span className="text-sm text-gray-500">{ev.activityName}</span>
+                  </div>
+                  <h2 className="text-lg font-semibold mb-2">{ev.title}</h2>
+                  <div className="text-sm text-gray-500 space-y-1">
+                    <p>📍 {ev.city}{ev.location ? ` — ${ev.location}` : ''}</p>
+                    <p>📅 {new Date(ev.date).toLocaleDateString('fr-FR', {
+                      weekday: 'long',
+                      day: 'numeric',
+                      month: 'long',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}</p>
+                    <p>👥 {ev.participantCount}/{ev.maxParticipants} participants</p>
+                    <p className="text-xs text-gray-400">Par {ev.creatorName}</p>
+                  </div>
                 </div>
               </Link>
             ))}

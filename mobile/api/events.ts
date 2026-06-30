@@ -13,6 +13,7 @@ export type EventSummary = {
   creatorId: string;
   creatorName: string;
   participantCount: number;
+  photoUrl: string | null;
 };
 
 export type Participant = {
@@ -22,10 +23,20 @@ export type Participant = {
   status: string;
 };
 
+export type EventPhoto = {
+  id: string;
+  eventId: string;
+  url: string;
+  uploaderId: string;
+  uploaderName: string;
+  createdAt: string;
+};
+
 export type EventDetail = EventSummary & {
   description: string | null;
   createdAt: string;
   participants: Participant[];
+  photos: EventPhoto[];
 };
 
 export type PaginatedResult<T> = {
@@ -57,6 +68,7 @@ export const createEvent = (data: {
   date: string;
   maxParticipants: number;
   activityId: string;
+  photoUrl?: string;
 }) => client.post<EventDetail>('/events', data).then((r) => r.data);
 
 export const joinEvent = (id: string) =>

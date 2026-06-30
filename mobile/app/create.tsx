@@ -24,6 +24,7 @@ type FormState = {
   city: string;
   location: string;
   maxPeople: number;
+  photoUrl: string;
 };
 
 export default function CreateScreen() {
@@ -36,7 +37,7 @@ export default function CreateScreen() {
   const [error, setError] = useState('');
   const [form, setForm] = useState<FormState>({
     activityId: '', activityName: '', title: '', description: '',
-    date: '', city: '', location: '', maxPeople: 6,
+    date: '', city: '', location: '', maxPeople: 6, photoUrl: '',
   });
 
   useEffect(() => {
@@ -68,6 +69,7 @@ export default function CreateScreen() {
         location: form.location.trim() || undefined,
         date: new Date(form.date).toISOString(),
         maxParticipants: form.maxPeople,
+        photoUrl: form.photoUrl.trim() || undefined,
       });
       router.replace(`/activity/${ev.id}`);
     } catch (err) {
@@ -132,6 +134,7 @@ export default function CreateScreen() {
                 { label: 'Titre *',       key: 'title' as const,       placeholder: 'Ex: Footing matinal au parc' },
                 { label: 'Lieu / RDV',    key: 'location' as const,    placeholder: 'Ex: Entrée du parc' },
                 { label: 'Description',   key: 'description' as const, placeholder: 'Décrivez votre activité…' },
+                { label: 'Photo de couverture (URL)', key: 'photoUrl' as const, placeholder: 'URL de l\'image (optionnel)' },
               ].map((field) => (
                 <View key={field.key}>
                   <Text style={styles.fieldLabel}>{field.label}</Text>

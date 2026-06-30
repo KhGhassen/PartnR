@@ -21,6 +21,7 @@ export default function EditEvent() {
     date: '',
     maxParticipants: 5,
     status: 'Published',
+    photoUrl: '',
   });
 
   useEffect(() => {
@@ -44,6 +45,7 @@ export default function EditEvent() {
         date: new Date(ev.date).toISOString().slice(0, 16),
         maxParticipants: ev.maxParticipants,
         status: ev.status,
+        photoUrl: ev.photoUrl || '',
       });
     }).catch(() => {
       setError('Événement introuvable.');
@@ -82,6 +84,7 @@ export default function EditEvent() {
         date: form.date ? new Date(form.date).toISOString() : undefined,
         maxParticipants: Number(form.maxParticipants),
         status: form.status,
+        photoUrl: form.photoUrl || undefined,
       });
       navigate(`/events/${id}`);
     } catch (err) {
@@ -126,6 +129,17 @@ export default function EditEvent() {
             onChange={update('description')}
             rows={3}
             className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Photo de couverture (URL)</label>
+          <input
+            type="text"
+            value={form.photoUrl}
+            onChange={update('photoUrl')}
+            placeholder="URL de l'image de couverture (optionnel)"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
           />
         </div>
 

@@ -36,6 +36,7 @@ const mockPaginatedResult = {
       creatorId: 'u1',
       creatorName: 'Alice',
       participantCount: 3,
+      photoUrl: null,
       createdAt: '2026-03-01T00:00:00Z',
     },
   ],

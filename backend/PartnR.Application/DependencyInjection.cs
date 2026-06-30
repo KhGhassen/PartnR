@@ -12,6 +12,7 @@ public static class DependencyInjection
         services.AddScoped<IProfileService, ProfileService>();
         services.AddScoped<IEventService, EventService>();
         services.AddScoped<IRatingService, RatingService>();
+        services.AddScoped<IEventPhotoService, EventPhotoService>();
         services.AddScoped<IActivityService, ActivityService>();
         services.AddScoped<IAdminService, AdminService>();
         services.AddScoped<IAnalyticsService, AnalyticsService>();

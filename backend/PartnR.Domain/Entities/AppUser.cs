@@ -34,4 +34,5 @@ public class AppUser : IdentityUser<Guid>
     public ICollection<Message> Messages { get; set; } = [];
     public ICollection<Rating> RatingsGiven { get; set; } = [];
     public ICollection<Rating> RatingsReceived { get; set; } = [];
+    public ICollection<EventPhoto> UploadedPhotos { get; set; } = [];
 }
