@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import * as Location from 'expo-location';
 import { T } from '../../constants/tokens';
 import { listEvents, type EventSummary } from '../../api/events';
 import { useApp } from '../../context/AppContext';
@@ -20,11 +21,15 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
+  const [nearMe, setNearMe] = useState(false);
+  const [locating, setLocating] = useState(false);
 
-  const fetchEvents = useCallback(async () => {
+  const fetchEvents = useCallback(async (coords?: { lat: number; lng: number }) => {
     setError('');
     try {
-      const result = await listEvents({ pageSize: 20 });
+      const result = await listEvents(
+        coords ? { pageSize: 20, lat: coords.lat, lng: coords.lng, radiusKm: 25 } : { pageSize: 20 }
+      );
       setEvents(result.items);
     } catch {
       setError('Impossible de charger les événements.');
@@ -38,6 +43,34 @@ export default function HomeScreen() {
     await fetchEvents();
     setRefreshing(false);
   }, [fetchEvents]);
+
+  const toggleNearMe = useCallback(async () => {
+    if (nearMe) {
+      setNearMe(false);
+      setLoading(true);
+      await fetchEvents();
+      setLoading(false);
+      return;
+    }
+
+    setLocating(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setError('Autorisez la localisation pour voir les événements près de vous.');
+        return;
+      }
+      const pos = await Location.getCurrentPositionAsync({});
+      setNearMe(true);
+      setLoading(true);
+      await fetchEvents({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      setLoading(false);
+    } catch {
+      setError('Impossible de récupérer votre position.');
+    } finally {
+      setLocating(false);
+    }
+  }, [nearMe, fetchEvents]);
 
   const filtered = activeFilter === 'All'
     ? events
@@ -61,6 +94,11 @@ export default function HomeScreen() {
 
       {/* Filter pills */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters} style={styles.filtersScroll}>
+        <Pill
+          label={locating ? 'Localisation…' : '📍 Près de moi'}
+          active={nearMe}
+          onPress={toggleNearMe}
+        />
         {FILTERS.map((f) => (
           <Pill key={f} label={f} active={activeFilter === f} onPress={() => setActiveFilter(f)} />
         ))}
@@ -114,7 +152,10 @@ function EventRow({ ev }: { ev: EventSummary }) {
       </View>
       <View style={styles.cardBody}>
         <Text style={styles.cardTitle} numberOfLines={1}>{ev.title}</Text>
-        <Text style={styles.cardMeta}>📅 {new Date(ev.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</Text>
+        <Text style={styles.cardMeta}>
+          📅 {new Date(ev.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+          {ev.distanceKm != null ? ` · ${ev.distanceKm.toFixed(1)} km` : ''}
+        </Text>
         <View style={styles.cardFooter}>
           <View style={styles.progressTrack}>
             <View style={[styles.progressFill, { width: `${pct}%` }]} />

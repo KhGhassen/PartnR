@@ -21,6 +21,9 @@ export default function Navbar() {
           <Link to="/" className="text-gray-600 hover:text-gray-900">
             Événements
           </Link>
+          <Link to="/map" className="text-gray-600 hover:text-gray-900">
+            Carte
+          </Link>
 
           {isAuthenticated ? (
             <>

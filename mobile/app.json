@@ -20,6 +20,15 @@
       },
       "package": "com.partnr.app"
     },
-    "plugins": ["expo-router", "expo-font"]
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "PartnR utilise votre position pour trouver des événements près de vous."
+        }
+      ]
+    ]
   }
 }

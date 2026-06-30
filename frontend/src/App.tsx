@@ -3,6 +3,7 @@ import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import EmailVerificationBanner from './components/EmailVerificationBanner';
 import EventList from './pages/EventList';
+import EventsMap from './pages/EventsMap';
 import EventDetail from './pages/EventDetail';
 import CreateEvent from './pages/CreateEvent';
 import Login from './pages/Login';
@@ -29,6 +30,7 @@ function AppRoutes() {
       <ErrorBoundary>
         <Routes>
           <Route path="/" element={<EventList />} />
+          <Route path="/map" element={<EventsMap />} />
           <Route path="/events/new" element={<ProtectedRoute><CreateEvent /></ProtectedRoute>} />
           <Route path="/events/:id/edit" element={<ProtectedRoute><EditEvent /></ProtectedRoute>} />
           <Route path="/events/:id" element={<EventDetail />} />

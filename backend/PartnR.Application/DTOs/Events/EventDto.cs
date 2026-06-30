@@ -20,6 +20,9 @@ public class EventDto
     public string CreatorName { get; set; } = null!;
     public int ParticipantCount { get; set; }
     public string? PhotoUrl { get; set; }
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
+    public double? DistanceKm { get; set; }
     public DateTime CreatedAt { get; set; }
 }
 
@@ -63,6 +66,12 @@ public class CreateEventDto
 
     [MaxLength(500)]
     public string? PhotoUrl { get; set; }
+
+    [Range(-90, 90)]
+    public double? Latitude { get; set; }
+
+    [Range(-180, 180)]
+    public double? Longitude { get; set; }
 }
 
 public class UpdateEventDto
@@ -88,4 +97,10 @@ public class UpdateEventDto
 
     [MaxLength(500)]
     public string? PhotoUrl { get; set; }
+
+    [Range(-90, 90)]
+    public double? Latitude { get; set; }
+
+    [Range(-180, 180)]
+    public double? Longitude { get; set; }
 }

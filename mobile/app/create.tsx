@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Location from 'expo-location';
 import { T } from '../constants/tokens';
 import { listActivities, type Activity } from '../api/activities';
 import { listCities } from '../api/cities';
@@ -25,6 +26,8 @@ type FormState = {
   location: string;
   maxPeople: number;
   photoUrl: string;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 export default function CreateScreen() {
@@ -38,7 +41,19 @@ export default function CreateScreen() {
   const [form, setForm] = useState<FormState>({
     activityId: '', activityName: '', title: '', description: '',
     date: '', city: '', location: '', maxPeople: 6, photoUrl: '',
+    latitude: null, longitude: null,
   });
+
+  const captureLocation = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') return;
+      const pos = await Location.getCurrentPositionAsync({});
+      setForm((f) => ({ ...f, latitude: pos.coords.latitude, longitude: pos.coords.longitude }));
+    } catch {
+      // Geolocation is optional — silently skip if unavailable.
+    }
+  };
 
   useEffect(() => {
     listActivities()
@@ -46,6 +61,7 @@ export default function CreateScreen() {
       .catch(() => {})
       .finally(() => setLoadingActivities(false));
     listCities().then(setCities).catch(() => {});
+    captureLocation();
   }, []);
 
   const isValid = [
@@ -70,6 +86,8 @@ export default function CreateScreen() {
         date: new Date(form.date).toISOString(),
         maxParticipants: form.maxPeople,
         photoUrl: form.photoUrl.trim() || undefined,
+        latitude: form.latitude ?? undefined,
+        longitude: form.longitude ?? undefined,
       });
       router.replace(`/activity/${ev.id}`);
     } catch (err) {

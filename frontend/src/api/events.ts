@@ -7,6 +7,9 @@ export const listEvents = (params?: {
   status?: string;
   page?: number;
   pageSize?: number;
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
 }) =>
   api.get<PaginatedResult<EventSummary>>('/events', { params }).then((r) => r.data);
 
@@ -22,6 +25,8 @@ export const createEvent = (data: {
   maxParticipants: number;
   activityId: string;
   photoUrl?: string;
+  latitude?: number;
+  longitude?: number;
 }) => api.post<EventDetail>('/events', data).then((r) => r.data);
 
 export const updateEvent = (id: string, data: Record<string, unknown>) =>

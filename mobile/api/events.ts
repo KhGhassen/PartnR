@@ -14,6 +14,9 @@ export type EventSummary = {
   creatorName: string;
   participantCount: number;
   photoUrl: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  distanceKm: number | null;
 };
 
 export type Participant = {
@@ -54,6 +57,9 @@ export const listEvents = (params?: {
   mine?: boolean;
   page?: number;
   pageSize?: number;
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
 }) =>
   client.get<PaginatedResult<EventSummary>>('/events', { params }).then((r) => r.data);
 
@@ -69,6 +75,8 @@ export const createEvent = (data: {
   maxParticipants: number;
   activityId: string;
   photoUrl?: string;
+  latitude?: number;
+  longitude?: number;
 }) => client.post<EventDetail>('/events', data).then((r) => r.data);
 
 export const joinEvent = (id: string) =>

@@ -372,5 +372,77 @@ public class EventServiceTests : IDisposable
         Assert.False(result.HasNextPage);
     }
 
+    [Fact]
+    public async Task CreateAsync_AndUpdateAsync_SetCoordinates()
+    {
+        var dto = new CreateEventDto
+        {
+            Title = "Geo Event",
+            City = "Paris",
+            Date = DateTime.UtcNow.AddDays(5),
+            MaxParticipants = 5,
+            ActivityId = _activityId,
+            Latitude = 48.8566,
+            Longitude = 2.3522
+        };
+
+        var created = await _service.CreateAsync(_userId, dto);
+        Assert.Equal(48.8566, created.Latitude);
+        Assert.Equal(2.3522, created.Longitude);
+
+        var updated = await _service.UpdateAsync(created.Id, _userId, new UpdateEventDto
+        {
+            Latitude = 45.7640,
+            Longitude = 4.8357
+        });
+
+        Assert.Equal(45.7640, updated.Latitude);
+        Assert.Equal(4.8357, updated.Longitude);
+    }
+
+    [Fact]
+    public async Task ListAsync_NearMe_FiltersByRadiusAndSortsByDistance()
+    {
+        // Paris
+        await _service.CreateAsync(_userId, new CreateEventDto
+        {
+            Title = "Paris Event",
+            City = "Paris",
+            Date = DateTime.UtcNow.AddDays(5),
+            MaxParticipants = 5,
+            ActivityId = _activityId,
+            Latitude = 48.8566,
+            Longitude = 2.3522
+        });
+        // Lyon (~390km from Paris)
+        await _service.CreateAsync(_userId, new CreateEventDto
+        {
+            Title = "Lyon Event",
+            City = "Lyon",
+            Date = DateTime.UtcNow.AddDays(5),
+            MaxParticipants = 5,
+            ActivityId = _activityId,
+            Latitude = 45.7640,
+            Longitude = 4.8357
+        });
+        // No coordinates at all
+        await _service.CreateAsync(_userId, new CreateEventDto
+        {
+            Title = "No Coords Event",
+            City = "Marseille",
+            Date = DateTime.UtcNow.AddDays(5),
+            MaxParticipants = 5,
+            ActivityId = _activityId
+        });
+
+        // Search near Paris with a 50km radius
+        var result = await _service.ListAsync(null, null, null, lat: 48.85, lng: 2.35, radiusKm: 50);
+
+        Assert.Single(result.Items);
+        Assert.Equal("Paris Event", result.Items[0].Title);
+        Assert.NotNull(result.Items[0].DistanceKm);
+        Assert.True(result.Items[0].DistanceKm < 50);
+    }
+
     public void Dispose() => _db.Dispose();
 }

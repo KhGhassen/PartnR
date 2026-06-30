@@ -26,7 +26,7 @@ public class EventService : IEventService
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<PaginatedResult<EventDto>> ListAsync(string? city, Guid? activityId, EventStatus? status, int page = 1, int pageSize = 20, bool mine = false, Guid? userId = null)
+    public async Task<PaginatedResult<EventDto>> ListAsync(string? city, Guid? activityId, EventStatus? status, int page = 1, int pageSize = 20, bool mine = false, Guid? userId = null, double? lat = null, double? lng = null, double? radiusKm = null)
     {
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 50);
@@ -49,6 +49,32 @@ public class EventService : IEventService
         else
             query = query.Where(e => e.Status == EventStatus.Published);
 
+        if (lat.HasValue && lng.HasValue)
+        {
+            var radius = radiusKm ?? 25;
+
+            var candidates = await query
+                .Where(e => e.Latitude != null && e.Longitude != null)
+                .ToListAsync();
+
+            var nearby = candidates
+                .Select(e => (Event: e, Distance: HaversineKm(lat.Value, lng.Value, e.Latitude!.Value, e.Longitude!.Value)))
+                .Where(x => x.Distance <= radius)
+                .OrderBy(x => x.Distance)
+                .ToList();
+
+            var nearTotal = nearby.Count;
+            var nearPage = nearby.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+            return new PaginatedResult<EventDto>
+            {
+                Items = nearPage.Select(x => MapToDto(x.Event, x.Distance)).ToList(),
+                TotalCount = nearTotal,
+                Page = page,
+                PageSize = pageSize
+            };
+        }
+
         var totalCount = await query.CountAsync();
 
         var events = await query
@@ -59,12 +85,26 @@ public class EventService : IEventService
 
         return new PaginatedResult<EventDto>
         {
-            Items = events.Select(MapToDto).ToList(),
+            Items = events.Select(e => MapToDto(e)).ToList(),
             TotalCount = totalCount,
             Page = page,
             PageSize = pageSize
         };
     }
+
+    private static double HaversineKm(double lat1, double lon1, double lat2, double lon2)
+    {
+        const double earthRadiusKm = 6371;
+        var dLat = ToRadians(lat2 - lat1);
+        var dLon = ToRadians(lon2 - lon1);
+        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+                Math.Cos(ToRadians(lat1)) * Math.Cos(ToRadians(lat2)) *
+                Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+        var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+        return earthRadiusKm * c;
+    }
+
+    private static double ToRadians(double degrees) => degrees * Math.PI / 180;
 
     public async Task<EventDetailDto> GetByIdAsync(Guid id)
     {
@@ -99,7 +139,9 @@ public class EventService : IEventService
             ActivityId = dto.ActivityId,
             CreatorId = creatorId,
             Status = EventStatus.Published,
-            PhotoUrl = dto.PhotoUrl
+            PhotoUrl = dto.PhotoUrl,
+            Latitude = dto.Latitude,
+            Longitude = dto.Longitude
         };
 
         ev.Participants.Add(new EventParticipant
@@ -130,6 +172,8 @@ public class EventService : IEventService
         if (dto.MaxParticipants.HasValue) ev.MaxParticipants = dto.MaxParticipants.Value;
         if (dto.Status.HasValue) ev.Status = dto.Status.Value;
         if (dto.PhotoUrl is not null) ev.PhotoUrl = dto.PhotoUrl;
+        if (dto.Latitude.HasValue) ev.Latitude = dto.Latitude;
+        if (dto.Longitude.HasValue) ev.Longitude = dto.Longitude;
 
         await _unitOfWork.SaveChangesAsync();
         return await GetByIdAsync(ev.Id);
@@ -199,7 +243,7 @@ public class EventService : IEventService
         await _unitOfWork.SaveChangesAsync();
     }
 
-    private static EventDto MapToDto(Event e) => new()
+    private static EventDto MapToDto(Event e, double? distanceKm = null) => new()
     {
         Id = e.Id,
         Title = e.Title,
@@ -215,6 +259,9 @@ public class EventService : IEventService
         CreatorName = e.Creator.FirstName,
         ParticipantCount = e.Participants.Count(p => p.Status == ParticipantStatus.Confirmed),
         PhotoUrl = e.PhotoUrl,
+        Latitude = e.Latitude,
+        Longitude = e.Longitude,
+        DistanceKm = distanceKm,
         CreatedAt = e.CreatedAt
     };
 
@@ -234,6 +281,8 @@ public class EventService : IEventService
         CreatorName = e.Creator.FirstName,
         ParticipantCount = e.Participants.Count(p => p.Status == ParticipantStatus.Confirmed),
         PhotoUrl = e.PhotoUrl,
+        Latitude = e.Latitude,
+        Longitude = e.Longitude,
         CreatedAt = e.CreatedAt,
         Participants = e.Participants.Select(p => new ParticipantDto
         {
