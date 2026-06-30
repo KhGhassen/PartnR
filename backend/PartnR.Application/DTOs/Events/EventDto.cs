@@ -19,12 +19,14 @@ public class EventDto
     public Guid CreatorId { get; set; }
     public string CreatorName { get; set; } = null!;
     public int ParticipantCount { get; set; }
+    public string? PhotoUrl { get; set; }
     public DateTime CreatedAt { get; set; }
 }
 
 public class EventDetailDto : EventDto
 {
     public List<ParticipantDto> Participants { get; set; } = [];
+    public List<EventPhotoDto> Photos { get; set; } = [];
 }
 
 public class ParticipantDto
@@ -58,6 +60,9 @@ public class CreateEventDto
 
     [Required]
     public Guid ActivityId { get; set; }
+
+    [MaxLength(500)]
+    public string? PhotoUrl { get; set; }
 }
 
 public class UpdateEventDto
@@ -80,4 +85,7 @@ public class UpdateEventDto
     public int? MaxParticipants { get; set; }
 
     public EventStatus? Status { get; set; }
+
+    [MaxLength(500)]
+    public string? PhotoUrl { get; set; }
 }

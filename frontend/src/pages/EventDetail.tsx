@@ -6,6 +6,7 @@ import { trackAction } from '../api/analytics';
 import type { EventDetail as EventDetailType } from '../types';
 import EventChat from '../components/EventChat';
 import RatingForm from '../components/RatingForm';
+import EventGallery from '../components/EventGallery';
 
 export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
@@ -84,7 +85,15 @@ export default function EventDetail() {
         ← Retour aux événements
       </Link>
 
-      <div className="bg-white rounded-xl border border-gray-200 p-8">
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        {event.photoUrl && (
+          <img
+            src={event.photoUrl}
+            alt={event.title}
+            className="w-full h-56 object-cover bg-gray-100"
+          />
+        )}
+        <div className="p-8">
         <div className="flex items-center gap-3 mb-4">
           <span className="text-4xl">{event.activityIcon}</span>
           <div>
@@ -247,8 +256,19 @@ export default function EventDetail() {
           </div>
         )}
 
+        {/* Photo gallery */}
+        <EventGallery
+          eventId={event.id}
+          photos={event.photos}
+          canAdd={isParticipant}
+          currentUserId={user?.id}
+          isCreator={isCreator}
+          onChange={(photos) => setEvent({ ...event, photos })}
+        />
+
         {/* Chat */}
         {isParticipant && event.status !== 'Completed' && <EventChat eventId={event.id} />}
+        </div>
       </div>
     </div>
   );

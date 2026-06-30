@@ -21,6 +21,7 @@ export const createEvent = (data: {
   date: string;
   maxParticipants: number;
   activityId: string;
+  photoUrl?: string;
 }) => api.post<EventDetail>('/events', data).then((r) => r.data);
 
 export const updateEvent = (id: string, data: Record<string, unknown>) =>

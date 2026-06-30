@@ -278,6 +278,30 @@ public class EventServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task CreateAsync_AndUpdateAsync_SetPhotoUrl()
+    {
+        var dto = new CreateEventDto
+        {
+            Title = "Photo Event",
+            City = "Nantes",
+            Date = DateTime.UtcNow.AddDays(5),
+            MaxParticipants = 5,
+            ActivityId = _activityId,
+            PhotoUrl = "https://example.com/cover.jpg"
+        };
+
+        var created = await _service.CreateAsync(_userId, dto);
+        Assert.Equal("https://example.com/cover.jpg", created.PhotoUrl);
+
+        var updated = await _service.UpdateAsync(created.Id, _userId, new UpdateEventDto
+        {
+            PhotoUrl = "https://example.com/new-cover.jpg"
+        });
+
+        Assert.Equal("https://example.com/new-cover.jpg", updated.PhotoUrl);
+    }
+
+    [Fact]
     public async Task ListAsync_FiltersbyCity()
     {
         await _service.CreateAsync(_userId, new CreateEventDto
