@@ -63,11 +63,11 @@ export default function AdminUsersPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Rechercher par nom ou email..."
-          className="flex-1 border border-gray-300 rounded-lg px-3 py-2"
+          className="flex-1 border-[1.5px] border-line rounded-2xl px-3 py-2"
         />
         <button
           type="submit"
-          className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700"
+          className="bg-coral-500 text-white px-6 py-2 rounded-full font-semibold hover:bg-coral-600"
         >
           Rechercher
         </button>

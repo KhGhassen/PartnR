@@ -1,1 +1,49 @@
 @import "tailwindcss";
+@import "@fontsource-variable/dm-sans";
+
+@theme {
+  --font-sans: "DM Sans Variable", "DM Sans", ui-sans-serif, system-ui, sans-serif;
+
+  /* PartnR brand — mirrors mobile/constants/tokens.ts */
+  --color-coral-50: #fdede8;
+  --color-coral-100: #fbd9cf;
+  --color-coral-200: #f7b7a3;
+  --color-coral-300: #f19271;
+  --color-coral-400: #ec764f;
+  --color-coral-500: #e8603a;
+  --color-coral-600: #d54e28;
+  --color-coral-700: #b8421e;
+  --color-coral-800: #93371c;
+  --color-coral-900: #772f1b;
+
+  --color-violet-50: #ede9f9;
+  --color-violet-100: #ddd5f3;
+  --color-violet-200: #c2b4e9;
+  --color-violet-300: #a68fdf;
+  --color-violet-400: #8f75d9;
+  --color-violet-500: #7b65d4;
+  --color-violet-600: #6549c4;
+  --color-violet-700: #533aa6;
+  --color-violet-800: #453188;
+  --color-violet-900: #3a2b6f;
+
+  --color-cream: #fafaf7;
+  --color-cream-deep: #f5f5f0;
+
+  --color-ink: #2a2a25;
+  --color-ink-mid: #706b60;
+  --color-ink-sub: #a09990;
+
+  --color-line: #e8e6e0;
+
+  --shadow-card: 0 2px 8px 0 rgb(42 42 37 / 0.06);
+  --shadow-card-hover: 0 8px 24px 0 rgb(42 42 37 / 0.10);
+}
+
+@layer base {
+  body {
+    background-color: var(--color-cream);
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+  }
+}

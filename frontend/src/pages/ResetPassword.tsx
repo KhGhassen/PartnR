@@ -1,6 +1,9 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { resetPassword } from '../api/auth';
+import Button from '../components/ui/Button';
+import Field from '../components/ui/Field';
+import { inputClass } from '../components/ui/classes';
 
 const PASSWORD_RULES = [
   { test: (p: string) => p.length >= 8, label: '8 caractères minimum' },
@@ -24,12 +27,12 @@ export default function ResetPassword() {
 
   if (!email || !token) {
     return (
-      <div className="min-h-[80vh] flex items-center justify-center">
-        <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 w-full max-w-md text-center">
-          <div className="text-5xl mb-4">⚠️</div>
-          <h1 className="text-xl font-bold mb-2">Lien invalide</h1>
-          <p className="text-gray-500 mb-4">Ce lien de réinitialisation est invalide ou a expiré.</p>
-          <Link to="/forgot-password" className="text-indigo-600 hover:underline text-sm">
+      <div className="flex min-h-[80vh] items-center justify-center px-4">
+        <div className="w-full max-w-md rounded-3xl border border-line bg-white p-8 text-center shadow-card">
+          <div className="mb-4 text-5xl">⚠️</div>
+          <h1 className="mb-2 text-xl font-bold tracking-tight text-ink">Lien invalide</h1>
+          <p className="mb-4 text-sm text-ink-sub">Ce lien de réinitialisation est invalide ou a expiré.</p>
+          <Link to="/forgot-password" className="text-sm font-medium text-coral-600 hover:underline">
             Demander un nouveau lien
           </Link>
         </div>
@@ -61,49 +64,48 @@ export default function ResetPassword() {
 
   if (success) {
     return (
-      <div className="min-h-[80vh] flex items-center justify-center">
-        <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 w-full max-w-md text-center">
-          <div className="text-5xl mb-4">✅</div>
-          <h1 className="text-2xl font-bold mb-2">Mot de passe modifié</h1>
-          <p className="text-gray-500 mb-6">Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.</p>
-          <button
-            onClick={() => navigate('/login')}
-            className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700"
-          >
+      <div className="flex min-h-[80vh] items-center justify-center px-4">
+        <div className="w-full max-w-md rounded-3xl border border-line bg-white p-8 text-center shadow-card">
+          <div className="mb-4 text-5xl">✅</div>
+          <h1 className="mb-2 text-2xl font-bold tracking-tight text-ink">Mot de passe modifié</h1>
+          <p className="mb-6 text-sm text-ink-sub">Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.</p>
+          <Button size="lg" onClick={() => navigate('/login')} className="w-full">
             Se connecter
-          </button>
+          </Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center">
-      <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 w-full max-w-md">
-        <h1 className="text-2xl font-bold text-center mb-6">Nouveau mot de passe</h1>
+    <div className="flex min-h-[80vh] items-center justify-center px-4">
+      <div className="w-full max-w-md rounded-3xl border border-line bg-white p-8 shadow-card">
+        <h1 className="mb-6 text-center text-2xl font-bold tracking-tight text-ink">Nouveau mot de passe</h1>
 
         {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm">{error}</div>
+          <div className="mb-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nouveau mot de passe</label>
-            <input
-              type="password"
-              required
-              minLength={8}
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-            />
+            <Field label="Nouveau mot de passe">
+              <input
+                type="password"
+                required
+                minLength={8}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="••••••••"
+                className={inputClass(false)}
+              />
+            </Field>
             {newPassword.length > 0 && (
               <div className="mt-2 space-y-1">
                 {PASSWORD_RULES.map((rule) => (
                   <p
                     key={rule.label}
-                    className={`text-xs flex items-center gap-1 ${
-                      rule.test(newPassword) ? 'text-green-600' : 'text-gray-400'
+                    className={`flex items-center gap-1 text-xs ${
+                      rule.test(newPassword) ? 'text-emerald-600' : 'text-ink-sub'
                     }`}
                   >
                     {rule.test(newPassword) ? '✓' : '○'} {rule.label}
@@ -112,23 +114,19 @@ export default function ResetPassword() {
               </div>
             )}
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Confirmer le mot de passe</label>
+          <Field label="Confirmer le mot de passe">
             <input
               type="password"
               required
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+              placeholder="••••••••"
+              className={inputClass(false)}
             />
-          </div>
-          <button
-            type="submit"
-            disabled={loading || !passwordValid}
-            className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
-          >
+          </Field>
+          <Button type="submit" size="lg" disabled={loading || !passwordValid} className="w-full">
             {loading ? 'Enregistrement...' : 'Enregistrer le mot de passe'}
-          </button>
+          </Button>
         </form>
       </div>
     </div>

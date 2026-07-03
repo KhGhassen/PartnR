@@ -109,13 +109,13 @@ export default function EventChat({ eventId }: Props) {
           return (
             <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
               <div className={`max-w-[70%] px-3 py-2 rounded-lg ${
-                isOwn ? 'bg-indigo-600 text-white' : 'bg-white border border-gray-200'
+                isOwn ? 'bg-coral-500 text-white' : 'bg-white border border-line'
               }`}>
                 {!isOwn && (
-                  <p className="text-xs font-medium text-indigo-600 mb-1">{msg.userName}</p>
+                  <p className="text-xs font-medium text-coral-600 mb-1">{msg.userName}</p>
                 )}
                 <p className="text-sm">{msg.content}</p>
-                <p className={`text-xs mt-1 ${isOwn ? 'text-indigo-200' : 'text-gray-400'}`}>
+                <p className={`text-xs mt-1 ${isOwn ? 'text-coral-100' : 'text-ink-sub'}`}>
                   {new Date(msg.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                 </p>
               </div>
@@ -133,12 +133,12 @@ export default function EventChat({ eventId }: Props) {
           onKeyDown={handleKeyDown}
           placeholder={connected ? 'Écrire un message...' : 'Connexion...'}
           disabled={!connected}
-          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none disabled:opacity-50"
+          className="flex-1 border-[1.5px] border-line rounded-2xl px-3 py-2 focus:ring-2 focus:ring-coral-500/30 focus:border-coral-500 outline-none disabled:opacity-50"
         />
         <button
           onClick={send}
           disabled={!connected || !input.trim()}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+          className="bg-coral-500 text-white px-4 py-2 rounded-full font-semibold hover:bg-coral-600 disabled:opacity-50"
         >
           Envoyer
         </button>

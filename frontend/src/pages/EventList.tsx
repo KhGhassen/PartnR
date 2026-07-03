@@ -5,7 +5,14 @@ import { listActivities } from '../api/activities';
 import { listCities } from '../api/cities';
 import { toApiError } from '../api/client';
 import { trackAction } from '../api/analytics';
+import Chip from '../components/ui/Chip';
+import Button, { ButtonLink } from '../components/ui/Button';
+import { EventCardSkeleton } from '../components/ui/Skeleton';
+import EmptyState from '../components/ui/EmptyState';
+import { inputClass } from '../components/ui/classes';
 import type { EventSummary, Activity } from '../types';
+
+const BAND_COLORS = ['bg-coral-50', 'bg-violet-50', 'bg-amber-50', 'bg-emerald-50'];
 
 export default function EventList() {
   const [events, setEvents] = useState<EventSummary[]>([]);
@@ -17,23 +24,24 @@ export default function EventList() {
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
-  const fetchEvents = async (p = page) => {
+  const fetchEvents = async (p: number, c = city, a = activityId) => {
     setLoading(true);
     setError('');
     try {
       const result = await listEvents({
-        city: city || undefined,
-        activityId: activityId || undefined,
+        city: c || undefined,
+        activityId: a || undefined,
         page: p,
         pageSize: 20,
       });
       setEvents(result.items);
       setTotalPages(result.totalPages);
+      setTotalCount(result.totalCount);
       setPage(result.page);
     } catch (err) {
-      const apiErr = toApiError(err);
-      setError(apiErr.message);
+      setError(toApiError(err).message);
     } finally {
       setLoading(false);
     }
@@ -43,140 +51,181 @@ export default function EventList() {
     listActivities().then(setActivities).catch(() => {});
     listCities().then(setCities).catch(() => {});
     fetchEvents(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleFilter = (e: React.FormEvent) => {
-    e.preventDefault();
-    setPage(1);
-    fetchEvents(1);
-    trackAction({ action: 'events_searched', metadata: JSON.stringify({ city, activityId }) });
-  };
-
-  const goToPage = (p: number) => {
-    fetchEvents(p);
+  const applyFilters = (c: string, a: string) => {
+    setCity(c);
+    setActivityId(a);
+    fetchEvents(1, c, a);
+    trackAction({ action: 'events_searched', metadata: JSON.stringify({ city: c, activityId: a }) });
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-3xl font-bold">Événements</h1>
-        <Link
-          to="/events/new"
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
-        >
-          + Créer un événement
-        </Link>
+    <div className="mx-auto max-w-6xl px-4 py-8">
+      {/* Hero */}
+      <div className="relative mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-coral-500 to-violet-500 px-8 py-10 text-white">
+        <div className="pointer-events-none absolute -right-10 -top-16 h-56 w-56 rounded-full bg-white/10" />
+        <div className="pointer-events-none absolute -bottom-24 right-24 h-40 w-40 rounded-full bg-white/10" />
+        <p className="mb-1 text-sm font-medium text-white/80">
+          {totalCount > 0 ? `${totalCount} événement${totalCount > 1 ? 's' : ''} à venir` : 'PartnR'}
+        </p>
+        <h1 className="max-w-lg text-3xl font-bold leading-tight tracking-tight">
+          Trouvez votre prochain partenaire d'activité
+        </h1>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <Link
+            to="/events/new"
+            className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-coral-600 transition-colors hover:bg-coral-50"
+          >
+            + Créer un événement
+          </Link>
+          <Link
+            to="/map"
+            className="rounded-full border border-white/40 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+          >
+            📍 Voir la carte
+          </Link>
+        </div>
       </div>
 
-      <form onSubmit={handleFilter} className="flex gap-3 mb-8">
+      {/* Filters */}
+      <div className="mb-6 flex flex-wrap items-center gap-2">
+        <div className="flex flex-1 flex-wrap gap-2">
+          <Chip active={activityId === ''} onClick={() => applyFilters(city, '')}>
+            Tout
+          </Chip>
+          {activities.map((a) => (
+            <Chip
+              key={a.id}
+              active={activityId === a.id}
+              onClick={() => applyFilters(city, activityId === a.id ? '' : a.id)}
+            >
+              {a.icon} {a.name}
+            </Chip>
+          ))}
+        </div>
         <select
           value={city}
-          onChange={(e) => setCity(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+          onChange={(e) => applyFilters(e.target.value, activityId)}
+          className={inputClass(false, 'w-auto min-w-44')}
         >
           <option value="">Toutes les villes</option>
           {cities.map((c) => (
             <option key={c} value={c}>{c}</option>
           ))}
         </select>
-        <select
-          value={activityId}
-          onChange={(e) => setActivityId(e.target.value)}
-          className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
-        >
-          <option value="">Toutes les activités</option>
-          {activities.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.icon} {a.name}
-            </option>
-          ))}
-        </select>
-        <button
-          type="submit"
-          className="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-900"
-        >
-          Filtrer
-        </button>
-      </form>
+      </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4 flex items-center justify-between">
-          <p className="text-red-600">{error}</p>
-          <button
-            onClick={() => fetchEvents()}
-            className="text-red-600 underline hover:text-red-800 ml-4"
-          >
+        <div className="mb-6 flex items-center justify-between rounded-2xl border border-red-100 bg-red-50 px-5 py-4">
+          <p className="text-sm text-red-600">{error}</p>
+          <Button variant="danger" size="sm" onClick={() => fetchEvents(page)}>
             Réessayer
-          </button>
+          </Button>
         </div>
       )}
 
       {loading ? (
-        <p className="text-gray-500">Chargement...</p>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <span className="sr-only">Chargement...</span>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <EventCardSkeleton key={i} />
+          ))}
+        </div>
       ) : events.length === 0 ? (
-        <p className="text-gray-500">Aucun événement trouvé.</p>
+        <EmptyState
+          emoji="🗓️"
+          title="Aucun événement trouvé."
+          hint="Essayez d'élargir vos filtres, ou lancez votre propre activité !"
+          action={<ButtonLink to="/events/new">Créer un événement</ButtonLink>}
+        />
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {events.map((ev) => (
-              <Link
-                key={ev.id}
-                to={`/events/${ev.id}`}
-                className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
-              >
-                {ev.photoUrl && (
-                  <img
-                    src={ev.photoUrl}
-                    alt={ev.title}
-                    className="w-full h-36 object-cover bg-gray-100"
-                  />
-                )}
-                <div className="p-6">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-2xl">{ev.activityIcon}</span>
-                    <span className="text-sm text-gray-500">{ev.activityName}</span>
-                  </div>
-                  <h2 className="text-lg font-semibold mb-2">{ev.title}</h2>
-                  <div className="text-sm text-gray-500 space-y-1">
-                    <p>📍 {ev.city}{ev.location ? ` — ${ev.location}` : ''}</p>
-                    <p>📅 {new Date(ev.date).toLocaleDateString('fr-FR', {
-                      weekday: 'long',
-                      day: 'numeric',
-                      month: 'long',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}</p>
-                    <p>👥 {ev.participantCount}/{ev.maxParticipants} participants</p>
-                    <p className="text-xs text-gray-400">Par {ev.creatorName}</p>
-                  </div>
-                </div>
-              </Link>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {events.map((ev, i) => (
+              <EventCard key={ev.id} ev={ev} bandColor={BAND_COLORS[i % BAND_COLORS.length]} />
             ))}
           </div>
 
           {totalPages > 1 && (
-            <div className="flex justify-center gap-2 mt-8">
-              <button
-                onClick={() => goToPage(page - 1)}
-                disabled={page <= 1}
-                className="px-3 py-1 rounded border border-gray-300 disabled:opacity-40 hover:bg-gray-100"
-              >
-                Précédent
-              </button>
-              <span className="px-3 py-1 text-gray-600">
+            <div className="mt-10 flex items-center justify-center gap-3">
+              <Button variant="ghost" size="sm" onClick={() => fetchEvents(page - 1)} disabled={page <= 1}>
+                ← Précédent
+              </Button>
+              <span className="text-sm text-ink-mid">
                 Page {page} / {totalPages}
               </span>
-              <button
-                onClick={() => goToPage(page + 1)}
-                disabled={page >= totalPages}
-                className="px-3 py-1 rounded border border-gray-300 disabled:opacity-40 hover:bg-gray-100"
-              >
-                Suivant
-              </button>
+              <Button variant="ghost" size="sm" onClick={() => fetchEvents(page + 1)} disabled={page >= totalPages}>
+                Suivant →
+              </Button>
             </div>
           )}
         </>
       )}
     </div>
+  );
+}
+
+function EventCard({ ev, bandColor }: { ev: EventSummary; bandColor: string }) {
+  const pct = ev.maxParticipants > 0 ? Math.min(100, (ev.participantCount / ev.maxParticipants) * 100) : 0;
+  const spotsLeft = Math.max(0, ev.maxParticipants - ev.participantCount);
+  const isFull = spotsLeft === 0;
+
+  return (
+    <Link
+      to={`/events/${ev.id}`}
+      className="group overflow-hidden rounded-3xl border border-line bg-white shadow-card transition-all duration-200 hover:-translate-y-1 hover:shadow-card-hover"
+    >
+      {ev.photoUrl ? (
+        <div className="relative h-32">
+          <img src={ev.photoUrl} alt="" className="h-full w-full object-cover" />
+          <span className="absolute right-3 top-3 rounded-full bg-white/85 px-3 py-1 text-xs font-medium text-ink backdrop-blur-sm">
+            {ev.activityIcon} {ev.activityName}
+          </span>
+        </div>
+      ) : (
+        <div className={`relative flex h-32 items-center px-6 ${bandColor}`}>
+          <span className="text-4xl transition-transform duration-200 group-hover:scale-110">{ev.activityIcon}</span>
+          <span className="absolute right-3 top-3 rounded-full bg-white/70 px-3 py-1 text-xs font-medium text-ink">
+            {ev.activityName}
+          </span>
+        </div>
+      )}
+
+      <div className="p-5">
+        <h2 className="mb-1 truncate font-semibold text-ink">{ev.title}</h2>
+        <p className="mb-1 text-sm text-ink-sub">
+          📅 {new Date(ev.date).toLocaleDateString('fr-FR', {
+            weekday: 'short',
+            day: 'numeric',
+            month: 'short',
+            hour: '2-digit',
+            minute: '2-digit',
+          })}
+        </p>
+        <p className="mb-4 truncate text-sm text-ink-sub">
+          📍 {ev.city}
+          {ev.location ? ` — ${ev.location}` : ''}
+          {ev.distanceKm != null ? ` · ${ev.distanceKm.toFixed(1)} km` : ''}
+        </p>
+
+        <div className="mb-3 flex items-center gap-3">
+          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-cream-deep">
+            <div className="h-full rounded-full bg-coral-500" style={{ width: `${pct}%` }} />
+          </div>
+          <span className={`text-xs font-medium ${isFull ? 'text-red-500' : 'text-ink-mid'}`}>
+            {isFull ? 'Complet' : `${spotsLeft} place${spotsLeft > 1 ? 's' : ''}`}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-ink-sub">par {ev.creatorName}</span>
+          <span className="text-xs font-semibold text-coral-500 transition-transform duration-200 group-hover:translate-x-0.5">
+            Voir →
+          </span>
+        </div>
+      </div>
+    </Link>
   );
 }

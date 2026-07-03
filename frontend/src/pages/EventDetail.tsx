@@ -7,6 +7,10 @@ import type { EventDetail as EventDetailType } from '../types';
 import EventChat from '../components/EventChat';
 import RatingForm from '../components/RatingForm';
 import EventGallery from '../components/EventGallery';
+import Button, { ButtonLink } from '../components/ui/Button';
+import Avatar from '../components/ui/Avatar';
+import StatusBadge from '../components/ui/StatusBadge';
+import Skeleton from '../components/ui/Skeleton';
 
 export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
@@ -32,16 +36,37 @@ export default function EventDetail() {
 
   useEffect(() => {
     fetchEvent();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  if (loading) return <p className="text-center py-12 text-gray-500">Chargement...</p>;
-  if (error || !event) return <p className="text-center py-12 text-red-500">{error}</p>;
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-8">
+        <span className="sr-only">Chargement...</span>
+        <div className="overflow-hidden rounded-3xl border border-line bg-white shadow-card">
+          <Skeleton className="h-56 rounded-none" />
+          <div className="space-y-4 p-8">
+            <Skeleton className="h-6 w-2/3" />
+            <Skeleton className="h-4 w-1/2" />
+            <div className="grid grid-cols-2 gap-4">
+              <Skeleton className="h-16" />
+              <Skeleton className="h-16" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  if (error || !event) return <p className="py-16 text-center text-red-500">{error}</p>;
 
   const isCreator = user?.id === event.creatorId;
   const isParticipant = event.participants.some(
     (p) => p.userId === user?.id && p.status === 'Confirmed'
   );
   const isFull = event.participantCount >= event.maxParticipants;
+  const confirmed = event.participants.filter((p) => p.status === 'Confirmed');
+  const spotsLeft = Math.max(0, event.maxParticipants - event.participantCount);
+  const pct = event.maxParticipants > 0 ? Math.min(100, (event.participantCount / event.maxParticipants) * 100) : 0;
 
   const handleJoin = async () => {
     setActionLoading(true);
@@ -80,194 +105,194 @@ export default function EventDetail() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <Link to="/" className="text-indigo-600 hover:underline text-sm mb-4 inline-block">
+    <div className="mx-auto max-w-4xl px-4 py-8">
+      <Link
+        to="/"
+        className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-ink-mid transition-colors hover:text-ink"
+      >
         ← Retour aux événements
       </Link>
 
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        {event.photoUrl && (
-          <img
-            src={event.photoUrl}
-            alt={event.title}
-            className="w-full h-56 object-cover bg-gray-100"
-          />
+      <div className="overflow-hidden rounded-3xl border border-line bg-white shadow-card">
+        {/* Cover */}
+        {event.photoUrl ? (
+          <div className="relative h-64">
+            <img src={event.photoUrl} alt={event.title} className="h-full w-full object-cover" />
+            <div className="absolute right-4 top-4"><StatusBadge status={event.status} /></div>
+          </div>
+        ) : (
+          <div className="relative flex h-44 items-center bg-gradient-to-br from-coral-50 to-violet-50 px-8">
+            <span className="text-7xl">{event.activityIcon}</span>
+            <div className="absolute right-4 top-4"><StatusBadge status={event.status} /></div>
+          </div>
         )}
+
         <div className="p-8">
-        <div className="flex items-center gap-3 mb-4">
-          <span className="text-4xl">{event.activityIcon}</span>
-          <div>
-            <h1 className="text-2xl font-bold">{event.title}</h1>
-            <p className="text-gray-500">{event.activityName}</p>
+          <div className="mb-5">
+            <span className="mb-2 inline-block rounded-full bg-coral-50 px-3 py-1 text-xs font-semibold text-coral-700">
+              {event.activityIcon} {event.activityName}
+            </span>
+            <h1 className="text-3xl font-bold tracking-tight text-ink">{event.title}</h1>
           </div>
-          <span className={`ml-auto px-3 py-1 rounded-full text-xs font-medium ${
-            event.status === 'Published' ? 'bg-green-100 text-green-700' :
-            event.status === 'Completed' ? 'bg-gray-100 text-gray-600' :
-            'bg-red-100 text-red-700'
-          }`}>
-            {event.status}
-          </span>
-        </div>
 
-        {event.description && (
-          <p className="text-gray-700 mb-6">{event.description}</p>
-        )}
+          {event.description && (
+            <p className="mb-6 leading-relaxed text-ink-mid">{event.description}</p>
+          )}
 
-        <div className="grid grid-cols-2 gap-4 mb-6 text-sm">
-          <div className="bg-gray-50 p-3 rounded-lg">
-            <span className="text-gray-400">Ville</span>
-            <p className="font-medium">{event.city}</p>
+          <div className="mb-6 grid grid-cols-2 gap-4 text-sm lg:grid-cols-4">
+            <div className="rounded-2xl bg-cream p-4">
+              <p className="mb-0.5 text-xs text-ink-sub">Ville</p>
+              <p className="font-semibold text-ink">{event.city}</p>
+            </div>
+            {event.location && (
+              <div className="rounded-2xl bg-cream p-4">
+                <p className="mb-0.5 text-xs text-ink-sub">Lieu / RDV</p>
+                <p className="font-semibold text-ink">{event.location}</p>
+              </div>
+            )}
+            <div className="rounded-2xl bg-cream p-4 col-span-2">
+              <p className="mb-0.5 text-xs text-ink-sub">Date</p>
+              <p className="font-semibold text-ink">
+                {new Date(event.date).toLocaleDateString('fr-FR', {
+                  weekday: 'long',
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </p>
+            </div>
           </div>
-          {event.location && (
-            <div className="bg-gray-50 p-3 rounded-lg">
-              <span className="text-gray-400">Lieu</span>
-              <p className="font-medium">{event.location}</p>
+
+          {/* Capacity */}
+          <div className="mb-6 flex items-center gap-4 rounded-2xl border border-line bg-white p-4">
+            <div className="flex -space-x-2">
+              {confirmed.slice(0, 5).map((p) => (
+                <Avatar key={p.userId} name={p.firstName} url={p.avatarUrl} size="sm" className="ring-2 ring-white" />
+              ))}
+              {confirmed.length > 5 && (
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-cream-deep text-xs font-semibold text-ink-mid ring-2 ring-white">
+                  +{confirmed.length - 5}
+                </div>
+              )}
+            </div>
+            <div className="flex-1">
+              <div className="mb-1 flex justify-between text-xs">
+                <span className="font-medium text-ink">
+                  {event.participantCount}/{event.maxParticipants} participants
+                </span>
+                <span className={isFull ? 'font-semibold text-red-500' : 'text-ink-sub'}>
+                  {isFull ? 'Complet' : `${spotsLeft} place${spotsLeft > 1 ? 's' : ''} restante${spotsLeft > 1 ? 's' : ''}`}
+                </span>
+              </div>
+              <div className="h-1.5 overflow-hidden rounded-full bg-cream-deep">
+                <div className="h-full rounded-full bg-coral-500" style={{ width: `${pct}%` }} />
+              </div>
+            </div>
+          </div>
+
+          {/* Actions */}
+          {isAuthenticated && (
+            <div className="mb-8 flex flex-wrap gap-3">
+              {!isParticipant && !isCreator && !isFull && event.status === 'Published' && (
+                <Button size="lg" onClick={handleJoin} disabled={actionLoading}>
+                  {actionLoading ? 'Un instant…' : 'Rejoindre 🎉'}
+                </Button>
+              )}
+              {isParticipant && !isCreator && (
+                <Button variant="ghost" onClick={handleLeave} disabled={actionLoading}>
+                  Quitter
+                </Button>
+              )}
+              {isCreator && (
+                <>
+                  <ButtonLink to={`/events/${event.id}/edit`} variant="ghost">
+                    Modifier
+                  </ButtonLink>
+                  <Button variant="danger" onClick={handleDelete}>
+                    Supprimer
+                  </Button>
+                </>
+              )}
             </div>
           )}
-          <div className="bg-gray-50 p-3 rounded-lg">
-            <span className="text-gray-400">Date</span>
-            <p className="font-medium">
-              {new Date(event.date).toLocaleDateString('fr-FR', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </p>
-          </div>
-          <div className="bg-gray-50 p-3 rounded-lg">
-            <span className="text-gray-400">Participants</span>
-            <p className="font-medium">
-              {event.participantCount}/{event.maxParticipants}
-              {isFull && <span className="text-red-500 ml-1">(Complet)</span>}
-            </p>
-          </div>
-        </div>
 
-        {/* Actions */}
-        {isAuthenticated && (
-          <div className="flex gap-3 mb-6">
-            {!isParticipant && !isCreator && !isFull && event.status === 'Published' && (
-              <button
-                onClick={handleJoin}
-                disabled={actionLoading}
-                className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
-              >
-                Rejoindre
-              </button>
-            )}
-            {isParticipant && !isCreator && (
-              <button
-                onClick={handleLeave}
-                disabled={actionLoading}
-                className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 disabled:opacity-50"
-              >
-                Quitter
-              </button>
-            )}
-            {isCreator && (
-              <>
-                <Link
-                  to={`/events/${event.id}/edit`}
-                  className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300"
-                >
-                  Modifier
-                </Link>
-                <button
-                  onClick={handleDelete}
-                  className="bg-red-100 text-red-600 px-6 py-2 rounded-lg hover:bg-red-200"
-                >
-                  Supprimer
-                </button>
-              </>
-            )}
-          </div>
-        )}
+          {error && <p className="mb-4 text-sm text-red-500">{error}</p>}
 
-        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
-
-        {/* Participants */}
-        <h2 className="text-lg font-semibold mb-3">Participants</h2>
-        <div className="flex flex-wrap gap-3 mb-8">
-          {event.participants
-            .filter((p) => p.status === 'Confirmed')
-            .map((p) => (
+          {/* Participants */}
+          <h2 className="mb-3 text-lg font-bold text-ink">Participants</h2>
+          <div className="mb-8 flex flex-wrap gap-2">
+            {confirmed.map((p) => (
               <Link
                 key={p.userId}
                 to={`/profile/${p.userId}`}
-                className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg hover:bg-gray-100"
+                className="flex items-center gap-2 rounded-full border border-line bg-white py-1 pl-1 pr-3.5 transition-colors hover:border-coral-300"
               >
-                <div className="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-sm font-medium">
-                  {p.firstName[0]}
-                </div>
-                <span className="text-sm">{p.firstName}</span>
+                <Avatar name={p.firstName} url={p.avatarUrl} size="sm" />
+                <span className="text-sm font-medium text-ink">{p.firstName}</span>
                 {p.userId === event.creatorId && (
-                  <span className="text-xs text-indigo-500">Organisateur</span>
+                  <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-700">
+                    Organisateur
+                  </span>
                 )}
               </Link>
             ))}
-        </div>
-
-        {/* Ratings section — only for completed events */}
-        {event.status === 'Completed' && isParticipant && (
-          <div className="mb-8">
-            <h2 className="text-lg font-semibold mb-3">Noter les participants</h2>
-            <div className="space-y-3">
-              {event.participants
-                .filter((p) => p.status === 'Confirmed' && p.userId !== user?.id)
-                .map((p) => (
-                  <div key={p.userId}>
-                    {ratingTarget === p.userId ? (
-                      <RatingForm
-                        eventId={event.id}
-                        ratedUserId={p.userId}
-                        ratedUserName={p.firstName}
-                        onRated={() => {
-                          setRatedUsers((prev) => new Set([...prev, p.userId]));
-                          setRatingTarget(null);
-                        }}
-                        onCancel={() => setRatingTarget(null)}
-                      />
-                    ) : (
-                      <div className="flex items-center justify-between bg-gray-50 px-4 py-3 rounded-lg">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-sm font-medium">
-                            {p.firstName[0]}
-                          </div>
-                          <span className="text-sm font-medium">{p.firstName}</span>
-                        </div>
-                        {ratedUsers.has(p.userId) ? (
-                          <span className="text-green-600 text-sm">Noté ✓</span>
-                        ) : (
-                          <button
-                            onClick={() => setRatingTarget(p.userId)}
-                            className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
-                          >
-                            Noter
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
-            </div>
           </div>
-        )}
 
-        {/* Photo gallery */}
-        <EventGallery
-          eventId={event.id}
-          photos={event.photos}
-          canAdd={isParticipant}
-          currentUserId={user?.id}
-          isCreator={isCreator}
-          onChange={(photos) => setEvent({ ...event, photos })}
-        />
+          {/* Ratings section — only for completed events */}
+          {event.status === 'Completed' && isParticipant && (
+            <div className="mb-8">
+              <h2 className="mb-3 text-lg font-bold text-ink">Noter les participants</h2>
+              <div className="space-y-3">
+                {event.participants
+                  .filter((p) => p.status === 'Confirmed' && p.userId !== user?.id)
+                  .map((p) => (
+                    <div key={p.userId}>
+                      {ratingTarget === p.userId ? (
+                        <RatingForm
+                          eventId={event.id}
+                          ratedUserId={p.userId}
+                          ratedUserName={p.firstName}
+                          onRated={() => {
+                            setRatedUsers((prev) => new Set([...prev, p.userId]));
+                            setRatingTarget(null);
+                          }}
+                          onCancel={() => setRatingTarget(null)}
+                        />
+                      ) : (
+                        <div className="flex items-center justify-between rounded-2xl bg-cream px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <Avatar name={p.firstName} url={p.avatarUrl} size="sm" />
+                            <span className="text-sm font-medium text-ink">{p.firstName}</span>
+                          </div>
+                          {ratedUsers.has(p.userId) ? (
+                            <span className="text-sm font-medium text-emerald-600">Noté ✓</span>
+                          ) : (
+                            <Button variant="soft" size="sm" onClick={() => setRatingTarget(p.userId)}>
+                              Noter
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
 
-        {/* Chat */}
-        {isParticipant && event.status !== 'Completed' && <EventChat eventId={event.id} />}
+          {/* Photo gallery */}
+          <EventGallery
+            eventId={event.id}
+            photos={event.photos}
+            canAdd={isParticipant}
+            currentUserId={user?.id}
+            isCreator={isCreator}
+            onChange={(photos) => setEvent({ ...event, photos })}
+          />
+
+          {/* Chat */}
+          {isParticipant && event.status !== 'Completed' && <EventChat eventId={event.id} />}
         </div>
       </div>
     </div>

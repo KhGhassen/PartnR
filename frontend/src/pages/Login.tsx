@@ -2,6 +2,10 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { login } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
+import AuthLayout from '../components/AuthLayout';
+import Button from '../components/ui/Button';
+import Field from '../components/ui/Field';
+import { inputClass } from '../components/ui/classes';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -27,56 +31,51 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center">
-      <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 w-full max-w-md">
-        <h1 className="text-2xl font-bold text-center mb-6">Connexion</h1>
+    <AuthLayout>
+      <h1 className="mb-1 text-2xl font-bold tracking-tight text-ink">Bon retour 👋</h1>
+      <p className="mb-6 text-sm text-ink-sub">Connectez-vous pour retrouver vos activités.</p>
 
-        {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm">{error}</div>
-        )}
+      {error && (
+        <div className="mb-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
+      )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-            />
-          </div>
-          <div className="flex justify-end">
-            <Link to="/forgot-password" className="text-xs text-indigo-600 hover:underline">
-              Mot de passe oublié ?
-            </Link>
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
-          >
-            {loading ? 'Connexion...' : 'Se connecter'}
-          </button>
-        </form>
-
-        <p className="text-center text-sm text-gray-500 mt-4">
-          Pas encore de compte ?{' '}
-          <Link to="/register" className="text-indigo-600 hover:underline">
-            S'inscrire
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Field label="Email">
+          <input
+            type="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="vous@exemple.fr"
+            className={inputClass(false)}
+          />
+        </Field>
+        <Field label="Mot de passe">
+          <input
+            type="password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="••••••••"
+            className={inputClass(false)}
+          />
+        </Field>
+        <div className="flex justify-end">
+          <Link to="/forgot-password" className="text-xs font-medium text-coral-600 hover:underline">
+            Mot de passe oublié ?
           </Link>
-        </p>
-      </div>
-    </div>
+        </div>
+        <Button type="submit" size="lg" disabled={loading} className="w-full">
+          {loading ? 'Connexion...' : 'Se connecter'}
+        </Button>
+      </form>
+
+      <p className="mt-5 text-center text-sm text-ink-sub">
+        Pas encore de compte ?{' '}
+        <Link to="/register" className="font-semibold text-coral-600 hover:underline">
+          S'inscrire
+        </Link>
+      </p>
+    </AuthLayout>
   );
 }

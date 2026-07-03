@@ -53,7 +53,7 @@ export default function EventGallery({ eventId, photos, canAdd, currentUserId, i
         {canAdd && !adding && (
           <button
             onClick={() => setAdding(true)}
-            className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+            className="text-coral-600 hover:text-coral-700 text-sm font-medium"
           >
             + Ajouter une photo
           </button>
@@ -67,14 +67,14 @@ export default function EventGallery({ eventId, photos, canAdd, currentUserId, i
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="URL de la photo"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none mb-3"
+            className="w-full border-[1.5px] border-line rounded-2xl px-3 py-2 text-sm focus:ring-2 focus:ring-coral-500/30 focus:border-coral-500 outline-none mb-3"
           />
           {error && <p className="text-red-500 text-xs mb-2">{error}</p>}
           <div className="flex gap-2">
             <button
               onClick={handleAdd}
               disabled={loading}
-              className="bg-indigo-600 text-white px-4 py-1.5 rounded-lg text-sm hover:bg-indigo-700 disabled:opacity-50"
+              className="bg-coral-500 text-white px-4 py-1.5 rounded-full text-sm font-semibold hover:bg-coral-600 disabled:opacity-50"
             >
               {loading ? 'Envoi...' : 'Ajouter'}
             </button>

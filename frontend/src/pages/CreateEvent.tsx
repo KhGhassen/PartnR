@@ -6,6 +6,10 @@ import { listCities } from '../api/cities';
 import { useAuth } from '../context/AuthContext';
 import { trackAction } from '../api/analytics';
 import LocationPicker from '../components/LocationPicker';
+import Button from '../components/ui/Button';
+import Chip from '../components/ui/Chip';
+import Field from '../components/ui/Field';
+import { inputClass } from '../components/ui/classes';
 import type { Activity } from '../types';
 
 export default function CreateEvent() {
@@ -38,10 +42,13 @@ export default function CreateEvent() {
     listCities().then(setCities).catch(() => {});
   }, [isAuthenticated, navigate]);
 
-  const update = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+  const set = (field: string, value: unknown) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
     setValidationErrors((prev) => ({ ...prev, [field]: '' }));
   };
+
+  const update = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+    set(field, e.target.value);
 
   const updateLocation = (lat: number, lng: number) => {
     setForm((prev) => ({ ...prev, latitude: lat, longitude: lng }));
@@ -79,40 +86,33 @@ export default function CreateEvent() {
     }
   };
 
-  const inputClass = (field: string) =>
-    `w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none ${
-      validationErrors[field] ? 'border-red-400' : 'border-gray-300'
-    }`;
-
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Créer un événement</h1>
+    <div className="mx-auto max-w-2xl px-4 py-8">
+      <h1 className="mb-1 text-3xl font-bold tracking-tight text-ink">Créer un événement</h1>
+      <p className="mb-6 text-ink-sub">Proposez une activité et trouvez des partenaires.</p>
 
       {error && (
-        <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm">{error}</div>
+        <div className="mb-4 rounded-2xl border border-red-100 bg-red-50 px-5 py-3 text-sm text-red-600">{error}</div>
       )}
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-200 p-8 space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-5 rounded-3xl border border-line bg-white p-8 shadow-card">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Activité</label>
-          <select
-            required
-            value={form.activityId}
-            onChange={update('activityId')}
-            className={inputClass('activityId')}
-          >
-            <option value="">Choisir une activité</option>
+          <label className="mb-1.5 block text-xs font-semibold text-ink-mid">Activité</label>
+          <div className="flex flex-wrap gap-2">
             {activities.map((a) => (
-              <option key={a.id} value={a.id}>
+              <Chip
+                key={a.id}
+                active={form.activityId === a.id}
+                onClick={() => set('activityId', a.id)}
+              >
                 {a.icon} {a.name}
-              </option>
+              </Chip>
             ))}
-          </select>
-          {validationErrors.activityId && <p className="text-red-500 text-xs mt-1">{validationErrors.activityId}</p>}
+          </div>
+          {validationErrors.activityId && <p className="mt-1 text-xs text-red-500">{validationErrors.activityId}</p>}
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Titre</label>
+        <Field label="Titre" error={validationErrors.title}>
           <input
             type="text"
             required
@@ -121,85 +121,68 @@ export default function CreateEvent() {
             value={form.title}
             onChange={update('title')}
             placeholder="Ex: Footing matinal au parc"
-            className={inputClass('title')}
+            className={inputClass(!!validationErrors.title)}
           />
-          {validationErrors.title && <p className="text-red-500 text-xs mt-1">{validationErrors.title}</p>}
-        </div>
+        </Field>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+        <Field label="Description">
           <textarea
             maxLength={1000}
             value={form.description}
             onChange={update('description')}
             rows={3}
             placeholder="Décrivez votre événement..."
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
+            className={inputClass(false, 'resize-none')}
           />
-        </div>
+        </Field>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Photo de couverture (URL)</label>
+        <Field label="Photo de couverture (URL)" hint="Optionnel — illustre la carte de l'événement.">
           <input
             type="text"
             value={form.photoUrl}
             onChange={update('photoUrl')}
-            placeholder="URL de l'image de couverture (optionnel)"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+            placeholder="https://…"
+            className={inputClass(false)}
           />
-        </div>
+        </Field>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Localisation</label>
-          <LocationPicker
-            latitude={form.latitude}
-            longitude={form.longitude}
-            onChange={updateLocation}
+          <label className="mb-1.5 block text-xs font-semibold text-ink-mid">Ville</label>
+          <div className="flex flex-wrap gap-2">
+            {cities.map((c) => (
+              <Chip key={c} active={form.city === c} onClick={() => set('city', c)}>
+                {c}
+              </Chip>
+            ))}
+          </div>
+          {validationErrors.city && <p className="mt-1 text-xs text-red-500">{validationErrors.city}</p>}
+        </div>
+
+        <Field label="Lieu / Point de RDV">
+          <input
+            type="text"
+            value={form.location}
+            onChange={update('location')}
+            placeholder="Ex: Entrée du parc"
+            className={inputClass(false)}
           />
-        </div>
+        </Field>
+
+        <Field label="Localisation sur la carte">
+          <LocationPicker latitude={form.latitude} longitude={form.longitude} onChange={updateLocation} />
+        </Field>
 
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Ville</label>
-            <select
-              required
-              value={form.city}
-              onChange={update('city')}
-              className={inputClass('city')}
-            >
-              <option value="">Sélectionner une ville</option>
-              {cities.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-            {validationErrors.city && <p className="text-red-500 text-xs mt-1">{validationErrors.city}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Lieu / Point de RDV</label>
-            <input
-              type="text"
-              value={form.location}
-              onChange={update('location')}
-              placeholder="Ex: Entrée du parc"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Date et heure</label>
+          <Field label="Date et heure" error={validationErrors.date}>
             <input
               type="datetime-local"
               required
               value={form.date}
               onChange={update('date')}
-              className={inputClass('date')}
+              className={inputClass(!!validationErrors.date)}
             />
-            {validationErrors.date && <p className="text-red-500 text-xs mt-1">{validationErrors.date}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Max participants</label>
+          </Field>
+          <Field label="Max participants">
             <input
               type="number"
               required
@@ -207,18 +190,14 @@ export default function CreateEvent() {
               max={50}
               value={form.maxParticipants}
               onChange={update('maxParticipants')}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+              className={inputClass(false)}
             />
-          </div>
+          </Field>
         </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
-        >
-          {loading ? 'Création...' : 'Créer l\'événement'}
-        </button>
+        <Button type="submit" size="lg" disabled={loading} className="w-full">
+          {loading ? 'Création...' : "Créer l'événement 🎉"}
+        </Button>
       </form>
     </div>
   );

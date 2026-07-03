@@ -12,6 +12,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@fontsource-variable/dm-sans": "^5.2.8",
     "@microsoft/signalr": "^10.0.0",
     "@tailwindcss/vite": "^4.2.1",
     "axios": "^1.13.6",

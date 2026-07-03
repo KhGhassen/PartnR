@@ -42,7 +42,7 @@ export default function RatingForm({ eventId, ratedUserId, ratedUserName, onRate
   return (
     <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
       <p className="text-sm font-medium mb-3">
-        Noter <span className="text-indigo-600">{ratedUserName}</span>
+        Noter <span className="text-coral-600">{ratedUserName}</span>
       </p>
 
       {/* Stars */}
@@ -72,7 +72,7 @@ export default function RatingForm({ eventId, ratedUserId, ratedUserName, onRate
         placeholder="Commentaire (optionnel)"
         maxLength={500}
         rows={2}
-        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none resize-none mb-3"
+        className="w-full border-[1.5px] border-line rounded-2xl px-3 py-2 text-sm focus:ring-2 focus:ring-coral-500/30 focus:border-coral-500 outline-none resize-none mb-3"
       />
 
       {error && <p className="text-red-500 text-xs mb-2">{error}</p>}
@@ -81,7 +81,7 @@ export default function RatingForm({ eventId, ratedUserId, ratedUserName, onRate
         <button
           onClick={handleSubmit}
           disabled={loading || score === 0}
-          className="bg-indigo-600 text-white px-4 py-1.5 rounded-lg text-sm hover:bg-indigo-700 disabled:opacity-50"
+          className="bg-coral-500 text-white px-4 py-1.5 rounded-full text-sm font-semibold hover:bg-coral-600 disabled:opacity-50"
         >
           {loading ? 'Envoi...' : 'Envoyer'}
         </button>

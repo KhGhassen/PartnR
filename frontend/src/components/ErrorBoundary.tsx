@@ -23,7 +23,7 @@ export default class ErrorBoundary extends Component<Props, State> {
           <p className="text-gray-500 mb-6">Quelque chose s'est mal passé. Veuillez rafraîchir la page.</p>
           <button
             onClick={() => window.location.reload()}
-            className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700"
+            className="bg-coral-500 text-white px-6 py-2 rounded-full font-semibold hover:bg-coral-600"
           >
             Rafraîchir
           </button>

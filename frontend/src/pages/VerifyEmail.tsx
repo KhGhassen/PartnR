@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { confirmEmail } from '../api/auth';
+import { ButtonLink } from '../components/ui/Button';
 
 export default function VerifyEmail() {
   const [params] = useSearchParams();
@@ -20,40 +21,35 @@ export default function VerifyEmail() {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-[80vh] flex items-center justify-center">
-        <p className="text-gray-500">Vérification en cours...</p>
+      <div className="flex min-h-[80vh] items-center justify-center">
+        <p className="text-ink-sub">Vérification en cours...</p>
       </div>
     );
   }
 
   if (status === 'success') {
     return (
-      <div className="min-h-[80vh] flex items-center justify-center">
-        <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 w-full max-w-md text-center">
-          <div className="text-5xl mb-4">✅</div>
-          <h1 className="text-2xl font-bold mb-2">Email confirmé !</h1>
-          <p className="text-gray-500 mb-6">Votre adresse email a bien été vérifiée.</p>
-          <Link
-            to="/"
-            className="inline-block bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700"
-          >
-            Accéder à l'application
-          </Link>
+      <div className="flex min-h-[80vh] items-center justify-center px-4">
+        <div className="w-full max-w-md rounded-3xl border border-line bg-white p-8 text-center shadow-card">
+          <div className="mb-4 text-5xl">✅</div>
+          <h1 className="mb-2 text-2xl font-bold tracking-tight text-ink">Email confirmé !</h1>
+          <p className="mb-6 text-sm text-ink-sub">Votre adresse email a bien été vérifiée.</p>
+          <ButtonLink to="/" size="lg">Accéder à l'application</ButtonLink>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center">
-      <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 w-full max-w-md text-center">
-        <div className="text-5xl mb-4">⚠️</div>
-        <h1 className="text-xl font-bold mb-2">Lien invalide ou expiré</h1>
-        <p className="text-gray-500 mb-4">Ce lien de confirmation est invalide ou a expiré.</p>
-        <Link to="/login" className="text-indigo-600 hover:underline text-sm block mb-2">
+    <div className="flex min-h-[80vh] items-center justify-center px-4">
+      <div className="w-full max-w-md rounded-3xl border border-line bg-white p-8 text-center shadow-card">
+        <div className="mb-4 text-5xl">⚠️</div>
+        <h1 className="mb-2 text-xl font-bold tracking-tight text-ink">Lien invalide ou expiré</h1>
+        <p className="mb-4 text-sm text-ink-sub">Ce lien de confirmation est invalide ou a expiré.</p>
+        <Link to="/login" className="mb-2 block text-sm font-medium text-coral-600 hover:underline">
           Se connecter
         </Link>
-        <p className="text-gray-400 text-xs">
+        <p className="text-xs text-ink-sub">
           Connectez-vous et demandez un renvoi de l'email de confirmation depuis votre profil.
         </p>
       </div>
