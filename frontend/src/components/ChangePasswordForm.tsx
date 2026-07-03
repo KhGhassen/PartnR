@@ -62,7 +62,7 @@ export default function ChangePasswordForm({ onClose }: { onClose: () => void })
           required
           value={currentPassword}
           onChange={(e) => setCurrentPassword(e.target.value)}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+          className="w-full border-[1.5px] border-line rounded-2xl px-3 py-2 focus:ring-2 focus:ring-coral-500/30 focus:border-coral-500 focus:border-transparent outline-none"
         />
       </div>
 
@@ -74,7 +74,7 @@ export default function ChangePasswordForm({ onClose }: { onClose: () => void })
           minLength={8}
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+          className="w-full border-[1.5px] border-line rounded-2xl px-3 py-2 focus:ring-2 focus:ring-coral-500/30 focus:border-coral-500 focus:border-transparent outline-none"
         />
         {newPassword.length > 0 && (
           <div className="mt-2 space-y-1">
@@ -99,7 +99,7 @@ export default function ChangePasswordForm({ onClose }: { onClose: () => void })
           required
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
-          className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+          className="w-full border-[1.5px] border-line rounded-2xl px-3 py-2 focus:ring-2 focus:ring-coral-500/30 focus:border-coral-500 focus:border-transparent outline-none"
         />
       </div>
 
@@ -107,7 +107,7 @@ export default function ChangePasswordForm({ onClose }: { onClose: () => void })
         <button
           type="submit"
           disabled={loading || !passwordValid}
-          className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+          className="bg-coral-500 text-white px-6 py-2 rounded-full font-semibold hover:bg-coral-600 disabled:opacity-50"
         >
           {loading ? 'Enregistrement...' : 'Enregistrer'}
         </button>

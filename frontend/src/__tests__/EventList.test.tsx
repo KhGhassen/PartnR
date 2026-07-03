@@ -79,8 +79,8 @@ describe('EventList', () => {
     await waitFor(() => {
       expect(screen.getByText('Morning Run')).toBeInTheDocument();
     });
-    expect(screen.getByText('Par Alice')).toBeInTheDocument();
-    expect(screen.getByText(/3\/10 participants/)).toBeInTheDocument();
+    expect(screen.getByText('par Alice')).toBeInTheDocument();
+    expect(screen.getByText(/7 places/)).toBeInTheDocument();
   });
 
   it('shows error with retry button on fetch failure', async () => {
@@ -118,7 +118,7 @@ describe('EventList', () => {
     });
   });
 
-  it('calls listEvents with filter params on submit', async () => {
+  it('calls listEvents with filter params when a city is selected', async () => {
     vi.mocked(listEvents).mockResolvedValue(mockPaginatedResult);
 
     render(
@@ -136,7 +136,6 @@ describe('EventList', () => {
     });
     const citySelect = screen.getByText('Toutes les villes').closest('select')!;
     await userEvent.selectOptions(citySelect, 'Lyon');
-    await userEvent.click(screen.getByText('Filtrer'));
 
     await waitFor(() => {
       expect(listEvents).toHaveBeenCalledWith(

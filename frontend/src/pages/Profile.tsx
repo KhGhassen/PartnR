@@ -5,6 +5,10 @@ import { listActivities } from '../api/activities';
 import { listCities } from '../api/cities';
 import { useAuth } from '../context/AuthContext';
 import ChangePasswordForm from '../components/ChangePasswordForm';
+import Avatar from '../components/ui/Avatar';
+import Button from '../components/ui/Button';
+import Chip from '../components/ui/Chip';
+import { inputClass } from '../components/ui/classes';
 import type { Activity, Profile as ProfileType, RatingDto } from '../types';
 
 const PROFILE_TYPES = [
@@ -96,9 +100,9 @@ export default function Profile() {
     }
   };
 
-  if (loading) return <p className="text-center py-12 text-gray-500">Chargement...</p>;
-  if (error && !profile) return <p className="text-center py-12 text-red-500">{error}</p>;
-  if (!profile) return <p className="text-center py-12 text-red-500">Profil introuvable.</p>;
+  if (loading) return <p className="py-16 text-center text-ink-sub">Chargement...</p>;
+  if (error && !profile) return <p className="py-16 text-center text-red-500">{error}</p>;
+  if (!profile) return <p className="py-16 text-center text-red-500">Profil introuvable.</p>;
 
   const stars = (rating: number) => {
     const full = Math.round(rating);
@@ -106,228 +110,202 @@ export default function Profile() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <div className="bg-white rounded-xl border border-gray-200 p-8">
-        <div className="flex items-center gap-4 mb-6">
-          {(editing ? form.avatarUrl : profile.avatarUrl) ? (
-            <img
-              src={editing ? form.avatarUrl : profile.avatarUrl!}
-              alt={profile.firstName}
-              className="w-16 h-16 rounded-full object-cover bg-gray-100"
-            />
-          ) : (
-            <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-2xl font-bold">
-              {profile.firstName[0]}
+    <div className="mx-auto max-w-2xl px-4 py-8">
+      <div className="overflow-hidden rounded-3xl border border-line bg-white shadow-card">
+        {/* Brand band */}
+        <div className="h-20 bg-gradient-to-r from-coral-500 to-violet-500" />
+
+        <div className="p-8 pt-0">
+          <div className="mb-6 flex items-end gap-4">
+            <div className="-mt-8">
+              <Avatar
+                name={profile.firstName}
+                url={editing ? form.avatarUrl || null : profile.avatarUrl}
+                size="lg"
+                className="ring-4 ring-white"
+              />
             </div>
-          )}
-          <div className="flex-1">
-            {editing ? (
-              <div className="space-y-2">
-                <input
-                  value={form.firstName}
-                  onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
-                  className="text-xl font-bold border border-gray-300 rounded px-2 py-1"
-                />
-                <input
-                  value={form.avatarUrl}
-                  onChange={(e) => setForm((f) => ({ ...f, avatarUrl: e.target.value }))}
-                  placeholder="URL de la photo de profil (optionnel)"
-                  className="block w-full text-sm border border-gray-300 rounded px-2 py-1 text-gray-600"
-                />
-              </div>
-            ) : (
-              <h1 className="text-2xl font-bold">{profile.firstName}</h1>
-            )}
-            <p className="text-gray-500">
-              Membre depuis {new Date(profile.createdAt).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
-            </p>
-          </div>
-          {isOwn && !editing && (
-            <button
-              onClick={() => setEditing(true)}
-              className="ml-auto text-sm text-indigo-600 hover:underline"
-            >
-              Modifier
-            </button>
-          )}
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <span className="text-sm text-gray-400">Ville</span>
-            {editing ? (
-              <select
-                value={form.city}
-                onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
-                className="block w-full border border-gray-300 rounded px-2 py-1 mt-1"
-              >
-                <option value="">Sélectionner une ville</option>
-                {cities.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-            ) : (
-              <p className="font-medium">{profile.city}</p>
+            <div className="flex-1 pt-2">
+              {editing ? (
+                <div className="space-y-2">
+                  <input
+                    value={form.firstName}
+                    onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
+                    className={inputClass(false, 'max-w-xs font-bold')}
+                  />
+                  <input
+                    value={form.avatarUrl}
+                    onChange={(e) => setForm((f) => ({ ...f, avatarUrl: e.target.value }))}
+                    placeholder="URL de la photo de profil (optionnel)"
+                    className={inputClass(false, 'text-xs')}
+                  />
+                </div>
+              ) : (
+                <>
+                  <h1 className="text-2xl font-bold tracking-tight text-ink">{profile.firstName}</h1>
+                  <p className="text-sm text-ink-sub">
+                    Membre depuis {new Date(profile.createdAt).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
+                  </p>
+                </>
+              )}
+            </div>
+            {isOwn && !editing && (
+              <Button variant="soft" size="sm" onClick={() => setEditing(true)}>
+                Modifier
+              </Button>
             )}
           </div>
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <span className="text-sm text-gray-400">Note</span>
-            <p className="font-medium">
-              <span className="text-yellow-500">{stars(profile.ratingAvg)}</span>
-              <span className="text-gray-400 text-sm ml-1">
-                ({profile.ratingCount} avis)
-              </span>
-            </p>
-          </div>
-        </div>
 
-        <div className="mb-6">
-          <h2 className="text-sm text-gray-400 mb-1">Bio</h2>
+          <div className="mb-6 grid grid-cols-2 gap-4">
+            <div className="rounded-2xl bg-cream p-4">
+              <p className="mb-0.5 text-xs text-ink-sub">Ville</p>
+              {editing ? (
+                <select
+                  value={form.city}
+                  onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
+                  className={inputClass(false, 'mt-1')}
+                >
+                  <option value="">Sélectionner une ville</option>
+                  {cities.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              ) : (
+                <p className="font-semibold text-ink">📍 {profile.city}</p>
+              )}
+            </div>
+            <div className="rounded-2xl bg-cream p-4">
+              <p className="mb-0.5 text-xs text-ink-sub">Note</p>
+              <p className="font-semibold text-ink">
+                <span className="text-amber-500">{stars(profile.ratingAvg)}</span>
+                <span className="ml-1 text-sm font-normal text-ink-sub">({profile.ratingCount} avis)</span>
+              </p>
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <h2 className="mb-1.5 text-xs font-semibold text-ink-mid">Bio</h2>
+            {editing ? (
+              <textarea
+                value={form.bio}
+                onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
+                maxLength={300}
+                rows={3}
+                className={inputClass(false, 'resize-none')}
+              />
+            ) : (
+              <p className="text-ink-mid">{profile.bio || 'Pas encore de bio.'}</p>
+            )}
+          </div>
+
           {editing ? (
-            <textarea
-              value={form.bio}
-              onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
-              maxLength={300}
-              rows={3}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 resize-none"
-            />
-          ) : (
-            <p className="text-gray-700">{profile.bio || 'Pas encore de bio.'}</p>
-          )}
-        </div>
-
-        {editing ? (
-          <div className="mb-6">
-            <h2 className="text-sm text-gray-400 mb-2">Catégorie de profil</h2>
-            <div className="flex flex-wrap gap-2">
-              {PROFILE_TYPES.map((pt) => {
-                const active = form.profileType === pt.value;
-                return (
-                  <button
-                    key={pt.value}
-                    type="button"
-                    onClick={() => setForm((f) => ({ ...f, profileType: active ? '' : pt.value }))}
-                    className={`px-3 py-1 rounded-full text-sm border transition-colors ${
-                      active
-                        ? 'bg-indigo-600 text-white border-indigo-600'
-                        : 'bg-white text-gray-600 border-gray-300 hover:border-indigo-400'
-                    }`}
-                  >
-                    {pt.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ) : (
-          profile.profileType && (
             <div className="mb-6">
-              <h2 className="text-sm text-gray-400 mb-2">Catégorie de profil</h2>
-              <span className="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full text-sm">
-                {PROFILE_TYPES.find((pt) => pt.value === profile.profileType)?.label || profile.profileType}
-              </span>
+              <h2 className="mb-2 text-xs font-semibold text-ink-mid">Catégorie de profil</h2>
+              <div className="flex flex-wrap gap-2">
+                {PROFILE_TYPES.map((pt) => {
+                  const active = form.profileType === pt.value;
+                  return (
+                    <Chip
+                      key={pt.value}
+                      active={active}
+                      onClick={() => setForm((f) => ({ ...f, profileType: active ? '' : pt.value }))}
+                    >
+                      {pt.label}
+                    </Chip>
+                  );
+                })}
+              </div>
             </div>
-          )
-        )}
+          ) : (
+            profile.profileType && (
+              <div className="mb-6">
+                <h2 className="mb-2 text-xs font-semibold text-ink-mid">Catégorie de profil</h2>
+                <span className="rounded-full bg-violet-50 px-3 py-1 text-sm font-medium text-violet-700">
+                  {PROFILE_TYPES.find((pt) => pt.value === profile.profileType)?.label || profile.profileType}
+                </span>
+              </div>
+            )
+          )}
 
-        {editing ? (
-          <div className="mb-6">
-            <h2 className="text-sm text-gray-400 mb-2">Activités favorites</h2>
-            <div className="flex flex-wrap gap-2">
-              {activities.map((a) => {
-                const active = form.favoriteActivities.includes(a.name);
-                return (
-                  <button
+          {editing ? (
+            <div className="mb-6">
+              <h2 className="mb-2 text-xs font-semibold text-ink-mid">Activités favorites</h2>
+              <div className="flex flex-wrap gap-2">
+                {activities.map((a) => (
+                  <Chip
                     key={a.id}
-                    type="button"
+                    active={form.favoriteActivities.includes(a.name)}
                     onClick={() => toggleFavoriteActivity(a.name)}
-                    className={`px-3 py-1 rounded-full text-sm border transition-colors ${
-                      active
-                        ? 'bg-indigo-600 text-white border-indigo-600'
-                        : 'bg-white text-gray-600 border-gray-300 hover:border-indigo-400'
-                    }`}
                   >
                     {a.icon} {a.name}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        ) : (
-          profile.favoriteActivities.length > 0 && (
-            <div className="mb-6">
-              <h2 className="text-sm text-gray-400 mb-2">Activités favorites</h2>
-              <div className="flex flex-wrap gap-2">
-                {profile.favoriteActivities.map((a) => (
-                  <span key={a} className="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full text-sm">
-                    {a}
-                  </span>
+                  </Chip>
                 ))}
               </div>
             </div>
-          )
-        )}
+          ) : (
+            profile.favoriteActivities.length > 0 && (
+              <div className="mb-6">
+                <h2 className="mb-2 text-xs font-semibold text-ink-mid">Activités favorites</h2>
+                <div className="flex flex-wrap gap-2">
+                  {profile.favoriteActivities.map((a) => (
+                    <span key={a} className="rounded-full bg-coral-50 px-3 py-1 text-sm font-medium text-coral-700">
+                      {a}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )
+          )}
 
-        {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+          {error && <p className="mb-4 text-sm text-red-500">{error}</p>}
 
-        {editing && (
-          <div className="flex gap-3">
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
-            >
-              {saving ? 'Sauvegarde...' : 'Sauvegarder'}
-            </button>
-            <button
-              onClick={handleCancel}
-              className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300"
-            >
-              Annuler
-            </button>
-          </div>
-        )}
+          {editing && (
+            <div className="flex gap-3">
+              <Button onClick={handleSave} disabled={saving}>
+                {saving ? 'Sauvegarde...' : 'Sauvegarder'}
+              </Button>
+              <Button variant="ghost" onClick={handleCancel}>
+                Annuler
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
       {isOwn && (
-        <div className="bg-white rounded-xl border border-gray-200 p-8 mt-6">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-lg font-bold">Sécurité</h2>
+        <div className="mt-6 rounded-3xl border border-line bg-white p-8 shadow-card">
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-ink">Sécurité</h2>
             {!changingPassword && (
-              <button
-                onClick={() => setChangingPassword(true)}
-                className="text-sm text-indigo-600 hover:underline"
-              >
+              <Button variant="soft" size="sm" onClick={() => setChangingPassword(true)}>
                 Changer le mot de passe
-              </button>
+              </Button>
             )}
           </div>
           {changingPassword ? (
             <ChangePasswordForm onClose={() => setChangingPassword(false)} />
           ) : (
-            <p className="text-sm text-gray-500">Modifiez votre mot de passe à tout moment.</p>
+            <p className="text-sm text-ink-sub">Modifiez votre mot de passe à tout moment.</p>
           )}
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-gray-200 p-8 mt-6">
-        <h2 className="text-lg font-bold mb-4">Avis reçus</h2>
+      <div className="mt-6 rounded-3xl border border-line bg-white p-8 shadow-card">
+        <h2 className="mb-4 text-lg font-bold text-ink">Avis reçus</h2>
         {ratings.length === 0 ? (
-          <p className="text-sm text-gray-500">Aucun avis pour l'instant.</p>
+          <p className="text-sm text-ink-sub">Aucun avis pour l'instant.</p>
         ) : (
           <div className="space-y-4">
             {ratings.map((r) => (
-              <div key={r.id} className="border border-gray-100 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium text-gray-800">{r.raterName}</span>
-                  <span className="text-xs text-gray-400">
+              <div key={r.id} className="rounded-2xl bg-cream p-4">
+                <div className="mb-1 flex items-center justify-between">
+                  <span className="text-sm font-semibold text-ink">{r.raterName}</span>
+                  <span className="text-xs text-ink-sub">
                     {new Date(r.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
                   </span>
                 </div>
-                <span className="text-yellow-500 text-sm">{stars(r.score)}</span>
-                {r.comment && (
-                  <p className="text-sm text-gray-600 mt-1">{r.comment}</p>
-                )}
+                <span className="text-sm text-amber-500">{stars(r.score)}</span>
+                {r.comment && <p className="mt-1 text-sm text-ink-mid">{r.comment}</p>}
               </div>
             ))}
           </div>

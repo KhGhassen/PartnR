@@ -25,7 +25,7 @@ export default function LocationPicker({ latitude, longitude, onChange }: Locati
 
   return (
     <div>
-      <div className="rounded-lg overflow-hidden border border-gray-300" style={{ height: 250 }}>
+      <div className="overflow-hidden rounded-2xl border-[1.5px] border-line" style={{ height: 260 }}>
         <MapContainer center={center} zoom={hasPosition ? 13 : 5} style={{ height: '100%', width: '100%' }}>
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -35,7 +35,7 @@ export default function LocationPicker({ latitude, longitude, onChange }: Locati
           {hasPosition && <Marker position={[latitude, longitude]} />}
         </MapContainer>
       </div>
-      <p className="text-xs text-gray-500 mt-1">
+      <p className="mt-1 text-xs text-ink-sub">
         Cliquez sur la carte pour positionner l'événement (optionnel)
       </p>
     </div>

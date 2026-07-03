@@ -51,7 +51,7 @@ export default function AnalyticsDashboardPage() {
           { label: 'Nouveaux (7j)', value: data.newUsersLast7Days },
         ].map((kpi) => (
           <div key={kpi.label} className="bg-white rounded-xl border border-gray-200 p-5 text-center">
-            <p className="text-3xl font-bold text-indigo-600">{kpi.value}</p>
+            <p className="text-3xl font-bold text-coral-500">{kpi.value}</p>
             <p className="text-sm text-gray-500 mt-1">{kpi.label}</p>
           </div>
         ))}
@@ -115,7 +115,7 @@ export default function AnalyticsDashboardPage() {
               <tr key={ev.id} className="border-b border-gray-50 last:border-0">
                 <td className="py-2 font-medium">{ev.title}</td>
                 <td className="py-2 text-gray-500">{ev.city}</td>
-                <td className="py-2 text-right text-indigo-600 font-bold">{ev.participantCount}</td>
+                <td className="py-2 text-right text-coral-500 font-bold">{ev.participantCount}</td>
               </tr>
             ))}
           </tbody>

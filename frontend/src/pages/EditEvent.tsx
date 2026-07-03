@@ -4,6 +4,10 @@ import { getEvent, updateEvent } from '../api/events';
 import { listCities } from '../api/cities';
 import { useAuth } from '../context/AuthContext';
 import LocationPicker from '../components/LocationPicker';
+import Button from '../components/ui/Button';
+import Chip from '../components/ui/Chip';
+import Field from '../components/ui/Field';
+import { inputClass } from '../components/ui/classes';
 
 export default function EditEvent() {
   const { id } = useParams<{ id: string }>();
@@ -59,10 +63,13 @@ export default function EditEvent() {
     });
   }, [id, isAuthenticated, user, navigate]);
 
-  const update = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
+  const set = (field: string, value: unknown) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
     setValidationErrors((prev) => ({ ...prev, [field]: '' }));
   };
+
+  const update = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+    set(field, e.target.value);
 
   const updateLocation = (lat: number, lng: number) => {
     setForm((prev) => ({ ...prev, latitude: lat, longitude: lng }));
@@ -105,19 +112,18 @@ export default function EditEvent() {
     }
   };
 
-  if (pageLoading) return <p className="text-center py-12 text-gray-500">Chargement...</p>;
+  if (pageLoading) return <p className="py-16 text-center text-ink-sub">Chargement...</p>;
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Modifier l'événement</h1>
+    <div className="mx-auto max-w-2xl px-4 py-8">
+      <h1 className="mb-6 text-3xl font-bold tracking-tight text-ink">Modifier l'événement</h1>
 
       {error && (
-        <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm">{error}</div>
+        <div className="mb-4 rounded-2xl border border-red-100 bg-red-50 px-5 py-3 text-sm text-red-600">{error}</div>
       )}
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-200 p-8 space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Titre</label>
+      <form onSubmit={handleSubmit} className="space-y-5 rounded-3xl border border-line bg-white p-8 shadow-card">
+        <Field label="Titre" error={validationErrors.title}>
           <input
             type="text"
             required
@@ -125,89 +131,66 @@ export default function EditEvent() {
             maxLength={100}
             value={form.title}
             onChange={update('title')}
-            className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none ${
-              validationErrors.title ? 'border-red-400' : 'border-gray-300'
-            }`}
+            className={inputClass(!!validationErrors.title)}
           />
-          {validationErrors.title && <p className="text-red-500 text-xs mt-1">{validationErrors.title}</p>}
-        </div>
+        </Field>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+        <Field label="Description">
           <textarea
             maxLength={1000}
             value={form.description}
             onChange={update('description')}
             rows={3}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
+            className={inputClass(false, 'resize-none')}
           />
-        </div>
+        </Field>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Photo de couverture (URL)</label>
+        <Field label="Photo de couverture (URL)">
           <input
             type="text"
             value={form.photoUrl}
             onChange={update('photoUrl')}
-            placeholder="URL de l'image de couverture (optionnel)"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+            placeholder="https://…"
+            className={inputClass(false)}
           />
-        </div>
+        </Field>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Localisation</label>
-          <LocationPicker
-            latitude={form.latitude}
-            longitude={form.longitude}
-            onChange={updateLocation}
+          <label className="mb-1.5 block text-xs font-semibold text-ink-mid">Ville</label>
+          <div className="flex flex-wrap gap-2">
+            {cities.map((c) => (
+              <Chip key={c} active={form.city === c} onClick={() => set('city', c)}>
+                {c}
+              </Chip>
+            ))}
+          </div>
+          {validationErrors.city && <p className="mt-1 text-xs text-red-500">{validationErrors.city}</p>}
+        </div>
+
+        <Field label="Lieu / Point de RDV">
+          <input
+            type="text"
+            value={form.location}
+            onChange={update('location')}
+            className={inputClass(false)}
           />
-        </div>
+        </Field>
+
+        <Field label="Localisation sur la carte">
+          <LocationPicker latitude={form.latitude} longitude={form.longitude} onChange={updateLocation} />
+        </Field>
 
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Ville</label>
-            <select
-              required
-              value={form.city}
-              onChange={update('city')}
-              className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none ${
-                validationErrors.city ? 'border-red-400' : 'border-gray-300'
-              }`}
-            >
-              <option value="">Sélectionner une ville</option>
-              {cities.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-            {validationErrors.city && <p className="text-red-500 text-xs mt-1">{validationErrors.city}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Lieu / Point de RDV</label>
-            <input
-              type="text"
-              value={form.location}
-              onChange={update('location')}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Date et heure</label>
+          <Field label="Date et heure" error={validationErrors.date}>
             <input
               type="datetime-local"
               required
               value={form.date}
               onChange={update('date')}
-              className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none ${
-                validationErrors.date ? 'border-red-400' : 'border-gray-300'
-              }`}
+              className={inputClass(!!validationErrors.date)}
             />
-            {validationErrors.date && <p className="text-red-500 text-xs mt-1">{validationErrors.date}</p>}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Max participants</label>
+          </Field>
+          <Field label="Max participants">
             <input
               type="number"
               required
@@ -215,39 +198,26 @@ export default function EditEvent() {
               max={50}
               value={form.maxParticipants}
               onChange={update('maxParticipants')}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+              className={inputClass(false)}
             />
-          </div>
+          </Field>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Statut</label>
-          <select
-            value={form.status}
-            onChange={update('status')}
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
-          >
+        <Field label="Statut">
+          <select value={form.status} onChange={update('status')} className={inputClass(false)}>
             <option value="Published">Publié</option>
             <option value="Cancelled">Annulé</option>
             <option value="Completed">Terminé</option>
           </select>
-        </div>
+        </Field>
 
         <div className="flex gap-3">
-          <button
-            type="submit"
-            disabled={loading}
-            className="flex-1 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
-          >
-            {loading ? 'Enregistrement...' : 'Enregistrer les modifications'}
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate(`/events/${id}`)}
-            className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-          >
+          <Button type="submit" size="lg" disabled={loading} className="flex-1">
+            {loading ? 'Enregistrement...' : 'Enregistrer'}
+          </Button>
+          <Button type="button" variant="ghost" size="lg" onClick={() => navigate(`/events/${id}`)}>
             Annuler
-          </button>
+          </Button>
         </div>
       </form>
     </div>

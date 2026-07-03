@@ -4,6 +4,10 @@ import { register, resendConfirmation } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
 import { trackAction } from '../api/analytics';
 import { listCities } from '../api/cities';
+import AuthLayout from '../components/AuthLayout';
+import Button from '../components/ui/Button';
+import Field from '../components/ui/Field';
+import { inputClass } from '../components/ui/classes';
 
 const PASSWORD_RULES = [
   { test: (p: string) => p.length >= 8, label: '8 caractères minimum' },
@@ -61,124 +65,112 @@ export default function Register() {
 
   if (registered) {
     return (
-      <div className="min-h-[80vh] flex items-center justify-center">
-        <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 w-full max-w-md text-center">
-          <div className="text-5xl mb-4">📬</div>
-          <h1 className="text-2xl font-bold mb-2">Vérifiez votre email</h1>
-          <p className="text-gray-500 mb-6">
-            Un lien de confirmation a été envoyé à <span className="font-medium text-gray-800">{form.email}</span>.
+      <AuthLayout>
+        <div className="text-center">
+          <div className="mb-4 text-5xl">📬</div>
+          <h1 className="mb-2 text-2xl font-bold tracking-tight text-ink">Vérifiez votre email</h1>
+          <p className="mb-6 text-sm text-ink-sub">
+            Un lien de confirmation a été envoyé à <span className="font-medium text-ink">{form.email}</span>.
             Cliquez sur ce lien pour activer votre compte.
           </p>
           {resent ? (
-            <p className="text-green-600 text-sm mb-4">Email renvoyé !</p>
+            <p className="mb-4 text-sm text-emerald-600">Email renvoyé !</p>
           ) : (
             <button
               onClick={handleResend}
-              className="text-indigo-600 hover:underline text-sm mb-4 block mx-auto"
+              className="mx-auto mb-4 block text-sm font-medium text-coral-600 hover:underline"
             >
               Renvoyer l'email
             </button>
           )}
-          <button
-            onClick={() => navigate('/')}
-            className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700"
-          >
+          <Button size="lg" onClick={() => navigate('/')} className="w-full">
             Accéder à l'application
-          </button>
+          </Button>
         </div>
-      </div>
+      </AuthLayout>
     );
   }
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center">
-      <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 w-full max-w-md">
-        <h1 className="text-2xl font-bold text-center mb-6">Inscription</h1>
+    <AuthLayout>
+      <h1 className="mb-1 text-2xl font-bold tracking-tight text-ink">Inscription</h1>
+      <p className="mb-6 text-sm text-ink-sub">Rejoignez la communauté en 30 secondes.</p>
 
-        {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm">{error}</div>
-        )}
+      {error && (
+        <div className="mb-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
+      )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Prénom</label>
-            <input
-              type="text"
-              required
-              maxLength={50}
-              value={form.firstName}
-              onChange={update('firstName')}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input
-              type="email"
-              required
-              value={form.email}
-              onChange={update('email')}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Field label="Prénom">
+          <input
+            type="text"
+            required
+            maxLength={50}
+            value={form.firstName}
+            onChange={update('firstName')}
+            placeholder="Votre prénom"
+            className={inputClass(false)}
+          />
+        </Field>
+        <Field label="Email">
+          <input
+            type="email"
+            required
+            value={form.email}
+            onChange={update('email')}
+            placeholder="vous@exemple.fr"
+            className={inputClass(false)}
+          />
+        </Field>
+        <div>
+          <Field label="Mot de passe">
             <input
               type="password"
               required
               minLength={8}
               value={form.password}
               onChange={update('password')}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+              placeholder="••••••••"
+              className={inputClass(false)}
             />
-            {form.password.length > 0 && (
-              <div className="mt-2 space-y-1">
-                {PASSWORD_RULES.map((rule) => (
-                  <p
-                    key={rule.label}
-                    className={`text-xs flex items-center gap-1 ${
-                      rule.test(form.password) ? 'text-green-600' : 'text-gray-400'
-                    }`}
-                  >
-                    {rule.test(form.password) ? '✓' : '○'} {rule.label}
-                  </p>
-                ))}
-              </div>
-            )}
-            {form.password.length === 0 && (
-              <p className="text-xs text-gray-400 mt-1">Min. 8 caractères, 1 majuscule, 1 chiffre</p>
-            )}
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Ville</label>
-            <select
-              required
-              value={form.city}
-              onChange={update('city')}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-            >
-              <option value="">Sélectionner une ville</option>
-              {cities.map((city) => (
-                <option key={city} value={city}>{city}</option>
+          </Field>
+          {form.password.length > 0 && (
+            <div className="mt-2 space-y-1">
+              {PASSWORD_RULES.map((rule) => (
+                <p
+                  key={rule.label}
+                  className={`flex items-center gap-1 text-xs ${
+                    rule.test(form.password) ? 'text-emerald-600' : 'text-ink-sub'
+                  }`}
+                >
+                  {rule.test(form.password) ? '✓' : '○'} {rule.label}
+                </p>
               ))}
-            </select>
-          </div>
-          <button
-            type="submit"
-            disabled={loading || !passwordValid}
-            className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
-          >
-            {loading ? 'Inscription...' : "S'inscrire"}
-          </button>
-        </form>
+            </div>
+          )}
+          {form.password.length === 0 && (
+            <p className="mt-1 text-xs text-ink-sub">Min. 8 caractères, 1 majuscule, 1 chiffre</p>
+          )}
+        </div>
+        <Field label="Ville">
+          <select required value={form.city} onChange={update('city')} className={inputClass(false)}>
+            <option value="">Sélectionner une ville</option>
+            {cities.map((city) => (
+              <option key={city} value={city}>{city}</option>
+            ))}
+          </select>
+        </Field>
+        <Button type="submit" size="lg" disabled={loading || !passwordValid} className="w-full">
+          {loading ? 'Inscription...' : "S'inscrire"}
+        </Button>
+      </form>
 
-        <p className="text-center text-sm text-gray-500 mt-4">
-          Déjà un compte ?{' '}
-          <Link to="/login" className="text-indigo-600 hover:underline">
-            Se connecter
-          </Link>
-        </p>
-      </div>
-    </div>
+      <p className="mt-5 text-center text-sm text-ink-sub">
+        Déjà un compte ?{' '}
+        <Link to="/login" className="font-semibold text-coral-600 hover:underline">
+          Se connecter
+        </Link>
+      </p>
+    </AuthLayout>
   );
 }
