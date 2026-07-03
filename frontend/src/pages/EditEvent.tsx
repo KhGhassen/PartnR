@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getEvent, updateEvent } from '../api/events';
 import { listCities } from '../api/cities';
 import { useAuth } from '../context/AuthContext';
+import LocationPicker from '../components/LocationPicker';
 
 export default function EditEvent() {
   const { id } = useParams<{ id: string }>();
@@ -22,6 +23,8 @@ export default function EditEvent() {
     maxParticipants: 5,
     status: 'Published',
     photoUrl: '',
+    latitude: null as number | null,
+    longitude: null as number | null,
   });
 
   useEffect(() => {
@@ -46,6 +49,8 @@ export default function EditEvent() {
         maxParticipants: ev.maxParticipants,
         status: ev.status,
         photoUrl: ev.photoUrl || '',
+        latitude: ev.latitude,
+        longitude: ev.longitude,
       });
     }).catch(() => {
       setError('Événement introuvable.');
@@ -57,6 +62,10 @@ export default function EditEvent() {
   const update = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
     setValidationErrors((prev) => ({ ...prev, [field]: '' }));
+  };
+
+  const updateLocation = (lat: number, lng: number) => {
+    setForm((prev) => ({ ...prev, latitude: lat, longitude: lng }));
   };
 
   const validate = (): boolean => {
@@ -85,6 +94,8 @@ export default function EditEvent() {
         maxParticipants: Number(form.maxParticipants),
         status: form.status,
         photoUrl: form.photoUrl || undefined,
+        latitude: form.latitude ?? undefined,
+        longitude: form.longitude ?? undefined,
       });
       navigate(`/events/${id}`);
     } catch (err) {
@@ -140,6 +151,15 @@ export default function EditEvent() {
             onChange={update('photoUrl')}
             placeholder="URL de l'image de couverture (optionnel)"
             className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Localisation</label>
+          <LocationPicker
+            latitude={form.latitude}
+            longitude={form.longitude}
+            onChange={updateLocation}
           />
         </div>
 

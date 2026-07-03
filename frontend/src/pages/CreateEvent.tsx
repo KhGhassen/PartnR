@@ -5,6 +5,7 @@ import { listActivities } from '../api/activities';
 import { listCities } from '../api/cities';
 import { useAuth } from '../context/AuthContext';
 import { trackAction } from '../api/analytics';
+import LocationPicker from '../components/LocationPicker';
 import type { Activity } from '../types';
 
 export default function CreateEvent() {
@@ -24,6 +25,8 @@ export default function CreateEvent() {
     maxParticipants: 5,
     activityId: '',
     photoUrl: '',
+    latitude: null as number | null,
+    longitude: null as number | null,
   });
 
   useEffect(() => {
@@ -38,6 +41,10 @@ export default function CreateEvent() {
   const update = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
     setValidationErrors((prev) => ({ ...prev, [field]: '' }));
+  };
+
+  const updateLocation = (lat: number, lng: number) => {
+    setForm((prev) => ({ ...prev, latitude: lat, longitude: lng }));
   };
 
   const validate = (): boolean => {
@@ -60,6 +67,8 @@ export default function CreateEvent() {
       const ev = await createEvent({
         ...form,
         maxParticipants: Number(form.maxParticipants),
+        latitude: form.latitude ?? undefined,
+        longitude: form.longitude ?? undefined,
       });
       trackAction({ action: 'event_created', entityType: 'event', entityId: ev.id });
       navigate(`/events/${ev.id}`);
@@ -137,6 +146,15 @@ export default function CreateEvent() {
             onChange={update('photoUrl')}
             placeholder="URL de l'image de couverture (optionnel)"
             className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Localisation</label>
+          <LocationPicker
+            latitude={form.latitude}
+            longitude={form.longitude}
+            onChange={updateLocation}
           />
         </div>
 

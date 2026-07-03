@@ -21,6 +21,8 @@ public class Event
     public int MaxParticipants { get; set; }
     public EventStatus Status { get; set; } = EventStatus.Published;
     public string? PhotoUrl { get; set; }
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

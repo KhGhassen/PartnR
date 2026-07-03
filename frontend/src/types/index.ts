@@ -49,6 +49,9 @@ export interface EventSummary {
   creatorName: string;
   participantCount: number;
   photoUrl: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  distanceKm: number | null;
   createdAt: string;
 }
 
