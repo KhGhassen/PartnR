@@ -1,9 +1,9 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { register, resendConfirmation } from '../api/auth';
 import { useAuth } from '../context/AuthContext';
 import { trackAction } from '../api/analytics';
-import { listCities } from '../api/cities';
+import CityPicker from '../components/CityPicker';
 import AuthLayout from '../components/AuthLayout';
 import Button from '../components/ui/Button';
 import Field from '../components/ui/Field';
@@ -17,17 +17,12 @@ const PASSWORD_RULES = [
 
 export default function Register() {
   const [form, setForm] = useState({ firstName: '', email: '', password: '', city: '' });
-  const [cities, setCities] = useState<string[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [registered, setRegistered] = useState(false);
   const [resent, setResent] = useState(false);
   const { setAuth } = useAuth();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    listCities().then(setCities).catch(() => {});
-  }, []);
 
   const passwordValid = PASSWORD_RULES.every((r) => r.test(form.password));
 
@@ -153,12 +148,10 @@ export default function Register() {
           )}
         </div>
         <Field label="Ville">
-          <select required value={form.city} onChange={update('city')} className={inputClass(false)}>
-            <option value="">Sélectionner une ville</option>
-            {cities.map((city) => (
-              <option key={city} value={city}>{city}</option>
-            ))}
-          </select>
+          <CityPicker
+            value={form.city}
+            onChange={(c) => setForm((prev) => ({ ...prev, city: c.name }))}
+          />
         </Field>
         <Button type="submit" size="lg" disabled={loading || !passwordValid} className="w-full">
           {loading ? 'Inscription...' : "S'inscrire"}

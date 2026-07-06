@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import '../lib/leafletIcons';
 import { listEvents } from '../api/events';
+import { useAuth } from '../context/AuthContext';
 import Chip from '../components/ui/Chip';
 import EmptyState from '../components/ui/EmptyState';
 import Skeleton from '../components/ui/Skeleton';
@@ -11,6 +13,22 @@ import type { EventSummary } from '../types';
 
 const FRANCE_CENTER: [number, number] = [46.6034, 1.8883];
 const RADII = [5, 10, 25, 50];
+
+const eventIcon = (emoji: string, highlighted = false) =>
+  L.divIcon({
+    className: '',
+    html: `<div style="width:38px;height:38px;border-radius:50% 50% 50% 4px;background:${highlighted ? '#B8421E' : '#E8603A'};transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgb(0 0 0 / .35);border:2px solid #fff"><span style="transform:rotate(45deg);font-size:17px">${emoji}</span></div>`,
+    iconSize: [38, 38],
+    iconAnchor: [8, 34],
+    popupAnchor: [11, -30],
+  });
+
+const userIcon = L.divIcon({
+  className: '',
+  html: '<div style="width:16px;height:16px;border-radius:50%;background:#7B65D4;border:3px solid #fff;box-shadow:0 0 0 4px rgb(123 101 212 / .3)"></div>',
+  iconSize: [16, 16],
+  iconAnchor: [8, 8],
+});
 
 function Recenter({ center, zoom }: { center: [number, number]; zoom: number }) {
   const map = useMap();
@@ -22,11 +40,15 @@ function Recenter({ center, zoom }: { center: [number, number]; zoom: number }) 
 
 export default function EventsMap() {
   const navigate = useNavigate();
+  const user = useAuth()?.user;
   const [position, setPosition] = useState<[number, number] | null>(null);
+  const [cityCenter, setCityCenter] = useState<[number, number] | null>(null);
   const [radiusKm, setRadiusKm] = useState(25);
   const [events, setEvents] = useState<EventSummary[]>([]);
   const [notice, setNotice] = useState('');
   const [loading, setLoading] = useState(true);
+  const [hovered, setHovered] = useState<string | null>(null);
+  const markerRefs = useRef<Record<string, L.Marker | null>>({});
 
   const locateUser = async () => {
     if (!navigator.geolocation) {
@@ -38,7 +60,23 @@ export default function EventsMap() {
         setNotice('');
         setPosition([pos.coords.latitude, pos.coords.longitude]);
       },
-      () => {
+      async () => {
+        // Fall back to the profile city's centre via the official communes API.
+        if (user?.city) {
+          try {
+            const res = await fetch(
+              `https://geo.api.gouv.fr/communes?nom=${encodeURIComponent(user.city)}&fields=nom,centre&boost=population&limit=1`
+            );
+            const [commune] = res.ok ? await res.json() : [];
+            if (commune?.centre) {
+              setCityCenter([commune.centre.coordinates[1], commune.centre.coordinates[0]]);
+              setNotice(`Position indisponible — carte centrée sur ${commune.nom}.`);
+              return;
+            }
+          } catch {
+            // fall through to the generic notice
+          }
+        }
         setNotice('Position indisponible — affichage de tous les événements géolocalisés.');
       },
       { enableHighAccuracy: false, timeout: 10000 }
@@ -48,8 +86,9 @@ export default function EventsMap() {
   const fetchEvents = async (pos: [number, number] | null, radius: number) => {
     setLoading(true);
     try {
-      const res = pos
-        ? await listEvents({ lat: pos[0], lng: pos[1], radiusKm: radius, pageSize: 100 })
+      const anchor = pos ?? cityCenter;
+      const res = anchor
+        ? await listEvents({ lat: anchor[0], lng: anchor[1], radiusKm: radius, pageSize: 100 })
         : await listEvents({ pageSize: 100 });
       setEvents(res.items.filter((e) => e.latitude != null && e.longitude != null));
     } catch {
@@ -61,25 +100,28 @@ export default function EventsMap() {
 
   useEffect(() => {
     locateUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     fetchEvents(position, radiusKm);
-  }, [position, radiusKm]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [position, cityCenter, radiusKm]);
 
-  const center = position ?? FRANCE_CENTER;
-  const zoom = position ? 12 : 5;
+  const anchor = position ?? cityCenter;
+  const center = anchor ?? FRANCE_CENTER;
+  const zoom = position ? 12 : cityCenter ? 11 : 5;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-ink">
-            {position ? 'Événements près de vous' : 'Carte des événements'}
+            {anchor ? 'Événements près de vous' : 'Carte des événements'}
           </h1>
           {notice && <p className="mt-1 text-sm text-ink-sub">{notice}</p>}
         </div>
-        {position && (
+        {anchor && (
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-ink-sub">Rayon</span>
             {RADII.map((r) => (
@@ -105,14 +147,19 @@ export default function EventsMap() {
             <EmptyState
               emoji="📍"
               title="Aucun événement dans ce rayon."
-              hint={position ? 'Essayez un rayon plus large.' : 'Aucun événement géolocalisé pour le moment.'}
+              hint={anchor ? 'Essayez un rayon plus large.' : 'Aucun événement géolocalisé pour le moment.'}
             />
           ) : (
             events.map((ev) => (
               <Link
                 key={ev.id}
                 to={`/events/${ev.id}`}
-                className="flex items-center gap-4 rounded-2xl border border-line bg-white p-4 shadow-card transition-all hover:-translate-y-0.5 hover:shadow-card-hover"
+                onMouseEnter={() => {
+                  setHovered(ev.id);
+                  markerRefs.current[ev.id]?.openPopup();
+                }}
+                onMouseLeave={() => setHovered(null)}
+                className="flex items-center gap-4 rounded-2xl border border-line bg-white p-4 shadow-card transition-all hover:-translate-y-0.5 hover:border-coral-300 hover:shadow-card-hover"
               >
                 <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-coral-50 text-2xl">
                   {ev.activityIcon}
@@ -143,12 +190,19 @@ export default function EventsMap() {
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             {position && (
-              <Marker position={position}>
+              <Marker position={position} icon={userIcon}>
                 <Popup>Vous êtes ici</Popup>
               </Marker>
             )}
             {events.map((ev) => (
-              <Marker key={ev.id} position={[ev.latitude as number, ev.longitude as number]}>
+              <Marker
+                key={ev.id}
+                position={[ev.latitude as number, ev.longitude as number]}
+                icon={eventIcon(ev.activityIcon, hovered === ev.id)}
+                ref={(m) => {
+                  markerRefs.current[ev.id] = m;
+                }}
+              >
                 <Popup>
                   <div className="space-y-1">
                     <p className="font-semibold">{ev.activityIcon} {ev.title}</p>
