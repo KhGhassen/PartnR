@@ -205,7 +205,7 @@ export default function CreateScreen() {
               <View>
                 <Text style={styles.fieldLabel}>Ville *</Text>
                 <View style={styles.cityGrid}>
-                  {cities.map((c) => {
+                  {cities.slice(0, 8).map((c) => {
                     const active = form.city === c;
                     return (
                       <TouchableOpacity
@@ -221,6 +221,13 @@ export default function CreateScreen() {
                     );
                   })}
                 </View>
+                <TextInput
+                  value={form.city}
+                  onChangeText={(v) => setForm((f) => ({ ...f, city: v }))}
+                  placeholder="Ou tapez votre commune…"
+                  placeholderTextColor={T.textSub}
+                  style={[styles.fieldInput, { marginTop: 8 }]}
+                />
               </View>
               <View>
                 <Text style={styles.fieldLabel}>Date et heure *</Text>

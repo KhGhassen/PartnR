@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { trackAction } from '../api/analytics';
 import LocationPicker from '../components/LocationPicker';
+import CityPicker from '../components/CityPicker';
 import PhotoInput from '../components/PhotoInput';
 import Button from '../components/ui/Button';
 import Chip from '../components/ui/Chip';
@@ -146,13 +147,24 @@ export default function CreateEvent() {
 
         <div>
           <label className="mb-1.5 block text-xs font-semibold text-ink-mid">Ville</label>
-          <div className="flex flex-wrap gap-2">
-            {cities.map((c) => (
+          <div className="mb-2 flex flex-wrap gap-2">
+            {cities.slice(0, 8).map((c) => (
               <Chip key={c} active={form.city === c} onClick={() => set('city', c)}>
                 {c}
               </Chip>
             ))}
           </div>
+          <CityPicker
+            value={form.city}
+            error={!!validationErrors.city}
+            placeholder="Ou cherchez votre commune…"
+            onChange={(c) => {
+              set('city', c.name);
+              if (c.lat != null && c.lng != null && form.latitude == null) {
+                setForm((prev) => ({ ...prev, latitude: c.lat, longitude: c.lng }));
+              }
+            }}
+          />
           {validationErrors.city && <p className="mt-1 text-xs text-red-500">{validationErrors.city}</p>}
         </div>
 

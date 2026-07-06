@@ -1,17 +1,19 @@
 using System.ComponentModel.DataAnnotations;
-using PartnR.Domain.Constants;
 
 namespace PartnR.Application.Validation;
 
+// Cities now come from the geo.api.gouv.fr autocomplete (any French commune),
+// so this only sanity-checks the value instead of enforcing a fixed list.
 public class AllowedCityAttribute : ValidationAttribute
 {
-    public AllowedCityAttribute() : base("La ville doit faire partie de la liste proposée.")
+    public AllowedCityAttribute() : base("Ville invalide.")
     {
     }
 
     public override bool IsValid(object? value)
     {
         if (value is not string city) return true;
-        return FrenchCities.All.Contains(city);
+        var trimmed = city.Trim();
+        return trimmed.Length is >= 1 and <= 100;
     }
 }

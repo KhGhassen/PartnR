@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { getProfile, updateMyProfile, getRatingsForUser } from '../api/profiles';
 import { listActivities } from '../api/activities';
-import { listCities } from '../api/cities';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import ChangePasswordForm from '../components/ChangePasswordForm';
 import PhotoInput from '../components/PhotoInput';
+import CityPicker from '../components/CityPicker';
 import Avatar from '../components/ui/Avatar';
 import Button from '../components/ui/Button';
 import Chip from '../components/ui/Chip';
@@ -30,7 +30,6 @@ export default function Profile() {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ firstName: '', city: '', bio: '', avatarUrl: '', favoriteActivities: [] as string[], profileType: '' });
   const [activities, setActivities] = useState<Activity[]>([]);
-  const [cities, setCities] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -61,7 +60,6 @@ export default function Profile() {
   useEffect(() => {
     if (isOwn) {
       listActivities().then(setActivities).catch(() => {});
-      listCities().then(setCities).catch(() => {});
     }
   }, [isOwn]);
 
@@ -163,16 +161,12 @@ export default function Profile() {
             <div className="rounded-2xl bg-cream p-4">
               <p className="mb-0.5 text-xs text-ink-sub">Ville</p>
               {editing ? (
-                <select
-                  value={form.city}
-                  onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
-                  className={inputClass(false, 'mt-1')}
-                >
-                  <option value="">Sélectionner une ville</option>
-                  {cities.map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
+                <div className="mt-1">
+                  <CityPicker
+                    value={form.city}
+                    onChange={(c) => setForm((f) => ({ ...f, city: c.name }))}
+                  />
+                </div>
               ) : (
                 <p className="font-semibold text-ink">📍 {profile.city}</p>
               )}
