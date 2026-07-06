@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Avatar from './ui/Avatar';
+import NotificationBell from './NotificationBell';
 import { ButtonLink } from './ui/Button';
 
 function NavItem({ to, children, onClick }: { to: string; children: React.ReactNode; onClick?: () => void }) {
@@ -80,6 +81,7 @@ export default function Navbar() {
           </button>
           {isAuthenticated ? (
             <>
+              <NotificationBell />
               <Link
                 to={`/profile/${user?.id}`}
                 className="flex items-center gap-2 rounded-full py-1 pl-1 pr-3 transition-colors hover:bg-cream-deep"

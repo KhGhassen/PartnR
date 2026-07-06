@@ -17,6 +17,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
     public DbSet<EventPhoto> EventPhotos => Set<EventPhoto>();
     public DbSet<UserAction> UserActions => Set<UserAction>();
     public DbSet<StoredImage> StoredImages => Set<StoredImage>();
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -184,6 +185,14 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
         {
             e.Property(i => i.ContentType).HasMaxLength(50);
             e.HasIndex(i => i.UploaderId);
+        });
+
+        // ── NOTIFICATIONS ─────────────────────────────────────
+        builder.Entity<Notification>(e =>
+        {
+            e.Property(n => n.Type).HasMaxLength(50);
+            e.Property(n => n.Message).HasMaxLength(500);
+            e.HasIndex(n => new { n.UserId, n.CreatedAt });
         });
     }
 

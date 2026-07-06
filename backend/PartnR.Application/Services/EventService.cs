@@ -12,17 +12,20 @@ public class EventService : IEventService
     private readonly IEventRepository _events;
     private readonly IActivityRepository _activities;
     private readonly IEventParticipantRepository _participants;
+    private readonly INotificationRepository _notifications;
     private readonly IUnitOfWork _unitOfWork;
 
     public EventService(
         IEventRepository events,
         IActivityRepository activities,
         IEventParticipantRepository participants,
+        INotificationRepository notifications,
         IUnitOfWork unitOfWork)
     {
         _events = events;
         _activities = activities;
         _participants = participants;
+        _notifications = notifications;
         _unitOfWork = unitOfWork;
     }
 
@@ -179,6 +182,23 @@ public class EventService : IEventService
         if (dto.Location is not null) ev.Location = dto.Location;
         if (dto.Date.HasValue) ev.Date = DateTime.SpecifyKind(dto.Date.Value, DateTimeKind.Utc);
         if (dto.MaxParticipants.HasValue) ev.MaxParticipants = dto.MaxParticipants.Value;
+        if (dto.Status.HasValue && dto.Status.Value == EventStatus.Cancelled && ev.Status != EventStatus.Cancelled)
+        {
+            var participantIds = await _participants.Query()
+                .Where(p => p.EventId == eventId && p.Status == ParticipantStatus.Confirmed && p.UserId != userId)
+                .Select(p => p.UserId)
+                .ToListAsync();
+            foreach (var pid in participantIds)
+            {
+                _notifications.Add(new Notification
+                {
+                    UserId = pid,
+                    Type = "event_cancelled",
+                    Message = $"L'événement « {ev.Title} » a été annulé.",
+                    EventId = ev.Id,
+                });
+            }
+        }
         if (dto.Status.HasValue) ev.Status = dto.Status.Value;
         if (dto.PhotoUrl is not null) ev.PhotoUrl = dto.PhotoUrl;
         if (dto.Latitude.HasValue) ev.Latitude = dto.Latitude;
@@ -215,6 +235,17 @@ public class EventService : IEventService
                 Status = ParticipantStatus.Confirmed
             });
 
+            if (ev.CreatorId != userId)
+            {
+                _notifications.Add(new Notification
+                {
+                    UserId = ev.CreatorId,
+                    Type = "participant_joined",
+                    Message = $"Un participant a rejoint « {ev.Title} » ({confirmed + 1}/{ev.MaxParticipants}).",
+                    EventId = ev.Id,
+                });
+            }
+
             await _unitOfWork.SaveChangesAsync();
             await transaction.CommitAsync();
         }
@@ -237,6 +268,13 @@ public class EventService : IEventService
             throw new InvalidOperationException("Creator cannot leave. Cancel the event instead.");
 
         participant.Status = ParticipantStatus.Cancelled;
+        _notifications.Add(new Notification
+        {
+            UserId = ev.CreatorId,
+            Type = "participant_left",
+            Message = $"Un participant a quitté « {ev.Title} ».",
+            EventId = ev.Id,
+        });
         await _unitOfWork.SaveChangesAsync();
     }
 

@@ -23,6 +23,7 @@ public class Event
     public string? PhotoUrl { get; set; }
     public double? Latitude { get; set; }
     public double? Longitude { get; set; }
+    public bool ReminderSent { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
