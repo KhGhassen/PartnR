@@ -3,7 +3,8 @@ namespace PartnR.Domain.Entities;
 public enum ParticipantStatus
 {
     Confirmed,
-    Cancelled
+    Cancelled,
+    Waitlisted
 }
 
 public class EventParticipant

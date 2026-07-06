@@ -221,27 +221,38 @@ public class EventService : IEventService
             if (ev.Status != EventStatus.Published)
                 throw new InvalidOperationException("Cannot join this event.");
 
-            var confirmed = ev.Participants.Count(p => p.Status == ParticipantStatus.Confirmed);
-            if (confirmed >= ev.MaxParticipants)
-                throw new InvalidOperationException("Event is full.");
-
-            if (ev.Participants.Any(p => p.UserId == userId))
+            if (ev.Participants.Any(p => p.UserId == userId && p.Status != ParticipantStatus.Cancelled))
                 throw new InvalidOperationException("Already participating.");
 
-            _participants.Add(new EventParticipant
+            var confirmed = ev.Participants.Count(p => p.Status == ParticipantStatus.Confirmed);
+            var isFull = confirmed >= ev.MaxParticipants;
+            var status = isFull ? ParticipantStatus.Waitlisted : ParticipantStatus.Confirmed;
+
+            var existing = ev.Participants.FirstOrDefault(p => p.UserId == userId);
+            if (existing is not null)
             {
-                EventId = eventId,
-                UserId = userId,
-                Status = ParticipantStatus.Confirmed
-            });
+                existing.Status = status;
+                existing.JoinedAt = DateTime.UtcNow;
+            }
+            else
+            {
+                _participants.Add(new EventParticipant
+                {
+                    EventId = eventId,
+                    UserId = userId,
+                    Status = status
+                });
+            }
 
             if (ev.CreatorId != userId)
             {
                 _notifications.Add(new Notification
                 {
                     UserId = ev.CreatorId,
-                    Type = "participant_joined",
-                    Message = $"Un participant a rejoint « {ev.Title} » ({confirmed + 1}/{ev.MaxParticipants}).",
+                    Type = isFull ? "participant_waitlisted" : "participant_joined",
+                    Message = isFull
+                        ? $"Quelqu'un s'est inscrit en liste d'attente de « {ev.Title} »."
+                        : $"Un participant a rejoint « {ev.Title} » ({confirmed + 1}/{ev.MaxParticipants}).",
                     EventId = ev.Id,
                 });
             }
@@ -267,6 +278,7 @@ public class EventService : IEventService
         if (ev.CreatorId == userId)
             throw new InvalidOperationException("Creator cannot leave. Cancel the event instead.");
 
+        var wasConfirmed = participant.Status == ParticipantStatus.Confirmed;
         participant.Status = ParticipantStatus.Cancelled;
         _notifications.Add(new Notification
         {
@@ -275,6 +287,27 @@ public class EventService : IEventService
             Message = $"Un participant a quitté « {ev.Title} ».",
             EventId = ev.Id,
         });
+
+        // A confirmed spot opened up — promote the oldest waitlisted participant.
+        if (wasConfirmed)
+        {
+            var promoted = await _participants.Query()
+                .Where(p => p.EventId == eventId && p.Status == ParticipantStatus.Waitlisted)
+                .OrderBy(p => p.JoinedAt)
+                .FirstOrDefaultAsync();
+            if (promoted is not null)
+            {
+                promoted.Status = ParticipantStatus.Confirmed;
+                _notifications.Add(new Notification
+                {
+                    UserId = promoted.UserId,
+                    Type = "waitlist_promoted",
+                    Message = $"Une place s'est libérée : vous participez à « {ev.Title} » ! 🎉",
+                    EventId = ev.Id,
+                });
+            }
+        }
+
         await _unitOfWork.SaveChangesAsync();
     }
 
