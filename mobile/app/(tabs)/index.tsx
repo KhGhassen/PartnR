@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, TextInput } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -7,48 +7,66 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { T } from '../../constants/tokens';
 import { listEvents, type EventSummary } from '../../api/events';
+import { listActivities, type Activity } from '../../api/activities';
 import { useApp } from '../../context/AppContext';
 import Avatar from '../../components/Avatar';
 import Pill from '../../components/Pill';
 
-const FILTERS = ['All', 'Running', 'Food', 'Music', 'Sports', 'Art'];
-
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useApp();
-  const [activeFilter, setActiveFilter] = useState('All');
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [activeFilter, setActiveFilter] = useState('Tous');
   const [events, setEvents] = useState<EventSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
   const [nearMe, setNearMe] = useState(false);
   const [locating, setLocating] = useState(false);
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const searchDebounce = useRef<ReturnType<typeof setTimeout>>();
 
-  const fetchEvents = useCallback(async (coords?: { lat: number; lng: number }) => {
+  const fetchEvents = useCallback(async (c: { lat: number; lng: number } | null, s: string) => {
     setError('');
     try {
-      const result = await listEvents(
-        coords ? { pageSize: 20, lat: coords.lat, lng: coords.lng, radiusKm: 25 } : { pageSize: 20 }
-      );
+      const result = await listEvents({
+        pageSize: 20,
+        search: s.trim() || undefined,
+        ...(c ? { lat: c.lat, lng: c.lng, radiusKm: 25 } : {}),
+      });
       setEvents(result.items);
     } catch {
       setError('Impossible de charger les événements.');
     }
   }, []);
 
-  useEffect(() => { fetchEvents().finally(() => setLoading(false)); }, [fetchEvents]);
+  useEffect(() => {
+    listActivities().then(setActivities).catch(() => {});
+    fetchEvents(null, '').finally(() => setLoading(false));
+  }, [fetchEvents]);
+
+  useEffect(() => () => clearTimeout(searchDebounce.current), []);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchEvents();
+    await fetchEvents(coords, search);
     setRefreshing(false);
-  }, [fetchEvents]);
+  }, [fetchEvents, coords, search]);
+
+  const applySearch = (s: string) => {
+    setSearch(s);
+    clearTimeout(searchDebounce.current);
+    searchDebounce.current = setTimeout(() => fetchEvents(coords, s), 400);
+  };
 
   const toggleNearMe = useCallback(async () => {
     if (nearMe) {
       setNearMe(false);
+      setCoords(null);
       setLoading(true);
-      await fetchEvents();
+      await fetchEvents(null, search);
       setLoading(false);
       return;
     }
@@ -61,18 +79,20 @@ export default function HomeScreen() {
         return;
       }
       const pos = await Location.getCurrentPositionAsync({});
+      const c = { lat: pos.coords.latitude, lng: pos.coords.longitude };
       setNearMe(true);
+      setCoords(c);
       setLoading(true);
-      await fetchEvents({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      await fetchEvents(c, search);
       setLoading(false);
     } catch {
       setError('Impossible de récupérer votre position.');
     } finally {
       setLocating(false);
     }
-  }, [nearMe, fetchEvents]);
+  }, [nearMe, fetchEvents, search]);
 
-  const filtered = activeFilter === 'All'
+  const filtered = activeFilter === 'Tous'
     ? events
     : events.filter((e) => e.activityName === activeFilter);
 
@@ -81,16 +101,36 @@ export default function HomeScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.greeting}>Good morning 👋</Text>
-          <Text style={styles.name}>{user?.firstName ?? 'Alex'}</Text>
+          <Text style={styles.greeting}>Bonjour 👋</Text>
+          <Text style={styles.name}>{user?.firstName ?? ''}</Text>
         </View>
         <View style={styles.headerRight}>
-          <TouchableOpacity style={styles.searchBtn}>
-            <Ionicons name="search" size={16} color={T.textMid} />
+          <TouchableOpacity
+            style={[styles.searchBtn, searchOpen && { backgroundColor: T.coralL }]}
+            onPress={() => {
+              if (searchOpen && search) applySearch('');
+              setSearchOpen((o) => !o);
+            }}
+          >
+            <Ionicons name={searchOpen ? 'close' : 'search'} size={16} color={searchOpen ? T.coralD : T.textMid} />
           </TouchableOpacity>
           <Avatar initials={(user?.firstName ?? 'A')[0]} color={T.coralL} size={36} />
         </View>
       </View>
+
+      {/* Search */}
+      {searchOpen && (
+        <View style={styles.searchRow}>
+          <TextInput
+            value={search}
+            onChangeText={applySearch}
+            placeholder="Rechercher un événement, un lieu…"
+            placeholderTextColor={T.textSub}
+            autoFocus
+            style={styles.searchInput}
+          />
+        </View>
+      )}
 
       {/* Filter pills */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters} style={styles.filtersScroll}>
@@ -99,8 +139,14 @@ export default function HomeScreen() {
           active={nearMe}
           onPress={toggleNearMe}
         />
-        {FILTERS.map((f) => (
-          <Pill key={f} label={f} active={activeFilter === f} onPress={() => setActiveFilter(f)} />
+        <Pill label="Tous" active={activeFilter === 'Tous'} onPress={() => setActiveFilter('Tous')} />
+        {activities.map((a) => (
+          <Pill
+            key={a.id}
+            label={`${a.icon} ${a.name}`}
+            active={activeFilter === a.name}
+            onPress={() => setActiveFilter(a.name)}
+          />
         ))}
       </ScrollView>
 
@@ -111,7 +157,7 @@ export default function HomeScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.coral} />}
       >
         <LinearGradient colors={[T.coral, T.violet]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.banner}>
-          <Text style={styles.bannerSub}>📍 Near you · New York</Text>
+          <Text style={styles.bannerSub}>📍 {nearMe ? 'Près de vous' : user?.city ?? 'Partout en France'}</Text>
           <Text style={styles.bannerMain}>{events.length} activités cette semaine</Text>
         </LinearGradient>
 
@@ -120,7 +166,7 @@ export default function HomeScreen() {
         ) : error ? (
           <View style={styles.errorBox}>
             <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity onPress={fetchEvents}>
+            <TouchableOpacity onPress={() => fetchEvents(coords, search)}>
               <Text style={styles.retryText}>Réessayer</Text>
             </TouchableOpacity>
           </View>
@@ -178,6 +224,9 @@ const styles = StyleSheet.create({
   name: { fontSize: 20, fontWeight: '700', color: T.text, letterSpacing: -0.5, fontFamily: 'DMSans_700Bold' },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   searchBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: T.card, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 4, shadowOffset: { width: 0, height: 1 }, elevation: 2 },
+
+  searchRow: { paddingHorizontal: 20, marginTop: 12 },
+  searchInput: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 14, borderWidth: 1.5, borderColor: T.border, fontSize: 14, fontFamily: 'DMSans_400Regular', color: T.text, backgroundColor: '#fff' },
 
   filtersScroll: { flexShrink: 0, marginTop: 14 },
   filters: { paddingHorizontal: 20, gap: 6, paddingBottom: 12 },

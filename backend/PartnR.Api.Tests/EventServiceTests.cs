@@ -401,6 +401,36 @@ public class EventServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task ListAsync_Search_MatchesTitleAndDescription()
+    {
+        await _service.CreateAsync(_userId, new CreateEventDto
+        {
+            Title = "Footing matinal",
+            Description = "Course tranquille au parc",
+            City = "Paris",
+            Date = DateTime.UtcNow.AddDays(5),
+            MaxParticipants = 5,
+            ActivityId = _activityId
+        });
+        await _service.CreateAsync(_userId, new CreateEventDto
+        {
+            Title = "Soirée ramen",
+            City = "Paris",
+            Date = DateTime.UtcNow.AddDays(5),
+            MaxParticipants = 5,
+            ActivityId = _activityId
+        });
+
+        var byTitle = await _service.ListAsync(null, null, null, search: "ramen");
+        Assert.Single(byTitle.Items);
+        Assert.Equal("Soirée ramen", byTitle.Items[0].Title);
+
+        var byDescription = await _service.ListAsync(null, null, null, search: "parc");
+        Assert.Single(byDescription.Items);
+        Assert.Equal("Footing matinal", byDescription.Items[0].Title);
+    }
+
+    [Fact]
     public async Task ListAsync_NearMe_FiltersByRadiusAndSortsByDistance()
     {
         // Paris

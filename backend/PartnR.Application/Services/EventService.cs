@@ -26,7 +26,7 @@ public class EventService : IEventService
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<PaginatedResult<EventDto>> ListAsync(string? city, Guid? activityId, EventStatus? status, int page = 1, int pageSize = 20, bool mine = false, Guid? userId = null, double? lat = null, double? lng = null, double? radiusKm = null)
+    public async Task<PaginatedResult<EventDto>> ListAsync(string? city, Guid? activityId, EventStatus? status, int page = 1, int pageSize = 20, bool mine = false, Guid? userId = null, double? lat = null, double? lng = null, double? radiusKm = null, string? search = null)
     {
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 50);
@@ -39,6 +39,15 @@ public class EventService : IEventService
 
         if (mine && userId.HasValue)
             query = query.Where(e => e.Participants.Any(p => p.UserId == userId.Value && p.Status == ParticipantStatus.Confirmed));
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToLower();
+            query = query.Where(e =>
+                e.Title.ToLower().Contains(term) ||
+                (e.Description != null && e.Description.ToLower().Contains(term)) ||
+                (e.Location != null && e.Location.ToLower().Contains(term)));
+        }
 
         if (!string.IsNullOrEmpty(city))
             query = query.Where(e => e.City.ToLower() == city.ToLower());
