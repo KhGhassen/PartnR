@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Image, TextInput } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Image } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { T } from '../../constants/tokens';
 import { getEvent, joinEvent, leaveEvent, type EventDetail } from '../../api/events';
 import { addEventPhoto, deleteEventPhoto } from '../../api/eventPhotos';
+import { pickAndUploadImage } from '../../api/uploads';
 import { toApiError } from '../../api/client';
 import { useApp } from '../../context/AppContext';
 import Avatar from '../../components/Avatar';
@@ -21,8 +22,6 @@ export default function ActivityDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState('');
-  const [addingPhoto, setAddingPhoto] = useState(false);
-  const [photoUrl, setPhotoUrl] = useState('');
   const [photoLoading, setPhotoLoading] = useState(false);
 
   const fetchEvent = async () => {
@@ -86,13 +85,13 @@ export default function ActivityDetailScreen() {
   const ctaAction = isCreator || isFull ? undefined : isParticipant ? handleLeave : handleJoin;
 
   const handleAddPhoto = async () => {
-    if (!photoUrl.trim()) return;
     setPhotoLoading(true);
     try {
-      await addEventPhoto(event.id, { url: photoUrl.trim() });
-      setPhotoUrl('');
-      setAddingPhoto(false);
-      await fetchEvent();
+      const url = await pickAndUploadImage();
+      if (url) {
+        await addEventPhoto(event.id, { url });
+        await fetchEvent();
+      }
     } catch (err) {
       setError(toApiError(err).message);
     } finally {
@@ -154,33 +153,12 @@ export default function ActivityDetailScreen() {
         <View style={styles.section}>
           <View style={styles.galleryHeader}>
             <Text style={styles.sectionTitle}>Photos</Text>
-            {isParticipant && !addingPhoto && (
-              <TouchableOpacity onPress={() => setAddingPhoto(true)}>
-                <Text style={styles.addPhotoLink}>+ Ajouter</Text>
+            {isParticipant && (
+              <TouchableOpacity onPress={handleAddPhoto} disabled={photoLoading}>
+                <Text style={styles.addPhotoLink}>{photoLoading ? 'Envoi…' : '+ Ajouter'}</Text>
               </TouchableOpacity>
             )}
           </View>
-
-          {addingPhoto && (
-            <View style={styles.addPhotoBox}>
-              <TextInput
-                value={photoUrl}
-                onChangeText={setPhotoUrl}
-                placeholder="URL de la photo"
-                placeholderTextColor={T.textSub}
-                autoCapitalize="none"
-                style={styles.addPhotoInput}
-              />
-              <View style={styles.addPhotoActions}>
-                <TouchableOpacity onPress={handleAddPhoto} disabled={photoLoading}>
-                  <Text style={styles.addPhotoSave}>{photoLoading ? 'Envoi…' : 'Ajouter'}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => { setAddingPhoto(false); setPhotoUrl(''); }}>
-                  <Text style={styles.addPhotoCancel}>Annuler</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
 
           {event.photos.length === 0 ? (
             <Text style={styles.noPhotos}>Aucune photo pour l'instant.</Text>
@@ -247,11 +225,6 @@ const styles = StyleSheet.create({
 
   galleryHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   addPhotoLink:  { fontSize: 13, fontWeight: '600', color: T.coral, fontFamily: 'DMSans_600SemiBold' },
-  addPhotoBox:   { backgroundColor: T.card, borderRadius: 16, padding: 12, marginBottom: 10, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
-  addPhotoInput: { paddingHorizontal: 14, paddingVertical: 12, borderRadius: 14, borderWidth: 1.5, borderColor: T.border, fontSize: 14, fontFamily: 'DMSans_400Regular', color: T.text, backgroundColor: '#fff' },
-  addPhotoActions: { flexDirection: 'row', gap: 16, marginTop: 10 },
-  addPhotoSave:   { fontSize: 13, fontWeight: '600', color: T.coral, fontFamily: 'DMSans_600SemiBold' },
-  addPhotoCancel: { fontSize: 13, fontWeight: '500', color: T.textSub, fontFamily: 'DMSans_500Medium' },
   noPhotos:  { fontSize: 13, color: T.textSub, fontFamily: 'DMSans_400Regular' },
   photoGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   photoThumb: { width: 92, height: 92, borderRadius: 12, backgroundColor: T.bg2 },

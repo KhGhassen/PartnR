@@ -37,6 +37,7 @@ public static class DependencyInjection
         services.AddScoped<IEventPhotoRepository, EventPhotoRepository>();
         services.AddScoped<IMessageRepository, MessageRepository>();
         services.AddScoped<IUserActionRepository, UserActionRepository>();
+        services.AddScoped<IStoredImageRepository, StoredImageRepository>();
 
         services.AddScoped<IEmailService, SmtpEmailService>();
         services.AddSingleton<IAnalyticsTracker, AnalyticsTracker>();

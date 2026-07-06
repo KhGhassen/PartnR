@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, TextInput, TouchableOpacity,
-  StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator,
+  StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator, Image,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,6 +10,7 @@ import { T } from '../constants/tokens';
 import { listActivities, type Activity } from '../api/activities';
 import { listCities } from '../api/cities';
 import { createEvent } from '../api/events';
+import { pickAndUploadImage } from '../api/uploads';
 import { toApiError } from '../api/client';
 import BackBtn from '../components/BackBtn';
 import CTAButton from '../components/CTAButton';
@@ -37,6 +38,7 @@ export default function CreateScreen() {
   const [loadingActivities, setLoadingActivities] = useState(true);
   const [cities, setCities] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [error, setError] = useState('');
   const [form, setForm] = useState<FormState>({
     activityId: '', activityName: '', title: '', description: '',
@@ -63,6 +65,18 @@ export default function CreateScreen() {
     listCities().then(setCities).catch(() => {});
     captureLocation();
   }, []);
+
+  const handlePickPhoto = async () => {
+    setUploadingPhoto(true);
+    try {
+      const url = await pickAndUploadImage();
+      if (url) setForm((f) => ({ ...f, photoUrl: url }));
+    } catch (err) {
+      setError(toApiError(err).message);
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
 
   const isValid = [
     form.activityId.length > 0,
@@ -152,7 +166,6 @@ export default function CreateScreen() {
                 { label: 'Titre *',       key: 'title' as const,       placeholder: 'Ex: Footing matinal au parc' },
                 { label: 'Lieu / RDV',    key: 'location' as const,    placeholder: 'Ex: Entrée du parc' },
                 { label: 'Description',   key: 'description' as const, placeholder: 'Décrivez votre activité…' },
-                { label: 'Photo de couverture (URL)', key: 'photoUrl' as const, placeholder: 'URL de l\'image (optionnel)' },
               ].map((field) => (
                 <View key={field.key}>
                   <Text style={styles.fieldLabel}>{field.label}</Text>
@@ -167,6 +180,28 @@ export default function CreateScreen() {
                   />
                 </View>
               ))}
+              <View>
+                <Text style={styles.fieldLabel}>Photo de couverture</Text>
+                <TouchableOpacity
+                  onPress={handlePickPhoto}
+                  disabled={uploadingPhoto}
+                  activeOpacity={0.8}
+                  style={styles.photoPicker}
+                >
+                  {form.photoUrl ? (
+                    <Image source={{ uri: form.photoUrl }} style={styles.photoPreview} resizeMode="cover" />
+                  ) : (
+                    <Text style={styles.photoPickerText}>
+                      {uploadingPhoto ? 'Envoi…' : '📷  Choisir une image (optionnel)'}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+                {form.photoUrl ? (
+                  <TouchableOpacity onPress={() => setForm((f) => ({ ...f, photoUrl: '' }))}>
+                    <Text style={styles.photoRemove}>Retirer la photo</Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
               <View>
                 <Text style={styles.fieldLabel}>Ville *</Text>
                 <View style={styles.cityGrid}>
@@ -282,6 +317,15 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_400Regular', color: T.text, backgroundColor: '#fff',
   },
   fieldInputMulti: { minHeight: 80, textAlignVertical: 'top' },
+
+  photoPicker: {
+    height: 96, borderRadius: 16, borderWidth: 1.5, borderColor: T.border,
+    borderStyle: 'dashed', backgroundColor: '#fff', alignItems: 'center',
+    justifyContent: 'center', overflow: 'hidden',
+  },
+  photoPreview: { width: '100%', height: '100%' },
+  photoPickerText: { fontSize: 13, color: T.textSub, fontFamily: 'DMSans_500Medium' },
+  photoRemove: { fontSize: 12, color: T.coralD, marginTop: 6, fontFamily: 'DMSans_500Medium' },
 
   cityGrid:  { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   cityChip:  { borderRadius: 999, borderWidth: 1.5, paddingHorizontal: 14, paddingVertical: 7 },

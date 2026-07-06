@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { addEventPhoto, deleteEventPhoto } from '../api/eventPhotos';
+import { uploadImage } from '../api/uploads';
 import type { EventPhoto } from '../types';
 
 interface Props {
@@ -12,27 +13,27 @@ interface Props {
 }
 
 export default function EventGallery({ eventId, photos, canAdd, currentUserId, isCreator, onChange }: Props) {
-  const [adding, setAdding] = useState(false);
-  const [url, setUrl] = useState('');
+  const fileRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleAdd = async () => {
-    if (!url.trim()) {
-      setError('Indiquez une URL');
+  const handleFile = async (file: File | undefined) => {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setError("L'image ne doit pas dépasser 5 Mo.");
       return;
     }
     setLoading(true);
     setError('');
     try {
-      const photo = await addEventPhoto(eventId, { url: url.trim() });
+      const { url } = await uploadImage(file);
+      const photo = await addEventPhoto(eventId, { url });
       onChange([photo, ...photos]);
-      setUrl('');
-      setAdding(false);
     } catch (err) {
       setError((err as {response?: {data?: {error?: string}}}).response?.data?.error || 'Erreur lors de l\'ajout');
     } finally {
       setLoading(false);
+      if (fileRef.current) fileRef.current.value = '';
     }
   };
 
@@ -50,43 +51,27 @@ export default function EventGallery({ eventId, photos, canAdd, currentUserId, i
     <div className="mb-8">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-semibold">Photos de l'événement</h2>
-        {canAdd && !adding && (
-          <button
-            onClick={() => setAdding(true)}
-            className="text-coral-600 hover:text-coral-700 text-sm font-medium"
-          >
-            + Ajouter une photo
-          </button>
+        {canAdd && (
+          <>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="hidden"
+              onChange={(e) => handleFile(e.target.files?.[0])}
+            />
+            <button
+              onClick={() => fileRef.current?.click()}
+              disabled={loading}
+              className="text-coral-600 hover:text-coral-700 text-sm font-medium disabled:opacity-50"
+            >
+              {loading ? 'Envoi…' : '+ Ajouter une photo'}
+            </button>
+          </>
         )}
       </div>
 
-      {adding && (
-        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 mb-4">
-          <input
-            type="text"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="URL de la photo"
-            className="w-full border-[1.5px] border-line rounded-2xl px-3 py-2 text-sm focus:ring-2 focus:ring-coral-500/30 focus:border-coral-500 outline-none mb-3"
-          />
-          {error && <p className="text-red-500 text-xs mb-2">{error}</p>}
-          <div className="flex gap-2">
-            <button
-              onClick={handleAdd}
-              disabled={loading}
-              className="bg-coral-500 text-white px-4 py-1.5 rounded-full text-sm font-semibold hover:bg-coral-600 disabled:opacity-50"
-            >
-              {loading ? 'Envoi...' : 'Ajouter'}
-            </button>
-            <button
-              onClick={() => { setAdding(false); setUrl(''); setError(''); }}
-              className="text-gray-500 hover:text-gray-700 text-sm px-3"
-            >
-              Annuler
-            </button>
-          </div>
-        </div>
-      )}
+      {error && <p className="text-red-500 text-xs mb-2">{error}</p>}
 
       {photos.length === 0 ? (
         <p className="text-sm text-gray-500">Aucune photo pour l'instant.</p>

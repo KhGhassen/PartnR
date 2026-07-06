@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { trackAction } from '../api/analytics';
 import LocationPicker from '../components/LocationPicker';
+import PhotoInput from '../components/PhotoInput';
 import Button from '../components/ui/Button';
 import Chip from '../components/ui/Chip';
 import Field from '../components/ui/Field';
@@ -139,14 +140,8 @@ export default function CreateEvent() {
           />
         </Field>
 
-        <Field label="Photo de couverture (URL)" hint="Optionnel — illustre la carte de l'événement.">
-          <input
-            type="text"
-            value={form.photoUrl}
-            onChange={update('photoUrl')}
-            placeholder="https://…"
-            className={inputClass(false)}
-          />
+        <Field label="Photo de couverture" hint="Optionnel — illustre la carte de l'événement.">
+          <PhotoInput value={form.photoUrl} onChange={(url) => set('photoUrl', url)} />
         </Field>
 
         <div>
