@@ -55,6 +55,7 @@ export const listEvents = (params?: {
   activityId?: string;
   status?: string;
   mine?: boolean;
+  search?: string;
   page?: number;
   pageSize?: number;
   lat?: number;

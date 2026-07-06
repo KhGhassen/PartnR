@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { listEvents } from '../api/events';
 import { listActivities } from '../api/activities';
 import { listCities } from '../api/cities';
@@ -15,24 +16,28 @@ import { bandColor } from '../components/ui/classes';
 import type { EventSummary, Activity } from '../types';
 
 export default function EventList() {
+  const isAuthenticated = useAuth()?.isAuthenticated ?? false;
   const [events, setEvents] = useState<EventSummary[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [cities, setCities] = useState<string[]>([]);
   const [city, setCity] = useState('');
   const [activityId, setActivityId] = useState('');
+  const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const searchDebounce = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  const fetchEvents = async (p: number, c = city, a = activityId) => {
+  const fetchEvents = async (p: number, c = city, a = activityId, s = search) => {
     setLoading(true);
     setError('');
     try {
       const result = await listEvents({
         city: c || undefined,
         activityId: a || undefined,
+        search: s.trim() || undefined,
         page: p,
         pageSize: 20,
       });
@@ -61,6 +66,14 @@ export default function EventList() {
     trackAction({ action: 'events_searched', metadata: JSON.stringify({ city: c, activityId: a }) });
   };
 
+  const applySearch = (s: string) => {
+    setSearch(s);
+    clearTimeout(searchDebounce.current);
+    searchDebounce.current = setTimeout(() => fetchEvents(1, city, activityId, s), 400);
+  };
+
+  useEffect(() => () => clearTimeout(searchDebounce.current), []);
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       {/* Hero */}
@@ -71,15 +84,33 @@ export default function EventList() {
           {totalCount > 0 ? `${totalCount} événement${totalCount > 1 ? 's' : ''} à venir` : 'PartnR'}
         </p>
         <h1 className="max-w-lg text-3xl font-bold leading-tight tracking-tight">
-          Trouvez votre prochain partenaire d'activité
+          {isAuthenticated
+            ? "Trouvez votre prochain partenaire d'activité"
+            : 'Ne faites plus rien seul·e.'}
         </h1>
+        {!isAuthenticated && (
+          <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/85">
+            Course à pied, resto, concert, expo… PartnR vous connecte avec des gens près de
+            chez vous qui partagent vos envies. Rejoignez une activité en deux clics, ou
+            proposez la vôtre.
+          </p>
+        )}
         <div className="mt-5 flex flex-wrap gap-3">
-          <Link
-            to="/events/new"
-            className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-coral-600 transition-colors hover:bg-coral-50"
-          >
-            + Créer un événement
-          </Link>
+          {isAuthenticated ? (
+            <Link
+              to="/events/new"
+              className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-coral-600 transition-colors hover:bg-coral-50"
+            >
+              + Créer un événement
+            </Link>
+          ) : (
+            <Link
+              to="/register"
+              className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-coral-600 transition-colors hover:bg-coral-50"
+            >
+              Rejoindre PartnR — c'est gratuit
+            </Link>
+          )}
           <Link
             to="/map"
             className="rounded-full border border-white/40 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
@@ -87,6 +118,18 @@ export default function EventList() {
             📍 Voir la carte
           </Link>
         </div>
+      </div>
+
+      {/* Search */}
+      <div className="relative mb-4">
+        <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-sub">🔍</span>
+        <input
+          type="search"
+          value={search}
+          onChange={(e) => applySearch(e.target.value)}
+          placeholder="Rechercher un événement, un lieu…"
+          className={inputClass(false, 'pl-11')}
+        />
       </div>
 
       {/* Filters */}
