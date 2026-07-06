@@ -70,6 +70,10 @@ export default function EventDetail() {
     (p) => p.userId === user?.id && p.status === 'Confirmed'
   );
   const isFull = event.participantCount >= event.maxParticipants;
+  const isWaitlisted = event.participants.some(
+    (p) => p.userId === user?.id && p.status === 'Waitlisted'
+  );
+  const waitlistCount = event.participants.filter((p) => p.status === 'Waitlisted').length;
   const confirmed = event.participants.filter((p) => p.status === 'Confirmed');
   const spotsLeft = Math.max(0, event.maxParticipants - event.participantCount);
   const pct = event.maxParticipants > 0 ? Math.min(100, (event.participantCount / event.maxParticipants) * 100) : 0;
@@ -79,7 +83,11 @@ export default function EventDetail() {
     try {
       await joinEvent(event.id);
       trackAction({ action: 'event_joined', entityType: 'event', entityId: event.id });
-      toast.success('Vous participez à cet événement 🎉');
+      if (isFull) {
+        toast.info("Vous êtes en liste d'attente — on vous prévient dès qu'une place se libère.");
+      } else {
+        toast.success('Vous participez à cet événement 🎉');
+      }
       await fetchEvent();
     } catch (err) {
       setError((err as {response?: {data?: {error?: string}}}).response?.data?.error || 'Erreur');
@@ -239,6 +247,7 @@ export default function EventDetail() {
                 </span>
                 <span className={isFull ? 'font-semibold text-red-500' : 'text-ink-sub'}>
                   {isFull ? 'Complet' : `${spotsLeft} place${spotsLeft > 1 ? 's' : ''} restante${spotsLeft > 1 ? 's' : ''}`}
+                  {waitlistCount > 0 ? ` · ${waitlistCount} en attente` : ''}
                 </span>
               </div>
               <div className="h-1.5 overflow-hidden rounded-full bg-cream-deep">
@@ -250,12 +259,22 @@ export default function EventDetail() {
           {/* Actions */}
           {isAuthenticated && (
             <div className="mb-8 flex flex-wrap gap-3">
-              {!isParticipant && !isCreator && !isFull && event.status === 'Published' && (
+              {!isParticipant && !isWaitlisted && !isCreator && !isFull && event.status === 'Published' && (
                 <Button size="lg" onClick={handleJoin} disabled={actionLoading}>
                   {actionLoading ? 'Un instant…' : 'Rejoindre 🎉'}
                 </Button>
               )}
-              {isParticipant && !isCreator && (
+              {!isParticipant && !isWaitlisted && !isCreator && isFull && event.status === 'Published' && (
+                <Button size="lg" variant="violet" onClick={handleJoin} disabled={actionLoading}>
+                  {actionLoading ? 'Un instant…' : "Rejoindre la liste d'attente ⏳"}
+                </Button>
+              )}
+              {isWaitlisted && (
+                <span className="inline-flex items-center rounded-full bg-violet-50 px-4 py-2 text-sm font-semibold text-violet-700">
+                  ⏳ En liste d'attente
+                </span>
+              )}
+              {(isParticipant || isWaitlisted) && !isCreator && (
                 <Button variant="ghost" onClick={handleLeave} disabled={actionLoading}>
                   Quitter
                 </Button>

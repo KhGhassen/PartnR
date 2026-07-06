@@ -133,7 +133,52 @@ public class EventServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task JoinAsync_ThrowsWhenFull()
+    public async Task JoinAsync_WhenFull_AddsToWaitlist_AndLeavePromotes()
+    {
+        var dto = new CreateEventDto
+        {
+            Title = "Waitlist Event",
+            City = "Nice",
+            Date = DateTime.UtcNow.AddDays(2),
+            MaxParticipants = 2,
+            ActivityId = _activityId
+        };
+        var created = await _service.CreateAsync(_userId, dto);
+
+        var ids = new List<Guid>();
+        for (int i = 0; i < 2; i++)
+        {
+            var uid = Guid.NewGuid();
+            ids.Add(uid);
+            _db.Users.Add(new AppUser
+            {
+                Id = uid,
+                UserName = $"w{i}@test.com",
+                Email = $"w{i}@test.com",
+                FirstName = $"W{i}",
+                City = "Nice",
+                NormalizedEmail = $"W{i}@TEST.COM",
+                NormalizedUserName = $"W{i}@TEST.COM",
+                SecurityStamp = Guid.NewGuid().ToString()
+            });
+        }
+        await _db.SaveChangesAsync();
+
+        await _service.JoinAsync(created.Id, ids[0]); // fills the event (creator + 1)
+        await _service.JoinAsync(created.Id, ids[1]); // goes to the waitlist
+
+        var waitlisted = _db.EventParticipants.Single(p => p.UserId == ids[1]);
+        Assert.Equal(ParticipantStatus.Waitlisted, waitlisted.Status);
+
+        await _service.LeaveAsync(created.Id, ids[0]); // frees a spot
+
+        var promoted = _db.EventParticipants.Single(p => p.UserId == ids[1]);
+        Assert.Equal(ParticipantStatus.Confirmed, promoted.Status);
+        Assert.Contains(_db.Notifications, n => n.UserId == ids[1] && n.Type == "waitlist_promoted");
+    }
+
+    [Fact]
+    public async Task JoinAsync_WhenFull_Waitlists()
     {
         var dto = new CreateEventDto
         {
@@ -177,8 +222,13 @@ public class EventServiceTests : IDisposable
         });
         await _db.SaveChangesAsync();
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
-            () => _service.JoinAsync(created.Id, user3Id));
+        // A full event no longer rejects the join — it waitlists instead.
+        await _service.JoinAsync(created.Id, user3Id);
+        var third = _db.EventParticipants.Single(p => p.UserId == user3Id);
+        Assert.Equal(ParticipantStatus.Waitlisted, third.Status);
+
+        var updated = await _service.GetByIdAsync(created.Id);
+        Assert.Equal(2, updated.ParticipantCount); // waitlisted people don't count
     }
 
     [Fact]
