@@ -4,6 +4,7 @@ import { createEvent } from '../api/events';
 import { listActivities } from '../api/activities';
 import { listCities } from '../api/cities';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { trackAction } from '../api/analytics';
 import LocationPicker from '../components/LocationPicker';
 import Button from '../components/ui/Button';
@@ -14,6 +15,7 @@ import type { Activity } from '../types';
 
 export default function CreateEvent() {
   const { isAuthenticated } = useAuth();
+  const toast = useToast();
   const navigate = useNavigate();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [cities, setCities] = useState<string[]>([]);
@@ -78,6 +80,7 @@ export default function CreateEvent() {
         longitude: form.longitude ?? undefined,
       });
       trackAction({ action: 'event_created', entityType: 'event', entityId: ev.id });
+      toast.success('Événement créé 🎉');
       navigate(`/events/${ev.id}`);
     } catch (err) {
       setError((err as {response?: {data?: {error?: string}}}).response?.data?.error || 'Erreur lors de la création');

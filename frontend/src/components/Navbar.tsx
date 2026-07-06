@@ -38,6 +38,7 @@ export default function Navbar() {
     <>
       <NavItem to="/" onClick={close}>Événements</NavItem>
       <NavItem to="/map" onClick={close}>Carte</NavItem>
+      {isAuthenticated && <NavItem to="/my-events" onClick={close}>Mes événements</NavItem>}
       {isAuthenticated && <NavItem to="/events/new" onClick={close}>Créer</NavItem>}
       {user?.role === 'admin' && (
         <>

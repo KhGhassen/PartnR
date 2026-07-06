@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getEvent, updateEvent } from '../api/events';
 import { listCities } from '../api/cities';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import LocationPicker from '../components/LocationPicker';
 import Button from '../components/ui/Button';
 import Chip from '../components/ui/Chip';
@@ -12,6 +13,7 @@ import { inputClass } from '../components/ui/classes';
 export default function EditEvent() {
   const { id } = useParams<{ id: string }>();
   const { user, isAuthenticated } = useAuth();
+  const toast = useToast();
   const navigate = useNavigate();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -104,6 +106,7 @@ export default function EditEvent() {
         latitude: form.latitude ?? undefined,
         longitude: form.longitude ?? undefined,
       });
+      toast.success('Modifications enregistrées.');
       navigate(`/events/${id}`);
     } catch (err) {
       setError((err as {response?: {data?: {error?: string}}}).response?.data?.error || 'Erreur lors de la modification');

@@ -1,8 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import '../lib/leafletIcons';
 import { getEvent, joinEvent, leaveEvent, deleteEvent } from '../api/events';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { trackAction } from '../api/analytics';
+import { downloadIcs, shareEvent } from '../lib/calendar';
 import type { EventDetail as EventDetailType } from '../types';
 import EventChat from '../components/EventChat';
 import RatingForm from '../components/RatingForm';
@@ -15,6 +20,7 @@ import Skeleton from '../components/ui/Skeleton';
 export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
   const { user, isAuthenticated } = useAuth();
+  const toast = useToast();
   const navigate = useNavigate();
   const [event, setEvent] = useState<EventDetailType | null>(null);
   const [loading, setLoading] = useState(true);
@@ -73,6 +79,7 @@ export default function EventDetail() {
     try {
       await joinEvent(event.id);
       trackAction({ action: 'event_joined', entityType: 'event', entityId: event.id });
+      toast.success('Vous participez à cet événement 🎉');
       await fetchEvent();
     } catch (err) {
       setError((err as {response?: {data?: {error?: string}}}).response?.data?.error || 'Erreur');
@@ -86,6 +93,7 @@ export default function EventDetail() {
     try {
       await leaveEvent(event.id);
       trackAction({ action: 'event_left', entityType: 'event', entityId: event.id });
+      toast.info("Vous avez quitté l'événement.");
       await fetchEvent();
     } catch (err) {
       setError((err as {response?: {data?: {error?: string}}}).response?.data?.error || 'Erreur');
@@ -98,6 +106,7 @@ export default function EventDetail() {
     if (!confirm('Supprimer cet événement ?')) return;
     try {
       await deleteEvent(event.id);
+      toast.info('Événement supprimé.');
       navigate('/');
     } catch (err) {
       setError((err as {response?: {data?: {error?: string}}}).response?.data?.error || 'Erreur');
@@ -128,11 +137,39 @@ export default function EventDetail() {
         )}
 
         <div className="p-8">
-          <div className="mb-5">
-            <span className="mb-2 inline-block rounded-full bg-coral-50 px-3 py-1 text-xs font-semibold text-coral-700">
-              {event.activityIcon} {event.activityName}
-            </span>
-            <h1 className="text-3xl font-bold tracking-tight text-ink">{event.title}</h1>
+          <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <span className="mb-2 inline-block rounded-full bg-coral-50 px-3 py-1 text-xs font-semibold text-coral-700">
+                {event.activityIcon} {event.activityName}
+              </span>
+              <h1 className="text-3xl font-bold tracking-tight text-ink">{event.title}</h1>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={async () => {
+                  try {
+                    const result = await shareEvent(event);
+                    if (result === 'copied') toast.success('Lien copié !');
+                  } catch {
+                    // user cancelled the share sheet
+                  }
+                }}
+              >
+                ↗ Partager
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  downloadIcs(event);
+                  toast.success('Événement ajouté à votre calendrier.');
+                }}
+              >
+                🗓 Calendrier
+              </Button>
+            </div>
           </div>
 
           {event.description && (
@@ -164,6 +201,24 @@ export default function EventDetail() {
               </p>
             </div>
           </div>
+
+          {/* Location map */}
+          {event.latitude != null && event.longitude != null && (
+            <div className="mb-6 h-52 overflow-hidden rounded-2xl border border-line">
+              <MapContainer
+                center={[event.latitude, event.longitude]}
+                zoom={14}
+                scrollWheelZoom={false}
+                style={{ height: '100%', width: '100%' }}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <Marker position={[event.latitude, event.longitude]} />
+              </MapContainer>
+            </div>
+          )}
 
           {/* Capacity */}
           <div className="mb-6 flex items-center gap-4 rounded-2xl border border-line bg-white p-4">
