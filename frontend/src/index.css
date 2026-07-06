@@ -47,3 +47,49 @@
     -webkit-font-smoothing: antialiased;
   }
 }
+
+/* Dark theme — token overrides, toggled via data-theme on <html> */
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --color-cream: #191914;
+  --color-cream-deep: #24241d;
+  --color-ink: #f0efe8;
+  --color-ink-mid: #b8b3a6;
+  --color-ink-sub: #878273;
+  --color-line: #37362c;
+
+  --color-coral-50: #3a251e;
+  --color-coral-100: #4d2d22;
+  --color-coral-700: #f0906c;
+
+  --color-violet-50: #2b2741;
+  --color-violet-700: #b3a4ec;
+
+  --shadow-card: 0 2px 8px 0 rgb(0 0 0 / 0.35);
+  --shadow-card-hover: 0 8px 24px 0 rgb(0 0 0 / 0.5);
+}
+
+/* Literal utility surfaces that must flip in dark mode */
+[data-theme='dark'] .bg-white {
+  background-color: #232319;
+}
+[data-theme='dark'] .bg-emerald-50 {
+  background-color: #1d3328;
+}
+[data-theme='dark'] .text-emerald-700,
+[data-theme='dark'] .text-emerald-600 {
+  color: #6ee7b7;
+}
+[data-theme='dark'] .bg-red-50 {
+  background-color: #3d2224;
+}
+[data-theme='dark'] .border-red-100 {
+  border-color: #572e31;
+}
+[data-theme='dark'] .bg-amber-50 {
+  background-color: #3a2f1a;
+}
+[data-theme='dark'] .text-amber-700 {
+  color: #fcd34d;
+}
