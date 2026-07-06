@@ -25,6 +25,14 @@ export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [dark, setDark] = useState(() => document.documentElement.dataset.theme === 'dark');
+
+  const toggleTheme = () => {
+    const next = !dark;
+    setDark(next);
+    document.documentElement.dataset.theme = next ? 'dark' : '';
+    localStorage.setItem('theme', next ? 'dark' : 'light');
+  };
 
   const handleLogout = () => {
     setOpen(false);
@@ -63,6 +71,13 @@ export default function Navbar() {
         <div className="ml-6 hidden items-center gap-1 md:flex">{links}</div>
 
         <div className="ml-auto hidden items-center gap-3 md:flex">
+          <button
+            onClick={toggleTheme}
+            aria-label={dark ? 'Passer en mode clair' : 'Passer en mode sombre'}
+            className="flex h-9 w-9 items-center justify-center rounded-full text-base transition-colors hover:bg-cream-deep"
+          >
+            {dark ? '☀️' : '🌙'}
+          </button>
           {isAuthenticated ? (
             <>
               <Link
@@ -90,8 +105,15 @@ export default function Navbar() {
         </div>
 
         <button
+          onClick={toggleTheme}
+          aria-label={dark ? 'Passer en mode clair' : 'Passer en mode sombre'}
+          className="ml-auto flex h-9 w-9 items-center justify-center rounded-full text-base hover:bg-cream-deep md:hidden"
+        >
+          {dark ? '☀️' : '🌙'}
+        </button>
+        <button
           onClick={() => setOpen((o) => !o)}
-          className="ml-auto flex h-9 w-9 items-center justify-center rounded-full text-ink-mid hover:bg-cream-deep md:hidden"
+          className="flex h-9 w-9 items-center justify-center rounded-full text-ink-mid hover:bg-cream-deep md:hidden"
           aria-label="Menu"
         >
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
