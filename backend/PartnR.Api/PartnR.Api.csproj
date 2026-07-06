@@ -18,4 +18,8 @@
     <ProjectReference Include="..\PartnR.Infrastructure\PartnR.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="../../supabase/migrations/*.sql" LinkBase="db-migrations" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

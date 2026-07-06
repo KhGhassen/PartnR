@@ -139,6 +139,15 @@ using (var scope = app.Services.CreateScope())
             Log.Information("Database schema created");
         else
             Log.Information("Database connection verified — schema already exists");
+
+        var migrationsDir = Path.Combine(AppContext.BaseDirectory, "db-migrations");
+        if (Directory.Exists(migrationsDir))
+        {
+            var executed = await SqlMigrationRunner.ApplyAsync(db, migrationsDir);
+            Log.Information(executed.Count > 0
+                ? $"Applied SQL migrations: {string.Join(", ", executed)}"
+                : "SQL migrations up to date");
+        }
     }
     catch (Exception ex)
     {
