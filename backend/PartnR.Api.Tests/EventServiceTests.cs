@@ -53,6 +53,7 @@ public class EventServiceTests : IDisposable
             new EventRepository(_db),
             new ActivityRepository(_db),
             new EventParticipantRepository(_db),
+            new NotificationRepository(_db),
             unitOfWork);
     }
 
@@ -398,6 +399,39 @@ public class EventServiceTests : IDisposable
 
         Assert.Equal(45.7640, updated.Latitude);
         Assert.Equal(4.8357, updated.Longitude);
+    }
+
+    [Fact]
+    public async Task JoinAsync_NotifiesCreator()
+    {
+        var created = await _service.CreateAsync(_userId, new CreateEventDto
+        {
+            Title = "Notif Event",
+            City = "Paris",
+            Date = DateTime.UtcNow.AddDays(3),
+            MaxParticipants = 5,
+            ActivityId = _activityId
+        });
+
+        var user2Id = Guid.NewGuid();
+        _db.Users.Add(new AppUser
+        {
+            Id = user2Id,
+            UserName = "n@test.com",
+            Email = "n@test.com",
+            FirstName = "Nina",
+            City = "Paris",
+            NormalizedEmail = "N@TEST.COM",
+            NormalizedUserName = "N@TEST.COM",
+            SecurityStamp = Guid.NewGuid().ToString()
+        });
+        await _db.SaveChangesAsync();
+
+        await _service.JoinAsync(created.Id, user2Id);
+
+        var notif = _db.Notifications.Single(n => n.UserId == _userId);
+        Assert.Equal("participant_joined", notif.Type);
+        Assert.Equal(created.Id, notif.EventId);
     }
 
     [Fact]
