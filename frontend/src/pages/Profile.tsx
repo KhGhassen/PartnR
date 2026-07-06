@@ -4,6 +4,7 @@ import { getProfile, updateMyProfile, getRatingsForUser } from '../api/profiles'
 import { listActivities } from '../api/activities';
 import { listCities } from '../api/cities';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import ChangePasswordForm from '../components/ChangePasswordForm';
 import Avatar from '../components/ui/Avatar';
 import Button from '../components/ui/Button';
@@ -23,6 +24,7 @@ const PROFILE_TYPES = [
 export default function Profile() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const toast = useToast();
   const [profile, setProfile] = useState<ProfileType | null>(null);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ firstName: '', city: '', bio: '', avatarUrl: '', favoriteActivities: [] as string[], profileType: '' });
@@ -93,6 +95,7 @@ export default function Profile() {
       const updated = await updateMyProfile({ ...form, profileType: form.profileType || null });
       setProfile(updated);
       setEditing(false);
+      toast.success('Profil mis à jour.');
     } catch {
       setError('Erreur lors de la sauvegarde.');
     } finally {

@@ -5,6 +5,7 @@ export const listEvents = (params?: {
   city?: string;
   activityId?: string;
   status?: string;
+  mine?: boolean;
   page?: number;
   pageSize?: number;
   lat?: number;

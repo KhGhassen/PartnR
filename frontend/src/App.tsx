@@ -1,8 +1,10 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 import Navbar from './components/Navbar';
 import EmailVerificationBanner from './components/EmailVerificationBanner';
 import EventList from './pages/EventList';
+import MyEvents from './pages/MyEvents';
 import EventsMap from './pages/EventsMap';
 import EventDetail from './pages/EventDetail';
 import CreateEvent from './pages/CreateEvent';
@@ -24,12 +26,13 @@ function AppRoutes() {
   useAnalytics();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-cream">
       <Navbar />
       <EmailVerificationBanner />
       <ErrorBoundary>
         <Routes>
           <Route path="/" element={<EventList />} />
+          <Route path="/my-events" element={<ProtectedRoute><MyEvents /></ProtectedRoute>} />
           <Route path="/map" element={<EventsMap />} />
           <Route path="/events/new" element={<ProtectedRoute><CreateEvent /></ProtectedRoute>} />
           <Route path="/events/:id/edit" element={<ProtectedRoute><EditEvent /></ProtectedRoute>} />
@@ -52,9 +55,11 @@ function AppRoutes() {
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
+      <ToastProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </ToastProvider>
     </AuthProvider>
   );
 }
