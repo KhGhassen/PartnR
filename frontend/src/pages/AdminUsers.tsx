@@ -56,7 +56,7 @@ export default function AdminUsersPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Gestion des utilisateurs</h1>
+      <h1 className="text-3xl font-bold tracking-tight text-ink mb-8">Gestion des utilisateurs</h1>
 
       <form onSubmit={handleSearchSubmit} className="mb-6 flex gap-3">
         <input
@@ -75,15 +75,15 @@ export default function AdminUsersPage() {
 
       {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <div className="bg-white rounded-3xl border border-line p-6 shadow-card">
         {loading ? (
-          <p className="text-center py-8 text-gray-500">Chargement...</p>
+          <p className="text-center py-8 text-ink-sub">Chargement...</p>
         ) : users.length === 0 ? (
-          <p className="text-center py-8 text-gray-500">Aucun utilisateur trouvé.</p>
+          <p className="text-center py-8 text-ink-sub">Aucun utilisateur trouvé.</p>
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-gray-400 border-b border-gray-100">
+              <tr className="text-left text-ink-sub border-b border-line text-xs uppercase tracking-wide">
                 <th className="pb-2 font-medium">Nom</th>
                 <th className="pb-2 font-medium">Email</th>
                 <th className="pb-2 font-medium">Ville</th>
@@ -94,25 +94,25 @@ export default function AdminUsersPage() {
             </thead>
             <tbody>
               {users.map((u) => (
-                <tr key={u.id} className="border-b border-gray-50 last:border-0">
+                <tr key={u.id} className="border-b border-cream-deep last:border-0 hover:bg-cream transition-colors">
                   <td className="py-3 font-medium">{u.firstName}</td>
-                  <td className="py-3 text-gray-500">{u.email}</td>
-                  <td className="py-3 text-gray-500">{u.city}</td>
-                  <td className="py-3 text-gray-500">{u.role}</td>
+                  <td className="py-3 text-ink-mid">{u.email}</td>
+                  <td className="py-3 text-ink-mid">{u.city}</td>
+                  <td className="py-3 text-ink-mid">{u.role}</td>
                   <td className="py-3">
                     {u.isBanned ? (
                       <span className="bg-red-50 text-red-600 px-2 py-1 rounded-full text-xs font-medium">
                         Banni
                       </span>
                     ) : (
-                      <span className="bg-green-50 text-green-600 px-2 py-1 rounded-full text-xs font-medium">
+                      <span className="bg-emerald-50 text-emerald-700 px-2 py-1 rounded-full text-xs font-medium">
                         Actif
                       </span>
                     )}
                   </td>
                   <td className="py-3 text-right">
                     {u.role === 'admin' ? (
-                      <span className="text-gray-300 text-xs">—</span>
+                      <span className="text-ink-sub text-xs">—</span>
                     ) : (
                       <button
                         onClick={() => toggleBan(u)}

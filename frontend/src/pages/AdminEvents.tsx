@@ -71,7 +71,7 @@ export default function AdminEventsPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Gestion des événements</h1>
+      <h1 className="text-3xl font-bold tracking-tight text-ink mb-8">Gestion des événements</h1>
 
       <form onSubmit={handleSearchSubmit} className="mb-6 flex gap-3">
         <input
@@ -100,15 +100,15 @@ export default function AdminEventsPage() {
 
       {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
+      <div className="bg-white rounded-3xl border border-line p-6 shadow-card">
         {loading ? (
-          <p className="text-center py-8 text-gray-500">Chargement...</p>
+          <p className="text-center py-8 text-ink-sub">Chargement...</p>
         ) : events.length === 0 ? (
-          <p className="text-center py-8 text-gray-500">Aucun événement trouvé.</p>
+          <p className="text-center py-8 text-ink-sub">Aucun événement trouvé.</p>
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-gray-400 border-b border-gray-100">
+              <tr className="text-left text-ink-sub border-b border-line text-xs uppercase tracking-wide">
                 <th className="pb-2 font-medium">Titre</th>
                 <th className="pb-2 font-medium">Ville</th>
                 <th className="pb-2 font-medium">Date</th>
@@ -120,25 +120,25 @@ export default function AdminEventsPage() {
             </thead>
             <tbody>
               {events.map((ev) => (
-                <tr key={ev.id} className="border-b border-gray-50 last:border-0">
+                <tr key={ev.id} className="border-b border-cream-deep last:border-0 hover:bg-cream transition-colors">
                   <td className="py-3 font-medium">{ev.title}</td>
-                  <td className="py-3 text-gray-500">{ev.city}</td>
-                  <td className="py-3 text-gray-500">
+                  <td className="py-3 text-ink-mid">{ev.city}</td>
+                  <td className="py-3 text-ink-mid">
                     {new Date(ev.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                   </td>
-                  <td className="py-3 text-gray-500">{ev.creatorName}</td>
-                  <td className="py-3 text-gray-500">{ev.participantCount}/{ev.maxParticipants}</td>
+                  <td className="py-3 text-ink-mid">{ev.creatorName}</td>
+                  <td className="py-3 text-ink-mid">{ev.participantCount}/{ev.maxParticipants}</td>
                   <td className="py-3">
                     {ev.status === 'Cancelled' ? (
                       <span className="bg-red-50 text-red-600 px-2 py-1 rounded-full text-xs font-medium">
                         Annulé
                       </span>
                     ) : ev.status === 'Completed' ? (
-                      <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs font-medium">
+                      <span className="bg-cream-deep text-ink-mid px-2 py-1 rounded-full text-xs font-medium">
                         Terminé
                       </span>
                     ) : (
-                      <span className="bg-green-50 text-green-600 px-2 py-1 rounded-full text-xs font-medium">
+                      <span className="bg-emerald-50 text-emerald-700 px-2 py-1 rounded-full text-xs font-medium">
                         Publié
                       </span>
                     )}
