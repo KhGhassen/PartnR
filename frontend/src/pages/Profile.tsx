@@ -6,6 +6,7 @@ import { listCities } from '../api/cities';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import ChangePasswordForm from '../components/ChangePasswordForm';
+import PhotoInput from '../components/PhotoInput';
 import Avatar from '../components/ui/Avatar';
 import Button from '../components/ui/Button';
 import Chip from '../components/ui/Chip';
@@ -136,11 +137,10 @@ export default function Profile() {
                     onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))}
                     className={inputClass(false, 'max-w-xs font-bold')}
                   />
-                  <input
+                  <PhotoInput
                     value={form.avatarUrl}
-                    onChange={(e) => setForm((f) => ({ ...f, avatarUrl: e.target.value }))}
-                    placeholder="URL de la photo de profil (optionnel)"
-                    className={inputClass(false, 'text-xs')}
+                    onChange={(url) => setForm((f) => ({ ...f, avatarUrl: url }))}
+                    placeholder="Photo de profil"
                   />
                 </div>
               ) : (

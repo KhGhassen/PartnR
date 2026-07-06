@@ -16,6 +16,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
     public DbSet<Rating> Ratings => Set<Rating>();
     public DbSet<EventPhoto> EventPhotos => Set<EventPhoto>();
     public DbSet<UserAction> UserActions => Set<UserAction>();
+    public DbSet<StoredImage> StoredImages => Set<StoredImage>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -176,6 +177,13 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
                 .WithMany(u => u.UploadedPhotos)
                 .HasForeignKey(p => p.UploaderId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ── STORED_IMAGES ─────────────────────────────────────
+        builder.Entity<StoredImage>(e =>
+        {
+            e.Property(i => i.ContentType).HasMaxLength(50);
+            e.HasIndex(i => i.UploaderId);
         });
     }
 

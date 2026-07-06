@@ -5,6 +5,7 @@ import { listCities } from '../api/cities';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import LocationPicker from '../components/LocationPicker';
+import PhotoInput from '../components/PhotoInput';
 import Button from '../components/ui/Button';
 import Chip from '../components/ui/Chip';
 import Field from '../components/ui/Field';
@@ -148,14 +149,8 @@ export default function EditEvent() {
           />
         </Field>
 
-        <Field label="Photo de couverture (URL)">
-          <input
-            type="text"
-            value={form.photoUrl}
-            onChange={update('photoUrl')}
-            placeholder="https://…"
-            className={inputClass(false)}
-          />
+        <Field label="Photo de couverture">
+          <PhotoInput value={form.photoUrl} onChange={(url) => set('photoUrl', url)} />
         </Field>
 
         <div>
