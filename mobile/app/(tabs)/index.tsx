@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, TextInput } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, RefreshControl, TextInput, Image } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -8,6 +8,7 @@ import * as Location from 'expo-location';
 import { T } from '../../constants/tokens';
 import { listEvents, type EventSummary } from '../../api/events';
 import { listActivities, type Activity } from '../../api/activities';
+import { listNotifications } from '../../api/notifications';
 import { useApp } from '../../context/AppContext';
 import Avatar from '../../components/Avatar';
 import Pill from '../../components/Pill';
@@ -26,6 +27,7 @@ export default function HomeScreen() {
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [unreadCount, setUnreadCount] = useState(0);
   const searchDebounce = useRef<ReturnType<typeof setTimeout>>();
 
   const fetchEvents = useCallback(async (c: { lat: number; lng: number } | null, s: string) => {
@@ -45,6 +47,10 @@ export default function HomeScreen() {
   useEffect(() => {
     listActivities().then(setActivities).catch(() => {});
     fetchEvents(null, '').finally(() => setLoading(false));
+    const poll = () => listNotifications().then((n) => setUnreadCount(n.unreadCount)).catch(() => {});
+    poll();
+    const interval = setInterval(poll, 60000);
+    return () => clearInterval(interval);
   }, [fetchEvents]);
 
   useEffect(() => () => clearTimeout(searchDebounce.current), []);
@@ -106,6 +112,20 @@ export default function HomeScreen() {
         </View>
         <View style={styles.headerRight}>
           <TouchableOpacity
+            style={styles.searchBtn}
+            onPress={() => {
+              setUnreadCount(0);
+              router.push('/notifications');
+            }}
+          >
+            <Ionicons name="notifications-outline" size={16} color={T.textMid} />
+            {unreadCount > 0 && (
+              <View style={styles.bellBadge}>
+                <Text style={styles.bellBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
             style={[styles.searchBtn, searchOpen && { backgroundColor: T.coralL }]}
             onPress={() => {
               if (searchOpen && search) applySearch('');
@@ -156,10 +176,15 @@ export default function HomeScreen() {
         contentContainerStyle={styles.feed}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={T.coral} />}
       >
-        <LinearGradient colors={[T.coral, T.violet]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.banner}>
-          <Text style={styles.bannerSub}>📍 {nearMe ? 'Près de vous' : user?.city ?? 'Partout en France'}</Text>
-          <Text style={styles.bannerMain}>{events.length} activités cette semaine</Text>
-        </LinearGradient>
+        <TouchableOpacity activeOpacity={0.9} onPress={() => router.push('/map')}>
+          <LinearGradient colors={[T.coral, T.violet]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.banner}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.bannerSub}>📍 {nearMe ? 'Près de vous' : user?.city ?? 'Partout en France'}</Text>
+              <Text style={styles.bannerMain}>{events.length} activités cette semaine</Text>
+            </View>
+            <Text style={styles.bannerCta}>Carte →</Text>
+          </LinearGradient>
+        </TouchableOpacity>
 
         {loading ? (
           <ActivityIndicator color={T.coral} style={{ marginTop: 40 }} />
@@ -191,9 +216,13 @@ function EventRow({ ev }: { ev: EventSummary }) {
       style={styles.card}
     >
       <View style={[styles.cardBand, { backgroundColor: T.coralL }]}>
-        <Text style={styles.cardEmoji}>{ev.activityIcon}</Text>
+        {ev.photoUrl ? (
+          <Image source={{ uri: ev.photoUrl }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+        ) : (
+          <Text style={styles.cardEmoji}>{ev.activityIcon}</Text>
+        )}
         <View style={styles.cardTag}>
-          <Text style={styles.cardTagText}>{ev.activityName}</Text>
+          <Text style={styles.cardTagText}>{ev.activityIcon} {ev.activityName}</Text>
         </View>
       </View>
       <View style={styles.cardBody}>
@@ -225,6 +254,13 @@ const styles = StyleSheet.create({
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   searchBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: T.card, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 4, shadowOffset: { width: 0, height: 1 }, elevation: 2 },
 
+  bellBadge: {
+    position: 'absolute', top: -2, right: -2, minWidth: 15, height: 15,
+    borderRadius: 8, backgroundColor: T.coral, alignItems: 'center',
+    justifyContent: 'center', paddingHorizontal: 3,
+  },
+  bellBadgeText: { fontSize: 9, fontWeight: '700', color: '#fff', fontFamily: 'DMSans_700Bold' },
+
   searchRow: { paddingHorizontal: 20, marginTop: 12 },
   searchInput: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 14, borderWidth: 1.5, borderColor: T.border, fontSize: 14, fontFamily: 'DMSans_400Regular', color: T.text, backgroundColor: '#fff' },
 
@@ -232,7 +268,8 @@ const styles = StyleSheet.create({
   filters: { paddingHorizontal: 20, gap: 6, paddingBottom: 12 },
 
   feed: { paddingHorizontal: 20, paddingBottom: 100 },
-  banner: { borderRadius: 24, padding: 14, paddingHorizontal: 18, marginBottom: 14 },
+  banner: { borderRadius: 24, padding: 14, paddingHorizontal: 18, marginBottom: 14, flexDirection: 'row', alignItems: 'center' },
+  bannerCta: { fontSize: 13, fontWeight: '700', color: '#fff', fontFamily: 'DMSans_700Bold' },
   bannerSub:  { fontSize: 11, fontWeight: '500', color: 'rgba(255,255,255,0.85)', marginBottom: 2, fontFamily: 'DMSans_500Medium' },
   bannerMain: { fontSize: 15, fontWeight: '600', color: '#fff', fontFamily: 'DMSans_600SemiBold' },
 

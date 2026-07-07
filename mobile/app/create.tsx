@@ -14,6 +14,7 @@ import { pickAndUploadImage } from '../api/uploads';
 import { toApiError } from '../api/client';
 import BackBtn from '../components/BackBtn';
 import CTAButton from '../components/CTAButton';
+import CityAutocomplete from '../components/CityAutocomplete';
 
 const STEP_TITLES = ['Choisir une activité', 'Détails', 'Paramètres'];
 
@@ -221,13 +222,20 @@ export default function CreateScreen() {
                     );
                   })}
                 </View>
-                <TextInput
-                  value={form.city}
-                  onChangeText={(v) => setForm((f) => ({ ...f, city: v }))}
-                  placeholder="Ou tapez votre commune…"
-                  placeholderTextColor={T.textSub}
-                  style={[styles.fieldInput, { marginTop: 8 }]}
-                />
+                <View style={{ marginTop: 8 }}>
+                  <CityAutocomplete
+                    value={form.city}
+                    placeholder="Ou cherchez votre commune…"
+                    onSelect={(c) =>
+                      setForm((f) => ({
+                        ...f,
+                        city: c.name,
+                        latitude: f.latitude ?? c.lat,
+                        longitude: f.longitude ?? c.lng,
+                      }))
+                    }
+                  />
+                </View>
               </View>
               <View>
                 <Text style={styles.fieldLabel}>Date et heure *</Text>

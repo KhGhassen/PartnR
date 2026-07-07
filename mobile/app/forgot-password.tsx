@@ -25,7 +25,7 @@ export default function ForgotPasswordScreen() {
       await forgotPassword(email.trim());
       setSent(true);
     } catch (err) {
-      setError(toApiError(err));
+      setError(toApiError(err).message);
     } finally {
       setLoading(false);
     }
@@ -45,7 +45,7 @@ export default function ForgotPasswordScreen() {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: T.bgMain }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: T.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
         contentContainerStyle={[styles.container, { paddingTop: insets.top + 32, paddingBottom: insets.bottom + 16 }]}
         keyboardShouldPersistTaps="handled"
@@ -64,7 +64,7 @@ export default function ForgotPasswordScreen() {
         <TextInput
           style={styles.input}
           placeholder="Email"
-          placeholderTextColor={T.textMuted}
+          placeholderTextColor={T.textSub}
           autoCapitalize="none"
           keyboardType="email-address"
           value={email}
@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     paddingHorizontal: 24,
-    backgroundColor: T.bgMain,
+    backgroundColor: T.bg,
   },
   backBtn: { marginBottom: 32 },
   backText: { color: T.violet, fontSize: 15 },
@@ -93,12 +93,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 26,
     fontFamily: 'DMSans_700Bold',
-    color: T.textDark,
+    color: T.text,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 15,
-    color: T.textMuted,
+    color: T.textSub,
     marginBottom: 28,
     lineHeight: 22,
   },
@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 15,
-    color: T.textDark,
+    color: T.text,
     borderWidth: 1,
     borderColor: '#E5E7EB',
     marginBottom: 16,

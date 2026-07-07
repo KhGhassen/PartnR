@@ -52,7 +52,7 @@ export default function ResetPasswordScreen() {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: T.bgMain }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: T.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView
         contentContainerStyle={[styles.container, { paddingTop: insets.top + 32, paddingBottom: insets.bottom + 16 }]}
         keyboardShouldPersistTaps="handled"
@@ -71,7 +71,7 @@ export default function ResetPasswordScreen() {
         <TextInput
           style={styles.input}
           placeholder="Nouveau mot de passe"
-          placeholderTextColor={T.textMuted}
+          placeholderTextColor={T.textSub}
           secureTextEntry
           value={newPassword}
           onChangeText={setNewPassword}
@@ -80,7 +80,7 @@ export default function ResetPasswordScreen() {
         <TextInput
           style={styles.input}
           placeholder="Confirmer le mot de passe"
-          placeholderTextColor={T.textMuted}
+          placeholderTextColor={T.textSub}
           secureTextEntry
           value={confirmPassword}
           onChangeText={setConfirmPassword}
@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     paddingHorizontal: 24,
-    backgroundColor: T.bgMain,
+    backgroundColor: T.bg,
   },
   backBtn: { marginBottom: 32 },
   backText: { color: T.violet, fontSize: 15 },
@@ -108,12 +108,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 26,
     fontFamily: 'DMSans_700Bold',
-    color: T.textDark,
+    color: T.text,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 15,
-    color: T.textMuted,
+    color: T.textSub,
     marginBottom: 28,
     lineHeight: 22,
   },
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 15,
-    color: T.textDark,
+    color: T.text,
     borderWidth: 1,
     borderColor: '#E5E7EB',
     marginBottom: 16,

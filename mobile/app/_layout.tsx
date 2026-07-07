@@ -4,7 +4,6 @@ import { useFonts } from 'expo-font';
 import {
   DMSans_400Regular,
   DMSans_500Medium,
-  DMSans_600SemiBold,
   DMSans_700Bold,
 } from '@expo-google-fonts/dm-sans';
 import * as SplashScreen from 'expo-splash-screen';
@@ -18,7 +17,8 @@ export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     DMSans_400Regular,
     DMSans_500Medium,
-    DMSans_600SemiBold,
+    // The package doesn't ship a 600 weight; styles referencing SemiBold get Bold.
+    DMSans_600SemiBold: DMSans_700Bold,
     DMSans_700Bold,
   });
 
@@ -39,6 +39,8 @@ export default function RootLayout() {
         <Stack.Screen name="register" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="create" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="notifications" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="map" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
         <Stack.Screen name="activity/[id]" />
         <Stack.Screen name="chat/[id]" />
       </Stack>
