@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Image } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Image, Share } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { T } from '../../constants/tokens';
@@ -45,8 +45,17 @@ export default function ActivityDetailScreen() {
 
   const isCreator   = user?.id === event.creatorId;
   const isParticipant = event.participants.some((p) => p.userId === user?.id && p.status === 'Confirmed');
+  const isWaitlisted = event.participants.some((p) => p.userId === user?.id && p.status === 'Waitlisted');
+  const waitlistCount = event.participants.filter((p) => p.status === 'Waitlisted').length;
   const isFull = event.participantCount >= event.maxParticipants;
   const spotsLeft = event.maxParticipants - event.participantCount;
+
+  const handleShare = () => {
+    Share.share({
+      message: `Rejoins-moi sur PartnR : ${event.title} 🎉`,
+      title: event.title,
+    }).catch(() => {});
+  };
 
   const handleJoin = async () => {
     setActionLoading(true);
@@ -74,15 +83,17 @@ export default function ActivityDetailScreen() {
 
   const ctaLabel = isCreator
     ? 'Vous êtes organisateur'
-    : isParticipant
-    ? 'Quitter l\'activité'
-    : isFull
-    ? 'Complet'
     : actionLoading
     ? 'En cours…'
+    : isParticipant
+    ? 'Quitter l\'activité'
+    : isWaitlisted
+    ? 'Quitter la liste d\'attente'
+    : isFull
+    ? 'Rejoindre la liste d\'attente ⏳'
     : `Rejoindre · ${spotsLeft} place${spotsLeft !== 1 ? 's' : ''}`;
 
-  const ctaAction = isCreator || isFull ? undefined : isParticipant ? handleLeave : handleJoin;
+  const ctaAction = isCreator ? undefined : isParticipant || isWaitlisted ? handleLeave : handleJoin;
 
   const handleAddPhoto = async () => {
     setPhotoLoading(true);
@@ -119,10 +130,15 @@ export default function ActivityDetailScreen() {
         )}
         <View style={styles.heroTop}>
           <BackBtn onPress={() => router.back()} />
-          <View style={[styles.statusBadge, { backgroundColor: event.status === 'Published' ? '#D1FAE5' : T.bg2 }]}>
-            <Text style={[styles.statusText, { color: event.status === 'Published' ? '#065F46' : T.textMid }]}>
-              {event.status}
-            </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <TouchableOpacity onPress={handleShare} style={styles.shareBtn}>
+              <Text style={styles.shareBtnText}>↗ Partager</Text>
+            </TouchableOpacity>
+            <View style={[styles.statusBadge, { backgroundColor: event.status === 'Published' ? '#D1FAE5' : T.bg2 }]}>
+              <Text style={[styles.statusText, { color: event.status === 'Published' ? '#065F46' : T.textMid }]}>
+                {event.status === 'Published' ? 'Publié' : event.status === 'Completed' ? 'Terminé' : 'Annulé'}
+              </Text>
+            </View>
           </View>
         </View>
       </View>
@@ -138,7 +154,7 @@ export default function ActivityDetailScreen() {
 
         {/* Participants */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Participants ({event.participantCount}/{event.maxParticipants})</Text>
+          <Text style={styles.sectionTitle}>Participants ({event.participantCount}/{event.maxParticipants}){waitlistCount > 0 ? ` · ${waitlistCount} en attente` : ''}</Text>
           <ProgressBar joined={event.participantCount} total={event.maxParticipants} />
           <View style={styles.avatarRow}>
             {event.participants
@@ -194,7 +210,7 @@ export default function ActivityDetailScreen() {
         <CTAButton
           label={ctaLabel}
           onPress={ctaAction}
-          disabled={actionLoading || isCreator || isFull}
+          disabled={actionLoading || isCreator}
           style={isParticipant ? { backgroundColor: T.bg2 } : undefined}
         />
       </View>
@@ -209,6 +225,9 @@ const styles = StyleSheet.create({
   hero: { height: 160, alignItems: 'center', justifyContent: 'center', position: 'relative' },
   heroEmoji: { fontSize: 64 },
   heroTop: { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 12 },
+  shareBtn: { backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
+  shareBtnText: { fontSize: 12, fontWeight: '600', color: T.text, fontFamily: 'DMSans_600SemiBold' },
+
   statusBadge: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
   statusText:  { fontSize: 11, fontWeight: '600', fontFamily: 'DMSans_600SemiBold' },
 
