@@ -5,6 +5,7 @@ COPY backend/PartnR.Api/PartnR.Api.csproj backend/PartnR.Api/
 RUN dotnet restore backend/PartnR.Api/PartnR.Api.csproj
 
 COPY backend/ backend/
+COPY supabase/ supabase/
 RUN dotnet publish backend/PartnR.Api/PartnR.Api.csproj -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime

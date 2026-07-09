@@ -149,6 +149,10 @@ using (var scope = app.Services.CreateScope())
                 ? $"Applied SQL migrations: {string.Join(", ", executed)}"
                 : "SQL migrations up to date");
         }
+        else
+        {
+            Log.Error("SQL migrations directory missing from the build output ({Dir}) — schema may drift", migrationsDir);
+        }
     }
     catch (Exception ex)
     {
