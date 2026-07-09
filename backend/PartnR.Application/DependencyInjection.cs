@@ -19,6 +19,7 @@ public static class DependencyInjection
         services.AddScoped<IEventChatService, EventChatService>();
         services.AddScoped<IUploadService, UploadService>();
         services.AddScoped<INotificationService, NotificationService>();
+        services.AddScoped<IEventCommentService, EventCommentService>();
 
         return services;
     }

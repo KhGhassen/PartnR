@@ -18,6 +18,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
     public DbSet<UserAction> UserActions => Set<UserAction>();
     public DbSet<StoredImage> StoredImages => Set<StoredImage>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<EventComment> EventComments => Set<EventComment>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -193,6 +194,23 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
             e.Property(n => n.Type).HasMaxLength(50);
             e.Property(n => n.Message).HasMaxLength(500);
             e.HasIndex(n => new { n.UserId, n.CreatedAt });
+        });
+
+        // ── EVENT_COMMENTS ────────────────────────────────────
+        builder.Entity<EventComment>(e =>
+        {
+            e.Property(c => c.Content).HasMaxLength(500);
+            e.HasIndex(c => new { c.EventId, c.CreatedAt });
+
+            e.HasOne(c => c.Event)
+                .WithMany()
+                .HasForeignKey(c => c.EventId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            e.HasOne(c => c.User)
+                .WithMany()
+                .HasForeignKey(c => c.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 

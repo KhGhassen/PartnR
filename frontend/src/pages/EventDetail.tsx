@@ -12,6 +12,7 @@ import type { EventDetail as EventDetailType } from '../types';
 import EventChat from '../components/EventChat';
 import RatingForm from '../components/RatingForm';
 import EventGallery from '../components/EventGallery';
+import EventComments from '../components/EventComments';
 import Button, { ButtonLink } from '../components/ui/Button';
 import Avatar from '../components/ui/Avatar';
 import StatusBadge from '../components/ui/StatusBadge';
@@ -354,6 +355,9 @@ export default function EventDetail() {
               </div>
             </div>
           )}
+
+          {/* Public questions */}
+          <EventComments eventId={event.id} creatorId={event.creatorId} />
 
           {/* Photo gallery */}
           <EventGallery
