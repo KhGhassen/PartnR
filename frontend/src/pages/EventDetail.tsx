@@ -13,6 +13,7 @@ import EventChat from '../components/EventChat';
 import RatingForm from '../components/RatingForm';
 import EventGallery from '../components/EventGallery';
 import EventComments from '../components/EventComments';
+import ReportButton from '../components/ReportButton';
 import Button, { ButtonLink } from '../components/ui/Button';
 import Avatar from '../components/ui/Avatar';
 import StatusBadge from '../components/ui/StatusBadge';
@@ -371,6 +372,12 @@ export default function EventDetail() {
 
           {/* Chat */}
           {isParticipant && event.status !== 'Completed' && <EventChat eventId={event.id} />}
+
+          {!isCreator && (
+            <div className="mt-8 flex justify-end">
+              <ReportButton targetType="event" targetId={event.id} />
+            </div>
+          )}
         </div>
       </div>
     </div>

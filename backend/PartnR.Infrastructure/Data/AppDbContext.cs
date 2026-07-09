@@ -19,6 +19,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
     public DbSet<StoredImage> StoredImages => Set<StoredImage>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<EventComment> EventComments => Set<EventComment>();
+    public DbSet<Report> Reports => Set<Report>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -211,6 +212,15 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
                 .WithMany()
                 .HasForeignKey(c => c.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── REPORTS ───────────────────────────────────────────
+        builder.Entity<Report>(e =>
+        {
+            e.Property(r => r.TargetType).HasMaxLength(10);
+            e.Property(r => r.Reason).HasMaxLength(500);
+            e.Property(r => r.Status).HasMaxLength(10).HasDefaultValue("Pending");
+            e.HasIndex(r => new { r.Status, r.CreatedAt });
         });
     }
 

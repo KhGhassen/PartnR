@@ -7,6 +7,7 @@ import { useToast } from '../context/ToastContext';
 import ChangePasswordForm from '../components/ChangePasswordForm';
 import PhotoInput from '../components/PhotoInput';
 import CityPicker from '../components/CityPicker';
+import ReportButton from '../components/ReportButton';
 import Avatar from '../components/ui/Avatar';
 import Button from '../components/ui/Button';
 import Chip from '../components/ui/Chip';
@@ -155,6 +156,7 @@ export default function Profile() {
                 Modifier
               </Button>
             )}
+            {!isOwn && <ReportButton targetType="user" targetId={id!} />}
           </div>
 
           <div className="mb-6 grid grid-cols-2 gap-4">
