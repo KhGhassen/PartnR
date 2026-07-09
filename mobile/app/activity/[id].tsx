@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Image, Share } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Image, Share, TextInput } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { T } from '../../constants/tokens';
 import { getEvent, joinEvent, leaveEvent, type EventDetail } from '../../api/events';
 import { addEventPhoto, deleteEventPhoto } from '../../api/eventPhotos';
+import { listEventComments, addEventComment, deleteEventComment, type EventComment } from '../../api/eventComments';
 import { pickAndUploadImage } from '../../api/uploads';
 import { toApiError } from '../../api/client';
 import { useApp } from '../../context/AppContext';
@@ -23,6 +24,9 @@ export default function ActivityDetailScreen() {
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState('');
   const [photoLoading, setPhotoLoading] = useState(false);
+  const [comments, setComments] = useState<EventComment[]>([]);
+  const [question, setQuestion] = useState('');
+  const [sendingQuestion, setSendingQuestion] = useState(false);
 
   const fetchEvent = async () => {
     try {
@@ -34,7 +38,10 @@ export default function ActivityDetailScreen() {
     }
   };
 
-  useEffect(() => { fetchEvent(); }, [id]);
+  useEffect(() => {
+    fetchEvent();
+    listEventComments(id!).then(setComments).catch(() => {});
+  }, [id]);
 
   if (loading) {
     return <View style={[styles.screen, { paddingTop: insets.top, alignItems: 'center', justifyContent: 'center' }]}><ActivityIndicator color={T.coral} /></View>;
@@ -110,6 +117,29 @@ export default function ActivityDetailScreen() {
     }
   };
 
+  const handleAskQuestion = async () => {
+    if (!question.trim()) return;
+    setSendingQuestion(true);
+    try {
+      const comment = await addEventComment(event.id, question.trim());
+      setComments((cs) => [...cs, comment]);
+      setQuestion('');
+    } catch (err) {
+      setError(toApiError(err).message);
+    } finally {
+      setSendingQuestion(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    try {
+      await deleteEventComment(event.id, commentId);
+      setComments((cs) => cs.filter((c) => c.id !== commentId));
+    } catch (err) {
+      setError(toApiError(err).message);
+    }
+  };
+
   const handleDeletePhoto = async (photoId: string) => {
     try {
       await deleteEventPhoto(event.id, photoId);
@@ -163,6 +193,57 @@ export default function ActivityDetailScreen() {
                 <Avatar key={p.userId} initials={p.firstName[0]} size={32} />
               ))}
           </View>
+        </View>
+
+        {/* Public questions */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Questions</Text>
+          {comments.length === 0 ? (
+            <Text style={styles.noPhotos}>Une question avant de rejoindre ? Posez-la ici.</Text>
+          ) : (
+            <View style={{ gap: 8, marginTop: 8 }}>
+              {comments.map((c) => (
+                <TouchableOpacity
+                  key={c.id}
+                  onLongPress={() => (c.userId === user?.id || isCreator) && handleDeleteComment(c.id)}
+                  activeOpacity={0.9}
+                  style={styles.commentCard}
+                >
+                  <View style={styles.commentHeader}>
+                    <Text style={styles.commentAuthor}>{c.userName}</Text>
+                    {c.isOrganizer && (
+                      <View style={styles.organizerBadge}>
+                        <Text style={styles.organizerBadgeText}>Organisateur</Text>
+                      </View>
+                    )}
+                    <Text style={styles.commentDate}>
+                      {new Date(c.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                    </Text>
+                  </View>
+                  <Text style={styles.commentContent}>{c.content}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+          {user && (
+            <View style={styles.questionRow}>
+              <TextInput
+                value={question}
+                onChangeText={setQuestion}
+                placeholder="Posez votre question…"
+                placeholderTextColor={T.textSub}
+                maxLength={500}
+                style={styles.questionInput}
+              />
+              <TouchableOpacity
+                onPress={handleAskQuestion}
+                disabled={sendingQuestion || !question.trim()}
+                style={[styles.questionSend, (!question.trim() || sendingQuestion) && { opacity: 0.5 }]}
+              >
+                <Text style={styles.questionSendText}>{sendingQuestion ? '…' : '➤'}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         {/* Photo gallery */}
@@ -225,6 +306,22 @@ const styles = StyleSheet.create({
   hero: { height: 160, alignItems: 'center', justifyContent: 'center', position: 'relative' },
   heroEmoji: { fontSize: 64 },
   heroTop: { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 12 },
+  commentCard: { backgroundColor: T.card, borderRadius: 14, padding: 12, borderWidth: 1, borderColor: T.border },
+  commentHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 3 },
+  commentAuthor: { fontSize: 13, fontWeight: '600', color: T.text, fontFamily: 'DMSans_600SemiBold' },
+  organizerBadge: { backgroundColor: T.violetL, borderRadius: 999, paddingHorizontal: 7, paddingVertical: 2 },
+  organizerBadgeText: { fontSize: 9, fontWeight: '600', color: T.violet, fontFamily: 'DMSans_600SemiBold' },
+  commentDate: { marginLeft: 'auto', fontSize: 11, color: T.textSub, fontFamily: 'DMSans_400Regular' },
+  commentContent: { fontSize: 13, color: T.textMid, fontFamily: 'DMSans_400Regular' },
+  questionRow: { flexDirection: 'row', gap: 8, marginTop: 10, alignItems: 'center' },
+  questionInput: {
+    flex: 1, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 14,
+    borderWidth: 1.5, borderColor: T.border, fontSize: 13,
+    fontFamily: 'DMSans_400Regular', color: T.text, backgroundColor: '#fff',
+  },
+  questionSend: { width: 40, height: 40, borderRadius: 20, backgroundColor: T.coral, alignItems: 'center', justifyContent: 'center' },
+  questionSendText: { color: '#fff', fontSize: 15 },
+
   shareBtn: { backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
   shareBtnText: { fontSize: 12, fontWeight: '600', color: T.text, fontFamily: 'DMSans_600SemiBold' },
 
