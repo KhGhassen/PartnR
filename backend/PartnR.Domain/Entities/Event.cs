@@ -24,6 +24,7 @@ public class Event
     public double? Latitude { get; set; }
     public double? Longitude { get; set; }
     public bool ReminderSent { get; set; }
+    public Guid? RecurrenceGroupId { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

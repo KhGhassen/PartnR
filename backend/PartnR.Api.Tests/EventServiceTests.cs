@@ -452,6 +452,30 @@ public class EventServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task CreateAsync_WithRecurrence_CreatesWeeklyOccurrences()
+    {
+        var start = DateTime.UtcNow.AddDays(3);
+        var created = await _service.CreateAsync(_userId, new CreateEventDto
+        {
+            Title = "Footing hebdo",
+            City = "Paris",
+            Date = start,
+            MaxParticipants = 5,
+            ActivityId = _activityId,
+            RecurrenceWeeks = 4
+        });
+
+        var group = _db.Events.Where(e => e.Title == "Footing hebdo").OrderBy(e => e.Date).ToList();
+        Assert.Equal(4, group.Count);
+        Assert.All(group, e => Assert.NotNull(e.RecurrenceGroupId));
+        Assert.Single(group.Select(e => e.RecurrenceGroupId).Distinct());
+        Assert.Equal(start.Date.AddDays(7), group[1].Date.Date);
+        Assert.Equal(start.Date.AddDays(21), group[3].Date.Date);
+        Assert.Equal(created.Id, group[0].Id); // returns the first occurrence
+        Assert.All(group, e => Assert.Contains(e.Participants, p => p.UserId == _userId));
+    }
+
+    [Fact]
     public async Task JoinAsync_NotifiesCreator()
     {
         var created = await _service.CreateAsync(_userId, new CreateEventDto

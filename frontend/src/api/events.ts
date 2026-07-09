@@ -29,6 +29,7 @@ export const createEvent = (data: {
   photoUrl?: string;
   latitude?: number;
   longitude?: number;
+  recurrenceWeeks?: number;
 }) => api.post<EventDetail>('/events', data).then((r) => r.data);
 
 export const updateEvent = (id: string, data: Record<string, unknown>) =>

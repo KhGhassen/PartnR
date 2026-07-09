@@ -140,32 +140,42 @@ public class EventService : IEventService
         if (date < DateTime.UtcNow)
             throw new InvalidOperationException("Event date must be in the future.");
 
-        var ev = new Event
-        {
-            Title = dto.Title,
-            Description = dto.Description ?? string.Empty,
-            City = dto.City,
-            Location = dto.Location ?? string.Empty,
-            Date = date,
-            MaxParticipants = dto.MaxParticipants,
-            ActivityId = dto.ActivityId,
-            CreatorId = creatorId,
-            Status = EventStatus.Published,
-            PhotoUrl = dto.PhotoUrl,
-            Latitude = dto.Latitude,
-            Longitude = dto.Longitude
-        };
+        var occurrences = dto.RecurrenceWeeks is > 1 ? dto.RecurrenceWeeks.Value : 1;
+        var recurrenceGroupId = occurrences > 1 ? Guid.NewGuid() : (Guid?)null;
+        Event first = null!;
 
-        ev.Participants.Add(new EventParticipant
+        for (var i = 0; i < occurrences; i++)
         {
-            UserId = creatorId,
-            Status = ParticipantStatus.Confirmed
-        });
+            var ev = new Event
+            {
+                Title = dto.Title,
+                Description = dto.Description ?? string.Empty,
+                City = dto.City,
+                Location = dto.Location ?? string.Empty,
+                Date = date.AddDays(7 * i),
+                MaxParticipants = dto.MaxParticipants,
+                ActivityId = dto.ActivityId,
+                CreatorId = creatorId,
+                Status = EventStatus.Published,
+                PhotoUrl = dto.PhotoUrl,
+                Latitude = dto.Latitude,
+                Longitude = dto.Longitude,
+                RecurrenceGroupId = recurrenceGroupId
+            };
 
-        _events.Add(ev);
+            ev.Participants.Add(new EventParticipant
+            {
+                UserId = creatorId,
+                Status = ParticipantStatus.Confirmed
+            });
+
+            _events.Add(ev);
+            first ??= ev;
+        }
+
         await _unitOfWork.SaveChangesAsync();
 
-        return await GetByIdAsync(ev.Id);
+        return await GetByIdAsync(first.Id);
     }
 
     public async Task<EventDetailDto> UpdateAsync(Guid eventId, Guid userId, UpdateEventDto dto)
