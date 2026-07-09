@@ -78,6 +78,7 @@ export const createEvent = (data: {
   photoUrl?: string;
   latitude?: number;
   longitude?: number;
+  recurrenceWeeks?: number;
 }) => client.post<EventDetail>('/events', data).then((r) => r.data);
 
 export const joinEvent = (id: string) =>

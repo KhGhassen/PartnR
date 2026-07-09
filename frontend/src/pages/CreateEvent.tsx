@@ -35,6 +35,7 @@ export default function CreateEvent() {
     photoUrl: '',
     latitude: null as number | null,
     longitude: null as number | null,
+    recurrenceWeeks: 0,
   });
 
   useEffect(() => {
@@ -80,6 +81,7 @@ export default function CreateEvent() {
         maxParticipants: Number(form.maxParticipants),
         latitude: form.latitude ?? undefined,
         longitude: form.longitude ?? undefined,
+        recurrenceWeeks: form.recurrenceWeeks >= 2 ? form.recurrenceWeeks : undefined,
       });
       trackAction({ action: 'event_created', entityType: 'event', entityId: ev.id });
       toast.success('Événement créé 🎉');
@@ -203,6 +205,25 @@ export default function CreateEvent() {
               className={inputClass(false)}
             />
           </Field>
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold text-ink-mid">Récurrence</label>
+          <div className="flex flex-wrap items-center gap-2">
+            <Chip active={form.recurrenceWeeks === 0} onClick={() => set('recurrenceWeeks', 0)}>
+              Une seule fois
+            </Chip>
+            {[2, 4, 8, 12].map((w) => (
+              <Chip key={w} active={form.recurrenceWeeks === w} onClick={() => set('recurrenceWeeks', w)}>
+                🔁 {w} semaines
+              </Chip>
+            ))}
+          </div>
+          {form.recurrenceWeeks >= 2 && (
+            <p className="mt-1 text-xs text-ink-sub">
+              {form.recurrenceWeeks} événements seront créés, un par semaine à la même heure.
+            </p>
+          )}
         </div>
 
         <Button type="submit" size="lg" disabled={loading} className="w-full">

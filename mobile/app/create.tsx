@@ -30,6 +30,7 @@ type FormState = {
   photoUrl: string;
   latitude: number | null;
   longitude: number | null;
+  recurrenceWeeks: number;
 };
 
 export default function CreateScreen() {
@@ -44,7 +45,7 @@ export default function CreateScreen() {
   const [form, setForm] = useState<FormState>({
     activityId: '', activityName: '', title: '', description: '',
     date: '', city: '', location: '', maxPeople: 6, photoUrl: '',
-    latitude: null, longitude: null,
+    latitude: null, longitude: null, recurrenceWeeks: 0,
   });
 
   const captureLocation = async () => {
@@ -103,6 +104,7 @@ export default function CreateScreen() {
         photoUrl: form.photoUrl.trim() || undefined,
         latitude: form.latitude ?? undefined,
         longitude: form.longitude ?? undefined,
+        recurrenceWeeks: form.recurrenceWeeks >= 2 ? form.recurrenceWeeks : undefined,
       });
       router.replace(`/activity/${ev.id}`);
     } catch (err) {
@@ -266,6 +268,27 @@ export default function CreateScreen() {
                   <Text style={styles.stepperValue}>{form.maxPeople}</Text>
                   <TouchableOpacity
                     onPress={() => setForm((f) => ({ ...f, maxPeople: Math.min(50, f.maxPeople + 1) }))}
+                    style={[styles.stepperBtn, styles.stepperBtnPlus]}
+                  >
+                    <Text style={styles.stepperPlus}>+</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.prefCard}>
+                <Text style={styles.prefTitle}>Répéter chaque semaine</Text>
+                <View style={styles.stepper}>
+                  <TouchableOpacity
+                    onPress={() => setForm((f) => ({ ...f, recurrenceWeeks: f.recurrenceWeeks <= 2 ? 0 : f.recurrenceWeeks - 1 }))}
+                    style={styles.stepperBtn}
+                  >
+                    <Text style={styles.stepperMinus}>−</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.stepperValue}>
+                    {form.recurrenceWeeks >= 2 ? `${form.recurrenceWeeks} sem.` : 'Non'}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => setForm((f) => ({ ...f, recurrenceWeeks: f.recurrenceWeeks < 2 ? 2 : Math.min(12, f.recurrenceWeeks + 1) }))}
                     style={[styles.stepperBtn, styles.stepperBtnPlus]}
                   >
                     <Text style={styles.stepperPlus}>+</Text>

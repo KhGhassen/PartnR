@@ -61,6 +61,10 @@ public class CreateEventDto
     [Range(2, 50)]
     public int MaxParticipants { get; set; } = 2;
 
+    // When set (2-12), creates that many weekly occurrences of the event.
+    [Range(2, 12)]
+    public int? RecurrenceWeeks { get; set; }
+
     [Required]
     public Guid ActivityId { get; set; }
 
