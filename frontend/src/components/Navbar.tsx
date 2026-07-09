@@ -54,6 +54,7 @@ export default function Navbar() {
           <NavItem to="/admin/analytics" onClick={close}>Analytics</NavItem>
           <NavItem to="/admin/users" onClick={close}>Utilisateurs</NavItem>
           <NavItem to="/admin/events" onClick={close}>Modération</NavItem>
+          <NavItem to="/admin/reports" onClick={close}>Signalements</NavItem>
         </>
       )}
     </>

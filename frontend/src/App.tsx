@@ -15,6 +15,7 @@ import EditEvent from './pages/EditEvent';
 import AnalyticsDashboardPage from './pages/AnalyticsDashboard';
 import AdminUsersPage from './pages/AdminUsers';
 import AdminEventsPage from './pages/AdminEvents';
+import AdminReports from './pages/AdminReports';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import VerifyEmail from './pages/VerifyEmail';
@@ -46,6 +47,7 @@ function AppRoutes() {
           <Route path="/admin/analytics" element={<ProtectedRoute><AnalyticsDashboardPage /></ProtectedRoute>} />
           <Route path="/admin/users" element={<ProtectedRoute><AdminUsersPage /></ProtectedRoute>} />
           <Route path="/admin/events" element={<ProtectedRoute><AdminEventsPage /></ProtectedRoute>} />
+          <Route path="/admin/reports" element={<ProtectedRoute><AdminReports /></ProtectedRoute>} />
         </Routes>
       </ErrorBoundary>
     </div>

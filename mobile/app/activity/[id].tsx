@@ -6,6 +6,7 @@ import { T } from '../../constants/tokens';
 import { getEvent, joinEvent, leaveEvent, type EventDetail } from '../../api/events';
 import { addEventPhoto, deleteEventPhoto } from '../../api/eventPhotos';
 import { listEventComments, addEventComment, deleteEventComment, type EventComment } from '../../api/eventComments';
+import { createReport } from '../../api/reports';
 import { pickAndUploadImage } from '../../api/uploads';
 import { toApiError } from '../../api/client';
 import { useApp } from '../../context/AppContext';
@@ -27,6 +28,9 @@ export default function ActivityDetailScreen() {
   const [comments, setComments] = useState<EventComment[]>([]);
   const [question, setQuestion] = useState('');
   const [sendingQuestion, setSendingQuestion] = useState(false);
+  const [reporting, setReporting] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportSent, setReportSent] = useState(false);
 
   const fetchEvent = async () => {
     try {
@@ -128,6 +132,18 @@ export default function ActivityDetailScreen() {
       setError(toApiError(err).message);
     } finally {
       setSendingQuestion(false);
+    }
+  };
+
+  const handleReport = async () => {
+    if (reportReason.trim().length < 10) return;
+    try {
+      await createReport({ targetType: 'event', targetId: event.id, reason: reportReason.trim() });
+      setReporting(false);
+      setReportSent(true);
+    } catch (err) {
+      setError(toApiError(err).message);
+      setReporting(false);
     }
   };
 
@@ -283,6 +299,36 @@ export default function ActivityDetailScreen() {
           </View>
         </View>
 
+        {/* Report */}
+        {user && !isCreator && (
+          reportSent ? (
+            <Text style={styles.reportSent}>Signalement envoyé, merci.</Text>
+          ) : reporting ? (
+            <View style={styles.reportBox}>
+              <TextInput
+                value={reportReason}
+                onChangeText={setReportReason}
+                placeholder="Décrivez le problème (10 caractères min)…"
+                placeholderTextColor={T.textSub}
+                maxLength={500}
+                style={styles.questionInput}
+              />
+              <View style={{ flexDirection: 'row', gap: 14, marginTop: 8 }}>
+                <TouchableOpacity onPress={handleReport} disabled={reportReason.trim().length < 10}>
+                  <Text style={[styles.reportSend, reportReason.trim().length < 10 && { opacity: 0.5 }]}>Envoyer</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setReporting(false)}>
+                  <Text style={styles.reportCancel}>Annuler</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : (
+            <TouchableOpacity onPress={() => setReporting(true)} style={{ alignSelf: 'flex-end' }}>
+              <Text style={styles.reportLink}>🚩 Signaler cet événement</Text>
+            </TouchableOpacity>
+          )
+        )}
+
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
       </ScrollView>
 
@@ -321,6 +367,12 @@ const styles = StyleSheet.create({
   },
   questionSend: { width: 40, height: 40, borderRadius: 20, backgroundColor: T.coral, alignItems: 'center', justifyContent: 'center' },
   questionSendText: { color: '#fff', fontSize: 15 },
+
+  reportLink: { fontSize: 12, color: T.textSub, marginTop: 4, fontFamily: 'DMSans_400Regular' },
+  reportBox: { marginTop: 8 },
+  reportSend: { fontSize: 13, fontWeight: '600', color: '#E53E3E', fontFamily: 'DMSans_600SemiBold' },
+  reportCancel: { fontSize: 13, color: T.textSub, fontFamily: 'DMSans_400Regular' },
+  reportSent: { fontSize: 12, color: T.textSub, textAlign: 'right', marginTop: 4, fontFamily: 'DMSans_400Regular' },
 
   shareBtn: { backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
   shareBtnText: { fontSize: 12, fontWeight: '600', color: T.text, fontFamily: 'DMSans_600SemiBold' },

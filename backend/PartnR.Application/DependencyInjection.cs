@@ -20,6 +20,7 @@ public static class DependencyInjection
         services.AddScoped<IUploadService, UploadService>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IEventCommentService, EventCommentService>();
+        services.AddScoped<IReportService, ReportService>();
 
         return services;
     }
