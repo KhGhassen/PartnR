@@ -230,6 +230,7 @@ function EventRow({ ev }: { ev: EventSummary }) {
         <Text style={styles.cardMeta}>
           📅 {new Date(ev.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
           {ev.distanceKm != null ? ` · ${ev.distanceKm.toFixed(1)} km` : ''}
+          {ev.isRecurring ? ` · 🔁 hebdo${ev.upcomingOccurrences ? ` (${ev.upcomingOccurrences})` : ''}` : ''}
         </Text>
         <View style={styles.cardFooter}>
           <View style={styles.progressTrack}>

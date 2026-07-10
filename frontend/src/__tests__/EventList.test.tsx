@@ -40,6 +40,8 @@ const mockPaginatedResult = {
       latitude: null,
       longitude: null,
       distanceKm: null,
+      isRecurring: false,
+      upcomingOccurrences: null,
       createdAt: '2026-03-01T00:00:00Z',
     },
   ],

@@ -61,6 +61,20 @@ public class EventService : IEventService
         else
             query = query.Where(e => e.Status == EventStatus.Published);
 
+        // In the public list, a recurring series shows a single card: its next
+        // upcoming occurrence. "Mes événements" keeps every occurrence visible.
+        if (!mine)
+        {
+            var nowUtc = DateTime.UtcNow;
+            query = query.Where(e => e.RecurrenceGroupId == null ||
+                !_events.Query().Any(o =>
+                    o.Id != e.Id &&
+                    o.RecurrenceGroupId == e.RecurrenceGroupId &&
+                    o.Status == EventStatus.Published &&
+                    o.Date >= nowUtc &&
+                    (e.Date < nowUtc || o.Date < e.Date)));
+        }
+
         if (lat.HasValue && lng.HasValue)
         {
             var radius = radiusKm ?? 25;
@@ -95,13 +109,34 @@ public class EventService : IEventService
             .Take(pageSize)
             .ToListAsync();
 
+        var occurrenceCounts = await CountUpcomingOccurrencesAsync(events);
+
         return new PaginatedResult<EventDto>
         {
-            Items = events.Select(e => MapToDto(e)).ToList(),
+            Items = events.Select(e => MapToDto(e, null,
+                e.RecurrenceGroupId is { } g ? occurrenceCounts.GetValueOrDefault(g) : null)).ToList(),
             TotalCount = totalCount,
             Page = page,
             PageSize = pageSize
         };
+    }
+
+    private async Task<Dictionary<Guid, int>> CountUpcomingOccurrencesAsync(List<Event> events)
+    {
+        var groupIds = events
+            .Where(e => e.RecurrenceGroupId != null)
+            .Select(e => e.RecurrenceGroupId!.Value)
+            .Distinct()
+            .ToList();
+        if (groupIds.Count == 0) return [];
+
+        var nowUtc = DateTime.UtcNow;
+        return await _events.Query()
+            .Where(e => e.RecurrenceGroupId != null && groupIds.Contains(e.RecurrenceGroupId.Value)
+                        && e.Status == EventStatus.Published && e.Date >= nowUtc)
+            .GroupBy(e => e.RecurrenceGroupId!.Value)
+            .Select(g => new { g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Key, x => x.Count);
     }
 
     private static double HaversineKm(double lat1, double lon1, double lat2, double lon2)
@@ -128,7 +163,15 @@ public class EventService : IEventService
             .FirstOrDefaultAsync(e => e.Id == id)
             ?? throw new KeyNotFoundException("Event not found.");
 
-        return MapToDetailDto(ev);
+        var occurrences = ev.RecurrenceGroupId is { } groupId
+            ? await _events.Query()
+                .Where(o => o.RecurrenceGroupId == groupId && o.Status == EventStatus.Published)
+                .OrderBy(o => o.Date)
+                .Select(o => new OccurrenceDto { Id = o.Id, Date = o.Date })
+                .ToListAsync()
+            : [];
+
+        return MapToDetailDto(ev, occurrences);
     }
 
     public async Task<EventDetailDto> CreateAsync(Guid creatorId, CreateEventDto dto)
@@ -333,7 +376,7 @@ public class EventService : IEventService
         await _unitOfWork.SaveChangesAsync();
     }
 
-    private static EventDto MapToDto(Event e, double? distanceKm = null) => new()
+    private static EventDto MapToDto(Event e, double? distanceKm = null, int? upcomingOccurrences = null) => new()
     {
         Id = e.Id,
         Title = e.Title,
@@ -352,10 +395,12 @@ public class EventService : IEventService
         Latitude = e.Latitude,
         Longitude = e.Longitude,
         DistanceKm = distanceKm,
+        IsRecurring = e.RecurrenceGroupId != null,
+        UpcomingOccurrences = upcomingOccurrences,
         CreatedAt = e.CreatedAt
     };
 
-    private static EventDetailDto MapToDetailDto(Event e) => new()
+    private static EventDetailDto MapToDetailDto(Event e, List<OccurrenceDto>? occurrences = null) => new()
     {
         Id = e.Id,
         Title = e.Title,
@@ -374,6 +419,8 @@ public class EventService : IEventService
         Latitude = e.Latitude,
         Longitude = e.Longitude,
         CreatedAt = e.CreatedAt,
+        IsRecurring = e.RecurrenceGroupId != null,
+        Occurrences = occurrences ?? [],
         Participants = e.Participants.Select(p => new ParticipantDto
         {
             UserId = p.UserId,

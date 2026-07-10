@@ -17,6 +17,8 @@ export type EventSummary = {
   latitude: number | null;
   longitude: number | null;
   distanceKm: number | null;
+  isRecurring: boolean;
+  upcomingOccurrences: number | null;
 };
 
 export type Participant = {
@@ -35,11 +37,14 @@ export type EventPhoto = {
   createdAt: string;
 };
 
+export type Occurrence = { id: string; date: string };
+
 export type EventDetail = EventSummary & {
   description: string | null;
   createdAt: string;
   participants: Participant[];
   photos: EventPhoto[];
+  occurrences: Occurrence[];
 };
 
 export type PaginatedResult<T> = {

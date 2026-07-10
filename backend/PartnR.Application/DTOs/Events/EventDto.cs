@@ -23,6 +23,8 @@ public class EventDto
     public double? Latitude { get; set; }
     public double? Longitude { get; set; }
     public double? DistanceKm { get; set; }
+    public bool IsRecurring { get; set; }
+    public int? UpcomingOccurrences { get; set; }
     public DateTime CreatedAt { get; set; }
 }
 
@@ -30,6 +32,13 @@ public class EventDetailDto : EventDto
 {
     public List<ParticipantDto> Participants { get; set; } = [];
     public List<EventPhotoDto> Photos { get; set; } = [];
+    public List<OccurrenceDto> Occurrences { get; set; } = [];
+}
+
+public class OccurrenceDto
+{
+    public Guid Id { get; set; }
+    public DateTime Date { get; set; }
 }
 
 public class ParticipantDto

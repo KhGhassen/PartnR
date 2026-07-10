@@ -52,6 +52,8 @@ export interface EventSummary {
   latitude: number | null;
   longitude: number | null;
   distanceKm: number | null;
+  isRecurring: boolean;
+  upcomingOccurrences: number | null;
   createdAt: string;
 }
 
@@ -72,9 +74,15 @@ export interface Participant {
   joinedAt: string;
 }
 
+export interface Occurrence {
+  id: string;
+  date: string;
+}
+
 export interface EventDetail extends EventSummary {
   participants: Participant[];
   photos: EventPhoto[];
+  occurrences: Occurrence[];
 }
 
 export interface Rating {

@@ -198,6 +198,26 @@ export default function ActivityDetailScreen() {
         <View style={styles.metaRow}><Text style={styles.meta}>📅 {new Date(event.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</Text></View>
         <View style={styles.metaRow}><Text style={styles.meta}>📍 {event.city}{event.location ? ` — ${event.location}` : ''}</Text></View>
 
+        {/* Recurring series dates */}
+        {event.occurrences.length > 1 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>🔁 Toutes les dates</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+              {event.occurrences.map((o) => (
+                <TouchableOpacity
+                  key={o.id}
+                  onPress={() => o.id !== event.id && router.replace(`/activity/${o.id}`)}
+                  style={[styles.occurrenceChip, o.id === event.id && styles.occurrenceChipActive]}
+                >
+                  <Text style={[styles.occurrenceText, o.id === event.id && styles.occurrenceTextActive]}>
+                    {new Date(o.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
         {/* Participants */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Participants ({event.participantCount}/{event.maxParticipants}){waitlistCount > 0 ? ` · ${waitlistCount} en attente` : ''}</Text>
@@ -352,6 +372,11 @@ const styles = StyleSheet.create({
   hero: { height: 160, alignItems: 'center', justifyContent: 'center', position: 'relative' },
   heroEmoji: { fontSize: 64 },
   heroTop: { position: 'absolute', top: 0, left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 12 },
+  occurrenceChip: { borderRadius: 999, borderWidth: 1.5, borderColor: T.border, backgroundColor: '#fff', paddingHorizontal: 12, paddingVertical: 6 },
+  occurrenceChipActive: { borderColor: T.violet, backgroundColor: T.violet },
+  occurrenceText: { fontSize: 12, color: T.textMid, fontFamily: 'DMSans_500Medium' },
+  occurrenceTextActive: { color: '#fff' },
+
   commentCard: { backgroundColor: T.card, borderRadius: 14, padding: 12, borderWidth: 1, borderColor: T.border },
   commentHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 3 },
   commentAuthor: { fontSize: 13, fontWeight: '600', color: T.text, fontFamily: 'DMSans_600SemiBold' },
