@@ -20,6 +20,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<EventComment> EventComments => Set<EventComment>();
     public DbSet<Report> Reports => Set<Report>();
+    public DbSet<PushToken> PushTokens => Set<PushToken>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -212,6 +213,13 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
                 .WithMany()
                 .HasForeignKey(c => c.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── PUSH_TOKENS ───────────────────────────────────────
+        builder.Entity<PushToken>(e =>
+        {
+            e.HasIndex(t => t.Token).IsUnique();
+            e.HasIndex(t => t.UserId);
         });
 
         // ── REPORTS ───────────────────────────────────────────

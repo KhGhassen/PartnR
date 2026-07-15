@@ -65,10 +65,10 @@ public class EventsController : ControllerBase
 
     [Authorize]
     [HttpPut("{id:guid}")]
-    public async Task<ActionResult<EventDetailDto>> Update(Guid id, UpdateEventDto dto)
+    public async Task<ActionResult<EventDetailDto>> Update(Guid id, UpdateEventDto dto, [FromQuery] bool applyToSeries = false)
     {
         var userId = User.GetUserId();
-        var ev = await _eventService.UpdateAsync(id, userId, dto);
+        var ev = await _eventService.UpdateAsync(id, userId, dto, applyToSeries);
         _tracker.Track(userId, "event_updated", "event", id);
         return Ok(ev);
     }
@@ -101,10 +101,10 @@ public class EventsController : ControllerBase
 
     [Authorize]
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<IActionResult> Delete(Guid id, [FromQuery] bool applyToSeries = false)
     {
         var userId = User.GetUserId();
-        await _eventService.DeleteAsync(id, userId);
+        await _eventService.DeleteAsync(id, userId, applyToSeries);
         _tracker.Track(userId, "event_deleted", "event", id);
         return NoContent();
     }

@@ -516,6 +516,26 @@ public class EventServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task UpdateAsync_AndDeleteAsync_ApplyToSeries()
+    {
+        var created = await _service.CreateAsync(_userId, new CreateEventDto
+        {
+            Title = "Série",
+            City = "Paris",
+            Date = DateTime.UtcNow.AddDays(2),
+            MaxParticipants = 5,
+            ActivityId = _activityId,
+            RecurrenceWeeks = 3
+        });
+
+        await _service.UpdateAsync(created.Id, _userId, new UpdateEventDto { Title = "Série renommée" }, applyToSeries: true);
+        Assert.Equal(3, _db.Events.Count(e => e.Title == "Série renommée"));
+
+        await _service.DeleteAsync(created.Id, _userId, applyToSeries: true);
+        Assert.Equal(0, _db.Events.Count(e => e.Title == "Série renommée"));
+    }
+
+    [Fact]
     public async Task JoinAsync_NotifiesCreator()
     {
         var created = await _service.CreateAsync(_userId, new CreateEventDto
