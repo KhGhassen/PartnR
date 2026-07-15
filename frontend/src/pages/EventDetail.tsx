@@ -230,6 +230,28 @@ export default function EventDetail() {
             </div>
           )}
 
+          {/* Recurring series dates */}
+          {event.occurrences.length > 1 && (
+            <div className="mb-6">
+              <p className="mb-2 text-xs font-semibold text-ink-mid">🔁 Événement hebdomadaire — toutes les dates</p>
+              <div className="flex flex-wrap gap-2">
+                {event.occurrences.map((o) => (
+                  <Link
+                    key={o.id}
+                    to={`/events/${o.id}`}
+                    className={`rounded-full border-[1.5px] px-3 py-1 text-xs font-medium transition-colors ${
+                      o.id === event.id
+                        ? 'border-violet-500 bg-violet-500 text-white'
+                        : 'border-line bg-white text-ink-mid hover:border-violet-300'
+                    }`}
+                  >
+                    {new Date(o.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Capacity */}
           <div className="mb-6 flex items-center gap-4 rounded-2xl border border-line bg-white p-4">
             <div className="flex -space-x-2">

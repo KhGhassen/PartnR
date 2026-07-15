@@ -38,14 +38,21 @@ export default function EventCard({ ev, bandColor, showStatus = false }: EventCa
 
       <div className="p-5">
         <h2 className="mb-1 truncate font-semibold text-ink">{ev.title}</h2>
-        <p className="mb-1 text-sm text-ink-sub">
-          📅 {new Date(ev.date).toLocaleDateString('fr-FR', {
-            weekday: 'short',
-            day: 'numeric',
-            month: 'short',
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
+        <p className="mb-1 flex flex-wrap items-center gap-2 text-sm text-ink-sub">
+          <span>
+            📅 {new Date(ev.date).toLocaleDateString('fr-FR', {
+              weekday: 'short',
+              day: 'numeric',
+              month: 'short',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </span>
+          {ev.isRecurring && (
+            <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-700">
+              🔁 Chaque semaine{ev.upcomingOccurrences ? ` · ${ev.upcomingOccurrences} dates` : ''}
+            </span>
+          )}
         </p>
         <p className="mb-4 truncate text-sm text-ink-sub">
           📍 {ev.city}

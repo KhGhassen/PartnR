@@ -476,6 +476,45 @@ public class EventServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task ListAsync_CollapsesRecurringSeriesToNextOccurrence()
+    {
+        await _service.CreateAsync(_userId, new CreateEventDto
+        {
+            Title = "Foot hebdo",
+            City = "Paris",
+            Date = DateTime.UtcNow.AddDays(2),
+            MaxParticipants = 5,
+            ActivityId = _activityId,
+            RecurrenceWeeks = 4
+        });
+        await _service.CreateAsync(_userId, new CreateEventDto
+        {
+            Title = "Événement simple",
+            City = "Paris",
+            Date = DateTime.UtcNow.AddDays(3),
+            MaxParticipants = 5,
+            ActivityId = _activityId
+        });
+
+        var list = await _service.ListAsync(null, null, null);
+
+        // One card for the series (its next occurrence) + the single event.
+        Assert.Equal(2, list.Items.Count);
+        var series = list.Items.Single(i => i.Title == "Foot hebdo");
+        Assert.True(series.IsRecurring);
+        Assert.Equal(4, series.UpcomingOccurrences);
+        Assert.Equal(DateTime.UtcNow.AddDays(2).Date, series.Date.Date);
+
+        // "Mes événements" still shows every occurrence.
+        var mine = await _service.ListAsync(null, null, null, mine: true, userId: _userId);
+        Assert.Equal(5, mine.Items.Count);
+
+        // The detail exposes the sibling dates.
+        var detail = await _service.GetByIdAsync(series.Id);
+        Assert.Equal(4, detail.Occurrences.Count);
+    }
+
+    [Fact]
     public async Task JoinAsync_NotifiesCreator()
     {
         var created = await _service.CreateAsync(_userId, new CreateEventDto
