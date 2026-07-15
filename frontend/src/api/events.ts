@@ -32,11 +32,11 @@ export const createEvent = (data: {
   recurrenceWeeks?: number;
 }) => api.post<EventDetail>('/events', data).then((r) => r.data);
 
-export const updateEvent = (id: string, data: Record<string, unknown>) =>
-  api.put<EventDetail>(`/events/${id}`, data).then((r) => r.data);
+export const updateEvent = (id: string, data: Record<string, unknown>, applyToSeries = false) =>
+  api.put<EventDetail>(`/events/${id}`, data, { params: applyToSeries ? { applyToSeries: true } : {} }).then((r) => r.data);
 
-export const deleteEvent = (id: string) =>
-  api.delete(`/events/${id}`);
+export const deleteEvent = (id: string, applyToSeries = false) =>
+  api.delete(`/events/${id}`, { params: applyToSeries ? { applyToSeries: true } : {} });
 
 export const joinEvent = (id: string) =>
   api.post(`/events/${id}/join`);

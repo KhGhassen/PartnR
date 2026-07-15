@@ -21,6 +21,8 @@ export default function EditEvent() {
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
   const [cities, setCities] = useState<string[]>([]);
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [applyToSeries, setApplyToSeries] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [form, setForm] = useState({
     title: '',
@@ -48,6 +50,7 @@ export default function EditEvent() {
         navigate(`/events/${id}`);
         return;
       }
+      setIsRecurring(ev.occurrences.length > 1);
       setForm({
         title: ev.title,
         description: ev.description || '',
@@ -107,8 +110,8 @@ export default function EditEvent() {
         photoUrl: form.photoUrl || undefined,
         latitude: form.latitude ?? undefined,
         longitude: form.longitude ?? undefined,
-      });
-      toast.success('Modifications enregistrées.');
+      }, applyToSeries);
+      toast.success(applyToSeries ? 'Toute la série a été mise à jour.' : 'Modifications enregistrées.');
       navigate(`/events/${id}`);
     } catch (err) {
       setError((err as {response?: {data?: {error?: string}}}).response?.data?.error || 'Erreur lors de la modification');
@@ -220,6 +223,18 @@ export default function EditEvent() {
             <option value="Completed">Terminé</option>
           </select>
         </Field>
+
+        {isRecurring && (
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-ink-mid">
+            <input
+              type="checkbox"
+              checked={applyToSeries}
+              onChange={(e) => setApplyToSeries(e.target.checked)}
+              className="h-4 w-4 accent-coral-500"
+            />
+            🔁 Appliquer à toutes les dates futures de la série (sauf la date/heure)
+          </label>
+        )}
 
         <div className="flex gap-3">
           <Button type="submit" size="lg" disabled={loading} className="flex-1">

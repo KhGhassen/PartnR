@@ -8,5 +8,6 @@ public class Notification
     public string Message { get; set; } = string.Empty;
     public Guid? EventId { get; set; }
     public bool IsRead { get; set; }
+    public bool PushSent { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

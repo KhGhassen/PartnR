@@ -114,9 +114,12 @@ export default function EventDetail() {
 
   const handleDelete = async () => {
     if (!confirm('Supprimer cet événement ?')) return;
+    const applyToSeries =
+      event.occurrences.length > 1 &&
+      confirm(`Supprimer aussi les ${event.occurrences.length - 1} autres dates de la série ?`);
     try {
-      await deleteEvent(event.id);
-      toast.info('Événement supprimé.');
+      await deleteEvent(event.id, applyToSeries);
+      toast.info(applyToSeries ? 'Série supprimée.' : 'Événement supprimé.');
       navigate('/');
     } catch (err) {
       setError((err as {response?: {data?: {error?: string}}}).response?.data?.error || 'Erreur');

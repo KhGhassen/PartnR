@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import type { UserInfo } from '../api/auth';
+import { registerForPush, listenForNotificationTaps } from '../lib/push';
 
 type AppContextType = {
   token: string | null;
@@ -28,9 +29,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (stored && storedUser) {
         setToken(stored);
         setUser(JSON.parse(storedUser));
+        registerForPush();
       }
       setIsLoading(false);
     })();
+    return listenForNotificationTaps();
   }, []);
 
   const login = async (tok: string, u: UserInfo) => {
@@ -38,6 +41,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     await SecureStore.setItemAsync('user', JSON.stringify(u));
     setToken(tok);
     setUser(u);
+    registerForPush();
   };
 
   const logout = async () => {

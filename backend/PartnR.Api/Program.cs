@@ -24,6 +24,8 @@ builder.Host.UseSerilog();
 // Application + Infrastructure (DbContext, Identity, repositories, services)
 builder.Services.AddApplication();
 builder.Services.AddHostedService<PartnR.Api.Services.EventReminderService>();
+builder.Services.AddHostedService<PartnR.Api.Services.ExpoPushService>();
+builder.Services.AddHttpClient();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 // JWT

@@ -222,7 +222,7 @@ public class EventService : IEventService
         return await GetByIdAsync(first.Id);
     }
 
-    public async Task<EventDetailDto> UpdateAsync(Guid eventId, Guid userId, UpdateEventDto dto)
+    public async Task<EventDetailDto> UpdateAsync(Guid eventId, Guid userId, UpdateEventDto dto, bool applyToSeries = false)
     {
         var ev = await _events.FindAsync(eventId)
             ?? throw new KeyNotFoundException("Event not found.");
@@ -230,33 +230,48 @@ public class EventService : IEventService
         if (ev.CreatorId != userId)
             throw new UnauthorizedAccessException("Only the creator can update this event.");
 
-        if (dto.Title is not null) ev.Title = dto.Title;
-        if (dto.Description is not null) ev.Description = dto.Description;
-        if (dto.City is not null) ev.City = dto.City;
-        if (dto.Location is not null) ev.Location = dto.Location;
-        if (dto.Date.HasValue) ev.Date = DateTime.SpecifyKind(dto.Date.Value, DateTimeKind.Utc);
-        if (dto.MaxParticipants.HasValue) ev.MaxParticipants = dto.MaxParticipants.Value;
-        if (dto.Status.HasValue && dto.Status.Value == EventStatus.Cancelled && ev.Status != EventStatus.Cancelled)
+        var targets = new List<Event> { ev };
+        if (applyToSeries && ev.RecurrenceGroupId is { } groupId)
         {
-            var participantIds = await _participants.Query()
-                .Where(p => p.EventId == eventId && p.Status == ParticipantStatus.Confirmed && p.UserId != userId)
-                .Select(p => p.UserId)
-                .ToListAsync();
-            foreach (var pid in participantIds)
-            {
-                _notifications.Add(new Notification
-                {
-                    UserId = pid,
-                    Type = "event_cancelled",
-                    Message = $"L'événement « {ev.Title} » a été annulé.",
-                    EventId = ev.Id,
-                });
-            }
+            var nowUtc = DateTime.UtcNow;
+            targets.AddRange(await _events.Query()
+                .Where(o => o.RecurrenceGroupId == groupId && o.Id != ev.Id && o.Date >= nowUtc)
+                .ToListAsync());
         }
-        if (dto.Status.HasValue) ev.Status = dto.Status.Value;
-        if (dto.PhotoUrl is not null) ev.PhotoUrl = dto.PhotoUrl;
-        if (dto.Latitude.HasValue) ev.Latitude = dto.Latitude;
-        if (dto.Longitude.HasValue) ev.Longitude = dto.Longitude;
+
+        foreach (var target in targets)
+        {
+            if (dto.Title is not null) target.Title = dto.Title;
+            if (dto.Description is not null) target.Description = dto.Description;
+            if (dto.City is not null) target.City = dto.City;
+            if (dto.Location is not null) target.Location = dto.Location;
+            if (dto.MaxParticipants.HasValue) target.MaxParticipants = dto.MaxParticipants.Value;
+            if (dto.Status.HasValue && dto.Status.Value == EventStatus.Cancelled && target.Status != EventStatus.Cancelled)
+            {
+                var participantIds = await _participants.Query()
+                    .Where(p => p.EventId == target.Id && p.Status == ParticipantStatus.Confirmed && p.UserId != userId)
+                    .Select(p => p.UserId)
+                    .ToListAsync();
+                foreach (var pid in participantIds)
+                {
+                    _notifications.Add(new Notification
+                    {
+                        UserId = pid,
+                        Type = "event_cancelled",
+                        Message = $"L'événement « {target.Title} » a été annulé.",
+                        EventId = target.Id,
+                    });
+                }
+            }
+            if (dto.Status.HasValue) target.Status = dto.Status.Value;
+            if (dto.PhotoUrl is not null) target.PhotoUrl = dto.PhotoUrl;
+            if (dto.Latitude.HasValue) target.Latitude = dto.Latitude;
+            if (dto.Longitude.HasValue) target.Longitude = dto.Longitude;
+        }
+
+        // The date only ever applies to the edited occurrence — shifting a
+        // whole series' dates at once would silently move everyone's plans.
+        if (dto.Date.HasValue) ev.Date = DateTime.SpecifyKind(dto.Date.Value, DateTimeKind.Utc);
 
         await _unitOfWork.SaveChangesAsync();
         return await GetByIdAsync(ev.Id);
@@ -365,7 +380,7 @@ public class EventService : IEventService
         await _unitOfWork.SaveChangesAsync();
     }
 
-    public async Task DeleteAsync(Guid eventId, Guid userId)
+    public async Task DeleteAsync(Guid eventId, Guid userId, bool applyToSeries = false)
     {
         var ev = await _events.FindAsync(eventId)
             ?? throw new KeyNotFoundException("Event not found.");
@@ -374,6 +389,16 @@ public class EventService : IEventService
             throw new UnauthorizedAccessException("Only the creator can delete this event.");
 
         _events.Remove(ev);
+
+        if (applyToSeries && ev.RecurrenceGroupId is { } groupId)
+        {
+            var nowUtc = DateTime.UtcNow;
+            var siblings = await _events.Query()
+                .Where(o => o.RecurrenceGroupId == groupId && o.Id != ev.Id && o.Date >= nowUtc)
+                .ToListAsync();
+            foreach (var sibling in siblings) _events.Remove(sibling);
+        }
+
         await _unitOfWork.SaveChangesAsync();
     }
 
