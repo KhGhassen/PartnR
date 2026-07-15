@@ -61,9 +61,10 @@ public class EventService : IEventService
         else
             query = query.Where(e => e.Status == EventStatus.Published);
 
-        // In the public list, a recurring series shows a single card: its next
-        // upcoming occurrence. "Mes événements" keeps every occurrence visible.
-        if (!mine)
+        // A recurring series shows a single card — its next upcoming
+        // occurrence — everywhere upcoming events are listed. Past-status
+        // views (Terminés/Annulés) keep each occurrence: they each happened.
+        if ((status ?? EventStatus.Published) == EventStatus.Published)
         {
             var nowUtc = DateTime.UtcNow;
             query = query.Where(e => e.RecurrenceGroupId == null ||

@@ -505,9 +505,10 @@ public class EventServiceTests : IDisposable
         Assert.Equal(4, series.UpcomingOccurrences);
         Assert.Equal(DateTime.UtcNow.AddDays(2).Date, series.Date.Date);
 
-        // "Mes événements" still shows every occurrence.
+        // "Mes événements" collapses the series the same way.
         var mine = await _service.ListAsync(null, null, null, mine: true, userId: _userId);
-        Assert.Equal(5, mine.Items.Count);
+        Assert.Equal(2, mine.Items.Count);
+        Assert.True(mine.Items.Single(i => i.Title == "Foot hebdo").IsRecurring);
 
         // The detail exposes the sibling dates.
         var detail = await _service.GetByIdAsync(series.Id);
