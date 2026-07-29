@@ -199,11 +199,11 @@ export default function ActivityDetailScreen() {
         <View style={styles.metaRow}><Text style={styles.meta}>📍 {event.city}{event.location ? ` — ${event.location}` : ''}</Text></View>
 
         {/* Recurring series dates */}
-        {event.occurrences.length > 1 && (
+        {(event.occurrences?.length ?? 0) > 1 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>🔁 Toutes les dates</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
-              {event.occurrences.map((o) => (
+              {(event.occurrences ?? []).map((o) => (
                 <TouchableOpacity
                   key={o.id}
                   onPress={() => o.id !== event.id && router.replace(`/activity/${o.id}`)}

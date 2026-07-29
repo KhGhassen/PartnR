@@ -4,6 +4,17 @@
   "framework": "vite",
   "rewrites": [
     {
+      "source": "/events/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|Facebot|Twitterbot|WhatsApp|Slackbot|Slack-ImgProxy|LinkedInBot|Discordbot|TelegramBot|Googlebot|bingbot|Applebot|redditbot|Pinterest|Iframely|SkypeUriPreview|vkShare|W3C_Validator|Embedly|Mastodon|Bluesky).*"
+        }
+      ],
+      "destination": "/api/og?id=:id"
+    },
+    {
       "source": "/api/:path*",
       "destination": "https://partnr-p3rv.onrender.com/api/:path*"
     },

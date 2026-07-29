@@ -77,6 +77,9 @@ export default function EventDetail() {
   );
   const waitlistCount = event.participants.filter((p) => p.status === 'Waitlisted').length;
   const confirmed = event.participants.filter((p) => p.status === 'Confirmed');
+  // Defensive: an API response predating the recurrence feature (deploy skew,
+  // cached response) must not take the whole page down.
+  const occurrences = event.occurrences ?? [];
   const spotsLeft = Math.max(0, event.maxParticipants - event.participantCount);
   const pct = event.maxParticipants > 0 ? Math.min(100, (event.participantCount / event.maxParticipants) * 100) : 0;
 
@@ -115,7 +118,7 @@ export default function EventDetail() {
   const handleDelete = async () => {
     if (!confirm('Supprimer cet événement ?')) return;
     const applyToSeries =
-      event.occurrences.length > 1 &&
+      (event.occurrences?.length ?? 0) > 1 &&
       confirm(`Supprimer aussi les ${event.occurrences.length - 1} autres dates de la série ?`);
     try {
       await deleteEvent(event.id, applyToSeries);
@@ -234,11 +237,11 @@ export default function EventDetail() {
           )}
 
           {/* Recurring series dates */}
-          {event.occurrences.length > 1 && (
+          {occurrences.length > 1 && (
             <div className="mb-6">
               <p className="mb-2 text-xs font-semibold text-ink-mid">🔁 Événement hebdomadaire — toutes les dates</p>
               <div className="flex flex-wrap gap-2">
-                {event.occurrences.map((o) => (
+                {occurrences.map((o) => (
                   <Link
                     key={o.id}
                     to={`/events/${o.id}`}

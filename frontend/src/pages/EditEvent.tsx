@@ -50,7 +50,7 @@ export default function EditEvent() {
         navigate(`/events/${id}`);
         return;
       }
-      setIsRecurring(ev.occurrences.length > 1);
+      setIsRecurring((ev.occurrences?.length ?? 0) > 1);
       setForm({
         title: ev.title,
         description: ev.description || '',
