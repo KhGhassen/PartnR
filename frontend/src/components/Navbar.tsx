@@ -12,8 +12,10 @@ function NavItem({ to, children, onClick }: { to: string; children: React.ReactN
       end={to === '/'}
       onClick={onClick}
       className={({ isActive }) =>
-        `rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-          isActive ? 'bg-coral-50 text-coral-700' : 'text-ink-mid hover:bg-cream-deep hover:text-ink'
+        `whitespace-nowrap border-b-2 px-2.5 py-1 text-sm font-medium transition-colors ${
+          isActive
+            ? 'border-accent text-text'
+            : 'border-transparent text-text-2 hover:border-border-strong hover:text-text'
         }`
       }
     >
@@ -61,18 +63,16 @@ export default function Navbar() {
   );
 
   return (
-    <nav className="sticky top-0 z-[1100] border-b border-line bg-cream/85 backdrop-blur-md">
+    <nav className="sticky top-0 z-[1100] border-b border-border bg-bg/85 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-2 px-4">
-        <Link to="/" className="flex items-center gap-2" onClick={close}>
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-coral-500 to-violet-500 text-sm font-bold text-white">
-            P
-          </span>
-          <span className="text-xl font-bold tracking-tight text-ink">PartnR</span>
+        <Link to="/" className="flex shrink-0 items-baseline" onClick={close}>
+          <span className="font-display text-xl font-bold tracking-tight text-text">PartnR</span>
+          <span className="ml-0.5 h-1.5 w-1.5 rounded-full bg-accent" aria-hidden="true" />
         </Link>
 
-        <div className="ml-6 hidden items-center gap-1 md:flex">{links}</div>
+        <div className="ml-6 hidden items-center gap-1 lg:flex">{links}</div>
 
-        <div className="ml-auto hidden items-center gap-3 md:flex">
+        <div className="ml-auto hidden items-center gap-3 lg:flex">
           <button
             onClick={toggleTheme}
             aria-label={dark ? 'Passer en mode clair' : 'Passer en mode sombre'}
@@ -110,13 +110,13 @@ export default function Navbar() {
         <button
           onClick={toggleTheme}
           aria-label={dark ? 'Passer en mode clair' : 'Passer en mode sombre'}
-          className="ml-auto flex h-9 w-9 items-center justify-center rounded-full text-base hover:bg-cream-deep md:hidden"
+          className="ml-auto flex h-9 w-9 items-center justify-center rounded-full text-base hover:bg-surface-sunken lg:hidden"
         >
           {dark ? '☀️' : '🌙'}
         </button>
         <button
           onClick={() => setOpen((o) => !o)}
-          className="flex h-9 w-9 items-center justify-center rounded-full text-ink-mid hover:bg-cream-deep md:hidden"
+          className="flex h-9 w-9 items-center justify-center rounded-full text-text-2 hover:bg-surface-sunken lg:hidden"
           aria-label="Menu"
         >
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -137,7 +137,7 @@ export default function Navbar() {
       </div>
 
       {open && (
-        <div className="flex flex-col gap-1 border-t border-line px-4 py-3 md:hidden">
+        <div className="flex flex-col gap-1 border-t border-border px-4 py-3 lg:hidden">
           {links}
           <div className="mt-2 flex items-center gap-3 border-t border-line pt-3">
             {isAuthenticated ? (

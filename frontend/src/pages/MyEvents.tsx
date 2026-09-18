@@ -3,7 +3,6 @@ import { listEvents } from '../api/events';
 import { toApiError } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import EventCard from '../components/EventCard';
-import { bandColor } from '../components/ui/classes';
 import Chip from '../components/ui/Chip';
 import { ButtonLink } from '../components/ui/Button';
 import { EventCardSkeleton } from '../components/ui/Skeleton';
@@ -100,8 +99,8 @@ export default function MyEvents() {
                 Organisés par moi <span className="ml-1 text-sm font-normal text-ink-sub">({organized.length})</span>
               </h2>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {organized.map((ev, i) => (
-                  <EventCard key={ev.id} ev={ev} bandColor={bandColor(i)} showStatus={tab !== 'Published'} />
+                {organized.map((ev) => (
+                  <EventCard key={ev.id} ev={ev} showStatus={tab !== 'Published'} />
                 ))}
               </div>
             </section>
@@ -112,8 +111,8 @@ export default function MyEvents() {
                 Rejoints <span className="ml-1 text-sm font-normal text-ink-sub">({joined.length})</span>
               </h2>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {joined.map((ev, i) => (
-                  <EventCard key={ev.id} ev={ev} bandColor={bandColor(i + 1)} showStatus={tab !== 'Published'} />
+                {joined.map((ev) => (
+                  <EventCard key={ev.id} ev={ev} showStatus={tab !== 'Published'} />
                 ))}
               </div>
             </section>

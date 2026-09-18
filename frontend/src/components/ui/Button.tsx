@@ -4,15 +4,21 @@ import { Link } from 'react-router-dom';
 type Variant = 'primary' | 'soft' | 'ghost' | 'danger' | 'violet';
 type Size = 'sm' | 'md' | 'lg';
 
+// Buttons are 10px-radius rectangles; chips stay pills. With 53 rounded-full
+// classes in the app a filter chip and a primary action were the same object —
+// the shape contrast is what separates "action" from "filter".
 const base =
-  'inline-flex items-center justify-center gap-2 font-semibold rounded-full transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none whitespace-nowrap';
+  'inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none whitespace-nowrap';
 
+// text-on-accent, never a literal white: on the light theme the accent carries
+// white, on the dark theme it carries ink. White on a light accent is 2.8:1 —
+// the mistake most dark modes ship.
 const variants: Record<Variant, string> = {
-  primary: 'bg-coral-500 text-white hover:bg-coral-600 active:bg-coral-700 shadow-card',
-  violet: 'bg-violet-500 text-white hover:bg-violet-600 active:bg-violet-700 shadow-card',
-  soft: 'bg-coral-50 text-coral-700 hover:bg-coral-100 border border-coral-100',
-  ghost: 'bg-white text-ink-mid border border-line hover:border-ink-sub hover:text-ink',
-  danger: 'bg-red-50 text-red-600 border border-red-100 hover:bg-red-100',
+  primary: 'bg-accent text-on-accent hover:bg-accent-strong shadow-card',
+  violet: 'bg-violet text-on-accent hover:opacity-90 shadow-card',
+  soft: 'bg-accent-surface text-accent-strong hover:brightness-95 border border-accent-surface',
+  ghost: 'bg-surface text-text-2 border border-border-strong hover:text-text',
+  danger: 'bg-danger-surface text-danger border border-danger-surface hover:brightness-95',
 };
 
 const sizes: Record<Size, string> = {

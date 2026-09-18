@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { MapPin, Plus, Search } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { listEvents } from '../api/events';
 import { listActivities } from '../api/activities';
@@ -12,7 +13,6 @@ import { EventCardSkeleton } from '../components/ui/Skeleton';
 import EmptyState from '../components/ui/EmptyState';
 import { inputClass } from '../components/ui/classes';
 import EventCard from '../components/EventCard';
-import { bandColor } from '../components/ui/classes';
 import type { EventSummary, Activity } from '../types';
 
 export default function EventList() {
@@ -77,52 +77,66 @@ export default function EventList() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       {/* Hero */}
-      <div className="relative mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-coral-500 to-violet-500 px-8 py-10 text-white">
-        <div className="pointer-events-none absolute -right-10 -top-16 h-56 w-56 rounded-full bg-white/10" />
-        <div className="pointer-events-none absolute -bottom-24 right-24 h-40 w-40 rounded-full bg-white/10" />
-        <p className="mb-1 text-sm font-medium text-white/80">
-          {totalCount > 0 ? `${totalCount} événement${totalCount > 1 ? 's' : ''} à venir` : 'PartnR'}
-        </p>
-        <h1 className="max-w-lg text-3xl font-bold leading-tight tracking-tight">
-          {isAuthenticated
-            ? "Trouvez votre prochain partenaire d'activité"
-            : 'Ne faites plus rien seul·e.'}
-        </h1>
-        {!isAuthenticated && (
-          <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/85">
-            Course à pied, resto, concert, expo… PartnR vous connecte avec des gens près de
-            chez vous qui partagent vos envies. Rejoignez une activité en deux clics, ou
-            proposez la vôtre.
+      {/* The night block is the brand anchor: identical in both themes, so it is
+          the one memorable object and it survives a share thumbnail. It also
+          replaces the coral→violet gradient, whose white/80 subtitle sat at
+          2.69:1 — the app's worst contrast failure, on its first screen. */}
+      <div className="relative mb-8 overflow-hidden rounded-3xl bg-night px-8 py-10">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-90"
+          style={{
+            background:
+              'radial-gradient(110% 130% at 12% 0%, rgba(194,69,28,.38), transparent 58%), radial-gradient(85% 110% at 88% 15%, rgba(91,63,214,.30), transparent 62%)',
+          }}
+        />
+        <div className="relative">
+          <p className="mb-1.5 text-sm font-medium tabular-nums text-[#C9BFAF]">
+            {totalCount > 0 ? `${totalCount} événement${totalCount > 1 ? 's' : ''} à venir` : 'PartnR'}
           </p>
-        )}
-        <div className="mt-5 flex flex-wrap gap-3">
-          {isAuthenticated ? (
-            <Link
-              to="/events/new"
-              className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-coral-600 transition-colors hover:bg-coral-50"
-            >
-              + Créer un événement
-            </Link>
-          ) : (
-            <Link
-              to="/register"
-              className="rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-coral-600 transition-colors hover:bg-coral-50"
-            >
-              Rejoindre PartnR — c'est gratuit
-            </Link>
+          <h1 className="max-w-lg font-display text-4xl leading-[1.1] font-bold text-[#F7F2E8]">
+            {isAuthenticated
+              ? "Trouvez votre prochain partenaire d'activité"
+              : 'Ne faites plus rien seul·e.'}
+          </h1>
+          {!isAuthenticated && (
+            <p className="mt-3 max-w-[34rem] text-[15px] leading-relaxed text-[#D6CDBD]">
+              Course à pied, resto, concert, expo… PartnR vous connecte avec des gens près de
+              chez vous qui partagent vos envies. Rejoignez une activité en deux clics, ou
+              proposez la vôtre.
+            </p>
           )}
-          <Link
-            to="/map"
-            className="rounded-full border border-white/40 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
-          >
-            📍 Voir la carte
-          </Link>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Link
+              to={isAuthenticated ? '/events/new' : '/register'}
+              className="inline-flex items-center gap-2 rounded-xl bg-[#F7F2E8] px-5 py-2.5 text-sm font-semibold text-[#221D18] transition-opacity hover:opacity-90"
+            >
+              {isAuthenticated ? (
+                <>
+                  <Plus size={16} aria-hidden="true" /> Créer un événement
+                </>
+              ) : (
+                <>Rejoindre PartnR — c'est gratuit</>
+              )}
+            </Link>
+            <Link
+              to="/map"
+              className="inline-flex items-center gap-2 rounded-xl border border-[#6A6155] px-5 py-2.5 text-sm font-semibold text-[#F7F2E8] transition-colors hover:bg-white/10"
+            >
+              <MapPin size={16} aria-hidden="true" /> Voir la carte
+            </Link>
+          </div>
         </div>
       </div>
 
       {/* Search */}
       <div className="relative mb-4">
-        <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink-sub">🔍</span>
+        {/* Chrome icons are Lucide, not emoji: emoji render differently per OS,
+            do not take currentColor, and screen readers read them aloud mid-sentence. */}
+        <Search
+          size={16}
+          aria-hidden="true"
+          className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-text-3"
+        />
         <input
           type="search"
           value={search}
@@ -186,8 +200,8 @@ export default function EventList() {
       ) : (
         <>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {events.map((ev, i) => (
-              <EventCard key={ev.id} ev={ev} bandColor={bandColor(i)} />
+            {events.map((ev) => (
+              <EventCard key={ev.id} ev={ev} />
             ))}
           </div>
 

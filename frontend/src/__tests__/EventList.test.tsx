@@ -81,7 +81,7 @@ describe('EventList', () => {
     await waitFor(() => {
       expect(screen.getByText('Morning Run')).toBeInTheDocument();
     });
-    expect(screen.getByText('par Alice')).toBeInTheDocument();
+    expect(screen.getByText(/par Alice/)).toBeInTheDocument();
     expect(screen.getByText(/7 places/)).toBeInTheDocument();
   });
 

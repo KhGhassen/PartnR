@@ -1,11 +1,12 @@
-const BAND_COLORS = ['bg-coral-50', 'bg-violet-50', 'bg-amber-50', 'bg-emerald-50'];
-
-export function bandColor(i: number) {
-  return BAND_COLORS[i % BAND_COLORS.length];
-}
+// bandColor() is gone: it tinted an event card from its INDEX IN THE LIST, so
+// the same event changed colour between the home feed and "Mes événements" — a
+// colour that meant nothing and lied about its own constancy. Cards now carry a
+// neutral band with an activity medallion.
 
 export function inputClass(hasError = false, extra = '') {
-  return `w-full rounded-2xl border-[1.5px] bg-white px-4 py-2.5 text-sm text-ink placeholder:text-ink-sub outline-none transition-colors focus:border-coral-500 focus:ring-2 focus:ring-coral-500/20 ${
-    hasError ? 'border-red-400' : 'border-line'
+  // border-strong, not border: an input outline carries meaning, so it owes
+  // 3:1 against the surface. The old #E8E6E0 sat at 1.19 and signalled nothing.
+  return `w-full rounded-xl border bg-surface px-4 py-2.5 text-sm text-text placeholder:text-text-3 outline-none transition-colors focus:border-accent ${
+    hasError ? 'border-danger' : 'border-border-strong'
   } ${extra}`.trim();
 }
