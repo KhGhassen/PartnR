@@ -61,6 +61,15 @@ public class EventService : IEventService
         else
             query = query.Where(e => e.Status == EventStatus.Published);
 
+        // The feed is a first impression: without this, page 1 leads with last
+        // month's run, which people could still join. "mine" is exempt — the
+        // mobile Messages tab finds its chats among past events.
+        if (!mine && (status ?? EventStatus.Published) == EventStatus.Published)
+        {
+            var since = DateTime.UtcNow.AddHours(-6);
+            query = query.Where(e => e.Date >= since);
+        }
+
         // A recurring series shows a single card — its next upcoming
         // occurrence — everywhere upcoming events are listed. Past-status
         // views (Terminés/Annulés) keep each occurrence: they each happened.
@@ -154,6 +163,15 @@ public class EventService : IEventService
 
     private static double ToRadians(double degrees) => degrees * Math.PI / 180;
 
+    // Clients send an instant carrying its offset ("...Z" or "+02:00"); Npgsql
+    // requires Kind=Utc for timestamptz. A value without an offset can only be
+    // read as UTC — that is the legacy web contract, kept so old payloads do
+    // not start throwing.
+    private static DateTime ToUtc(DateTime value) =>
+        value.Kind == DateTimeKind.Unspecified
+            ? DateTime.SpecifyKind(value, DateTimeKind.Utc)
+            : value.ToUniversalTime();
+
     public async Task<EventDetailDto> GetByIdAsync(Guid id)
     {
         var ev = await _events.Query()
@@ -180,7 +198,7 @@ public class EventService : IEventService
         var activity = await _activities.FindAsync(dto.ActivityId)
             ?? throw new KeyNotFoundException("Activity not found.");
 
-        var date = DateTime.SpecifyKind(dto.Date, DateTimeKind.Utc);
+        var date = ToUtc(dto.Date);
         if (date < DateTime.UtcNow)
             throw new InvalidOperationException("Event date must be in the future.");
 
@@ -271,7 +289,7 @@ public class EventService : IEventService
 
         // The date only ever applies to the edited occurrence — shifting a
         // whole series' dates at once would silently move everyone's plans.
-        if (dto.Date.HasValue) ev.Date = DateTime.SpecifyKind(dto.Date.Value, DateTimeKind.Utc);
+        if (dto.Date.HasValue) ev.Date = ToUtc(dto.Date.Value);
 
         await _unitOfWork.SaveChangesAsync();
         return await GetByIdAsync(ev.Id);
@@ -289,6 +307,9 @@ public class EventService : IEventService
 
             if (ev.Status != EventStatus.Published)
                 throw new InvalidOperationException("Cannot join this event.");
+
+            if (ev.Date < DateTime.UtcNow.AddHours(-6))
+                throw new InvalidOperationException("Cet événement est déjà passé.");
 
             if (ev.Participants.Any(p => p.UserId == userId && p.Status != ParticipantStatus.Cancelled))
                 throw new InvalidOperationException("Already participating.");

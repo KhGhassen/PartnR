@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using PartnR.Api.Extensions;
+using PartnR.Application.DTOs.Chat;
 using PartnR.Application.Interfaces.Services;
 
 namespace PartnR.Api.Hubs;
@@ -17,10 +18,16 @@ public class EventChatHub : Hub
         _tracker = tracker;
     }
 
+    // ExceptionMiddleware is HTTP-only, so hub methods translate their own
+    // failures into HubException — anything else reaches the client as an
+    // opaque "an unexpected error occurred".
+    private static Guid ParseEventId(string eventId) =>
+        Guid.TryParse(eventId, out var eid) ? eid : throw new HubException("Identifiant d'événement invalide.");
+
     public async Task JoinEventChat(string eventId)
     {
         var userId = Context.User!.GetUserId();
-        var eid = Guid.Parse(eventId);
+        var eid = ParseEventId(eventId);
 
         try
         {
@@ -40,9 +47,17 @@ public class EventChatHub : Hub
     public async Task SendMessage(string eventId, string content)
     {
         var userId = Context.User!.GetUserId();
-        var eid = Guid.Parse(eventId);
+        var eid = ParseEventId(eventId);
 
-        var message = await _chatService.SendMessageAsync(eid, userId, content);
+        ChatMessageDto? message;
+        try
+        {
+            message = await _chatService.SendMessageAsync(eid, userId, content);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            throw new HubException(ex.Message);
+        }
         if (message is null) return;
 
         _tracker.Track(userId, "message_sent", "event", eid);

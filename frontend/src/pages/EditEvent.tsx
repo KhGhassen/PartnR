@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getEvent, updateEvent } from '../api/events';
 import { listCities } from '../api/cities';
+import { toLocalInputValue, fromLocalInputValue } from '../lib/datetime';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import LocationPicker from '../components/LocationPicker';
@@ -56,7 +57,7 @@ export default function EditEvent() {
         description: ev.description || '',
         city: ev.city,
         location: ev.location || '',
-        date: new Date(ev.date).toISOString().slice(0, 16),
+        date: toLocalInputValue(ev.date),
         maxParticipants: ev.maxParticipants,
         status: ev.status,
         photoUrl: ev.photoUrl || '',
@@ -104,7 +105,7 @@ export default function EditEvent() {
         description: form.description || undefined,
         city: form.city,
         location: form.location || undefined,
-        date: form.date ? new Date(form.date).toISOString() : undefined,
+        date: form.date ? fromLocalInputValue(form.date) : undefined,
         maxParticipants: Number(form.maxParticipants),
         status: form.status,
         photoUrl: form.photoUrl || undefined,

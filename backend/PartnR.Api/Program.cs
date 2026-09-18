@@ -25,12 +25,37 @@ builder.Host.UseSerilog();
 builder.Services.AddApplication();
 builder.Services.AddHostedService<PartnR.Api.Services.EventReminderService>();
 builder.Services.AddHostedService<PartnR.Api.Services.ExpoPushService>();
+builder.Services.AddHostedService<PartnR.Api.Services.EventLifecycleService>();
 builder.Services.AddHttpClient();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 // JWT
 var jwtConfig = builder.Configuration.GetSection("Jwt");
-var key = Encoding.UTF8.GetBytes(jwtConfig["Key"]!);
+var jwtKey = jwtConfig["Key"];
+
+// appsettings.json ships a placeholder that is a perfectly valid 48-char HS256
+// key. Without this guard, a missing Jwt__Key means the API boots normally and
+// signs tokens with a secret published on GitHub — anyone could forge an admin
+// JWT. Outside Development this must be fatal, never a silent fallback.
+if (!builder.Environment.IsDevelopment())
+{
+    if (string.IsNullOrWhiteSpace(jwtKey)
+        || jwtKey.StartsWith("CHANGE_ME", StringComparison.Ordinal)
+        || Encoding.UTF8.GetByteCount(jwtKey) < 32)
+    {
+        throw new InvalidOperationException(
+            "Jwt:Key is missing, too short (<32 bytes) or still the placeholder. " +
+            "Set the Jwt__Key environment variable to a strong secret before starting the API.");
+    }
+}
+else if (string.IsNullOrWhiteSpace(jwtKey))
+{
+    // Keep local runs frictionless, but never with a shared well-known secret.
+    jwtKey = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(48));
+    builder.Configuration["Jwt:Key"] = jwtKey;
+}
+
+var key = Encoding.UTF8.GetBytes(jwtKey!);
 
 builder.Services.AddAuthentication(options =>
 {
