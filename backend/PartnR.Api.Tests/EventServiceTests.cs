@@ -536,6 +536,66 @@ public class EventServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task ListAsync_HidesPastEvents_ButKeepsThemForMine()
+    {
+        var past = new Event
+        {
+            Id = Guid.NewGuid(),
+            Title = "Course du mois dernier",
+            City = "Paris",
+            Date = DateTime.UtcNow.AddDays(-30),
+            MaxParticipants = 5,
+            CreatorId = _userId,
+            ActivityId = _activityId,
+        };
+        past.Participants.Add(new EventParticipant { UserId = _userId, Status = ParticipantStatus.Confirmed });
+        _db.Events.Add(past);
+
+        var upcoming = new Event
+        {
+            Id = Guid.NewGuid(),
+            Title = "Course de samedi",
+            City = "Paris",
+            Date = DateTime.UtcNow.AddDays(3),
+            MaxParticipants = 5,
+            CreatorId = _userId,
+            ActivityId = _activityId,
+        };
+        upcoming.Participants.Add(new EventParticipant { UserId = _userId, Status = ParticipantStatus.Confirmed });
+        _db.Events.Add(upcoming);
+        await _db.SaveChangesAsync();
+
+        var feed = await _service.ListAsync(null, null, null);
+        Assert.DoesNotContain(feed.Items, e => e.Title == "Course du mois dernier");
+        Assert.Contains(feed.Items, e => e.Title == "Course de samedi");
+
+        // "Mes événements" keeps past occurrences — the mobile Messages tab
+        // lists its chats from them.
+        var mine = await _service.ListAsync(null, null, null, mine: true, userId: _userId);
+        Assert.Contains(mine.Items, e => e.Title == "Course du mois dernier");
+    }
+
+    [Fact]
+    public async Task JoinAsync_RefusesPastEvent()
+    {
+        var past = new Event
+        {
+            Id = Guid.NewGuid(),
+            Title = "Déjà passé",
+            City = "Paris",
+            Date = DateTime.UtcNow.AddDays(-2),
+            MaxParticipants = 5,
+            CreatorId = _userId,
+            ActivityId = _activityId,
+        };
+        _db.Events.Add(past);
+        await _db.SaveChangesAsync();
+
+        var joiner = Guid.NewGuid();
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _service.JoinAsync(past.Id, joiner));
+    }
+
+    [Fact]
     public async Task JoinAsync_NotifiesCreator()
     {
         var created = await _service.CreateAsync(_userId, new CreateEventDto

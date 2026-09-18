@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { createEvent } from '../api/events';
 import { listActivities } from '../api/activities';
 import { listCities } from '../api/cities';
+import { fromLocalInputValue } from '../lib/datetime';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { trackAction } from '../api/analytics';
@@ -78,6 +79,7 @@ export default function CreateEvent() {
     try {
       const ev = await createEvent({
         ...form,
+        date: fromLocalInputValue(form.date),
         maxParticipants: Number(form.maxParticipants),
         latitude: form.latitude ?? undefined,
         longitude: form.longitude ?? undefined,

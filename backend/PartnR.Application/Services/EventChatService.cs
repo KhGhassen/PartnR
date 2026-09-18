@@ -58,6 +58,10 @@ public class EventChatService : IEventChatService
     {
         if (string.IsNullOrWhiteSpace(content) || content.Length > 2000) return null;
 
+        // Authorization belongs here, not in the hub: SendMessage is reachable
+        // without ever calling JoinEventChat.
+        await EnsureParticipantAsync(eventId, userId);
+
         var user = await _users.FindAsync(userId);
         if (user is null) return null;
 
@@ -65,7 +69,9 @@ public class EventChatService : IEventChatService
         {
             EventId = eventId,
             UserId = userId,
-            Content = System.Net.WebUtility.HtmlEncode(content.Trim())
+            // Stored raw: React and React Native escape on render, so encoding
+            // here double-encodes every French apostrophe ("J&#39;arrive").
+            Content = content.Trim()
         };
 
         _messages.Add(message);

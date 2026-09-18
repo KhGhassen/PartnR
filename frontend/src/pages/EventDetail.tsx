@@ -399,7 +399,7 @@ export default function EventDetail() {
           />
 
           {/* Chat */}
-          {isParticipant && event.status !== 'Completed' && <EventChat eventId={event.id} />}
+          {isParticipant && event.status !== 'Cancelled' && <EventChat eventId={event.id} />}
 
           {!isCreator && (
             <div className="mt-8 flex justify-end">
