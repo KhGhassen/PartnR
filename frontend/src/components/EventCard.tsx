@@ -5,8 +5,6 @@ import type { EventSummary } from '../types';
 
 interface EventCardProps {
   ev: EventSummary;
-  /** Kept for call-site compatibility; the band is neutral now. */
-  bandColor?: string;
   showStatus?: boolean;
 }
 

@@ -13,7 +13,6 @@ import { EventCardSkeleton } from '../components/ui/Skeleton';
 import EmptyState from '../components/ui/EmptyState';
 import { inputClass } from '../components/ui/classes';
 import EventCard from '../components/EventCard';
-import { bandColor } from '../components/ui/classes';
 import type { EventSummary, Activity } from '../types';
 
 export default function EventList() {
@@ -201,8 +200,8 @@ export default function EventList() {
       ) : (
         <>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {events.map((ev, i) => (
-              <EventCard key={ev.id} ev={ev} bandColor={bandColor(i)} />
+            {events.map((ev) => (
+              <EventCard key={ev.id} ev={ev} />
             ))}
           </div>
 
