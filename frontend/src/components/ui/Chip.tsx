@@ -12,10 +12,11 @@ export default function Chip({ active = false, onClick, children, className = ''
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full border-[1.5px] px-4 py-1.5 text-sm font-medium transition-colors whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-1 ${
+      aria-pressed={active}
+      className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors whitespace-nowrap ${
         active
-          ? 'border-coral-500 bg-coral-500 text-white'
-          : 'border-line bg-white text-ink-mid hover:border-coral-300 hover:text-ink'
+          ? 'border-accent bg-accent text-on-accent'
+          : 'border-border-strong bg-surface text-text-2 hover:border-accent hover:text-text'
       } ${className}`}
     >
       {children}

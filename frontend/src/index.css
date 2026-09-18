@@ -1,95 +1,232 @@
 @import "tailwindcss";
-@import "@fontsource-variable/dm-sans";
+@import "@fontsource-variable/bricolage-grotesque";
+@import "@fontsource-variable/inter";
+
+/* ───────────────────────────────────────────────────────────────────────────
+   « Le Programme » — PartnR design tokens
+
+   Two layers on purpose:
+
+   1. Semantic tokens (--color-bg, --color-surface, --color-text-*) carry the
+      meaning. New code uses only these, and a theme is a permutation of their
+      values — no utility overrides.
+
+   2. Legacy aliases (--color-cream, --color-ink*, --color-coral-*) keep the
+      188 literal utilities spread across 38 files rendering correctly while
+      they are migrated. They are plain values, not var() indirections, so the
+      dark block can override both layers the same way. They shrink as files
+      move over; the last one to go takes the patch block at the bottom with it.
+
+   Every pair below was contrast-checked against WCAG 2.1 (sRGB relative
+   luminance), not eyeballed. The headline fix: --color-ink-sub was #A09990 on
+   cream = 2.69:1, used 72 times for the date, city and author of every card.
+   ─────────────────────────────────────────────────────────────────────────── */
 
 @theme {
-  --font-sans: "DM Sans Variable", "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque Variable", "Inter Variable", ui-sans-serif, sans-serif;
 
-  /* PartnR brand — mirrors mobile/constants/tokens.ts */
-  --color-coral-50: #fdede8;
-  --color-coral-100: #fbd9cf;
-  --color-coral-200: #f7b7a3;
-  --color-coral-300: #f19271;
-  --color-coral-400: #ec764f;
-  --color-coral-500: #e8603a;
-  --color-coral-600: #d54e28;
-  --color-coral-700: #b8421e;
-  --color-coral-800: #93371c;
-  --color-coral-900: #772f1b;
+  /* ── Surfaces ─────────────────────────────────────────────────────────── */
+  --color-bg: #f7f4ee;
+  --color-surface: #ffffff;
+  --color-surface-sunken: #efebe2;
 
-  --color-violet-50: #ede9f9;
-  --color-violet-100: #ddd5f3;
-  --color-violet-200: #c2b4e9;
-  --color-violet-300: #a68fdf;
-  --color-violet-400: #8f75d9;
-  --color-violet-500: #7b65d4;
-  --color-violet-600: #6549c4;
-  --color-violet-700: #533aa6;
-  --color-violet-800: #453188;
-  --color-violet-900: #3a2b6f;
+  /* ── Text ─────────────────────────── contrast vs bg / surface / sunken ── */
+  --color-text: #1c1a16;    /* 15.83 / 17.37 / 14.60 */
+  --color-text-2: #565043;  /*  7.29 /  8.00 /  6.73 */
+  --color-text-3: #6e6656;  /*  5.17 /  5.68 /  4.77 */
 
-  --color-cream: #fafaf7;
-  --color-cream-deep: #f5f5f0;
+  /* ── Lines ────────────────────────────────────────────────────────────── */
+  --color-border: #e4ded2;        /* decorative only, exempt from 1.4.11 */
+  --color-border-strong: #8a8371; /* meaningful: inputs, chips, ghost buttons */
 
-  --color-ink: #2a2a25;
-  --color-ink-mid: #706b60;
-  --color-ink-sub: #a09990;
+  /* ── Accent ───────────────────────────────────────────────────────────── */
+  /* Darkened from #E8603A, which could not carry white text (3.41:1). */
+  --color-accent: #c2451c;         /* white on top: 5.05 */
+  --color-accent-strong: #a33814;  /* accent AS TEXT on a tint or sunken */
+  --color-accent-surface: #fbeae3;
+  --color-on-accent: #ffffff;      /* flips to ink in dark mode */
 
-  --color-line: #e8e6e0;
+  --color-violet: #5b3fd6;         /* social: organiser, waitlist, recurrence */
+  --color-violet-surface: #ece7fb;
 
-  --shadow-card: 0 2px 8px 0 rgb(42 42 37 / 0.06);
-  --shadow-card-hover: 0 8px 24px 0 rgb(42 42 37 / 0.10);
+  --color-success: #0e6b45;
+  --color-success-surface: #e7f3ec;
+  --color-danger: #b3261e;
+  --color-danger-surface: #fbe9e7;
+  --color-warn: #7a5300;           /* also scarcity: "plus que 2 places" */
+  --color-warn-surface: #f8efdc;
+
+  /* ── The anchor ───────────────────────────────────────────────────────── */
+  /* Identical in both themes: the hero block is the one memorable object,
+     recognisable in a share thumbnail, and it fixes the old coral→violet
+     gradient whose white/80 subtitle sat at 2.69:1. */
+  --color-night: #221d18;
+  --color-night-2: #322a22;
+
+  /* ── Legacy aliases (migrating) ───────────────────────────────────────── */
+  --color-cream: #f7f4ee;
+  --color-cream-deep: #efebe2;
+  --color-ink: #1c1a16;
+  --color-ink-mid: #565043;
+  --color-ink-sub: #6e6656;
+  --color-line: #e4ded2;
+
+  --color-coral-50: #fbeae3;
+  --color-coral-100: #f6d5c8;
+  --color-coral-200: #eeb49f;
+  --color-coral-300: #e28f73;
+  --color-coral-400: #d26a45;
+  --color-coral-500: #c2451c;
+  --color-coral-600: #a33814;
+  --color-coral-700: #8a2f11;
+  --color-coral-800: #6f260e;
+  --color-coral-900: #5a1f0c;
+
+  --color-violet-50: #ece7fb;
+  --color-violet-100: #dcd3f7;
+  --color-violet-200: #c0b0ef;
+  --color-violet-300: #a48ce7;
+  --color-violet-400: #7a5fe0;
+  --color-violet-500: #5b3fd6;
+  --color-violet-600: #4d33bd;
+  --color-violet-700: #402a9d;
+  --color-violet-800: #352380;
+  --color-violet-900: #2c1d69;
+
+  /* ── Shape ────────────────────────────────────────────────────────────── */
+  /* Everything used to be rounded-full or rounded-3xl: a filter chip and a
+     primary button were literally the same object. Tightening the scale here
+     retunes most of the app; chips stay pills so the contrast reads. */
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.625rem;
+  --radius-2xl: 0.875rem;
+  --radius-3xl: 1.125rem;
+
+  --shadow-card: 0 1px 2px 0 rgb(28 26 22 / 0.04), 0 4px 12px -2px rgb(28 26 22 / 0.06);
+  --shadow-card-hover: 0 2px 4px 0 rgb(28 26 22 / 0.05), 0 12px 28px -4px rgb(28 26 22 / 0.12);
 }
 
 @layer base {
   body {
-    background-color: var(--color-cream);
-    color: var(--color-ink);
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-feature-settings: "cv05" 1, "tnum" 1;
     -webkit-font-smoothing: antialiased;
+  }
+
+  /* Bricolage carries the personality; it closes up below 18px, so it is
+     reserved for headings and never used for body copy. */
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+
+  /* One visible focus treatment everywhere. The offset matters: an accent ring
+     drawn directly against an accent button is a 1:1 contrast. */
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
-/* Dark theme — token overrides, toggled via data-theme on <html> */
+/* ───────────────────────────────────────────────────────────────────────────
+   Dark theme — a computed value set, not an inverted greyscale.
+   ─────────────────────────────────────────────────────────────────────────── */
 [data-theme='dark'] {
   color-scheme: dark;
 
-  --color-cream: #191914;
-  --color-cream-deep: #24241d;
-  --color-ink: #f0efe8;
-  --color-ink-mid: #b8b3a6;
-  --color-ink-sub: #878273;
-  --color-line: #37362c;
+  --color-bg: #16140f;
+  --color-surface: #201d17;
+  --color-surface-sunken: #2a261e;
 
-  --color-coral-50: #3a251e;
-  --color-coral-100: #4d2d22;
-  --color-coral-700: #f0906c;
+  --color-text: #f2eee4;    /* 15.88 / 14.51 / 13.00 */
+  --color-text-2: #bdb6a6;  /*  9.12 /  8.33 /  7.46 */
+  --color-text-3: #97907f;  /*  5.79 /  5.29 /  4.74 */
 
-  --color-violet-50: #2b2741;
-  --color-violet-700: #b3a4ec;
+  --color-border: #322e26;
+  --color-border-strong: #7e7663;
 
-  --shadow-card: 0 2px 8px 0 rgb(0 0 0 / 0.35);
-  --shadow-card-hover: 0 8px 24px 0 rgb(0 0 0 / 0.5);
+  /* The dark-mode rule most apps get wrong: on a light accent the label must
+     be ink, not white. Ink on #FF8259 is 7.53:1; white would be 2.8:1. */
+  --color-accent: #ff8259;
+  --color-accent-strong: #ff9166;
+  --color-accent-surface: #3a1e12;
+  --color-on-accent: #16140f;
+
+  --color-violet: #b9a6ff;
+  --color-violet-surface: #2b2445;
+
+  --color-success: #5fd9a0;
+  --color-success-surface: #12291e;
+  --color-danger: #ff8f8f;
+  --color-danger-surface: #33191a;
+  --color-warn: #efc248;
+  --color-warn-surface: #2e2510;
+
+  /* Legacy aliases follow the same permutation. */
+  --color-cream: #16140f;
+  --color-cream-deep: #2a261e;
+  --color-ink: #f2eee4;
+  --color-ink-mid: #bdb6a6;
+  --color-ink-sub: #97907f;
+  --color-line: #322e26;
+
+  --color-coral-50: #3a1e12;
+  --color-coral-100: #4d2818;
+  --color-coral-300: #c25f3c;
+  --color-coral-400: #e8724a;
+  --color-coral-500: #ff8259;
+  --color-coral-600: #ff9166;
+  --color-coral-700: #ff9166;
+
+  --color-violet-50: #2b2445;
+  --color-violet-500: #b9a6ff;
+  --color-violet-700: #cbbcff;
+
+  --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.4), 0 4px 12px -2px rgb(0 0 0 / 0.45);
+  --shadow-card-hover: 0 2px 4px 0 rgb(0 0 0 / 0.5), 0 12px 28px -4px rgb(0 0 0 / 0.6);
 }
 
-/* Literal utility surfaces that must flip in dark mode */
-[data-theme='dark'] .bg-white {
-  background-color: #232319;
-}
-[data-theme='dark'] .bg-emerald-50 {
-  background-color: #1d3328;
-}
+/* Literal Tailwind utilities that carry their own colour and therefore cannot
+   follow a token. Temporary: this block shrinks as files migrate to semantic
+   classes, and is deleted once a grep returns nothing. Until then it must
+   cover every literal actually in use — the previous version missed gray-*,
+   which is why the chat, the rating form and the error screen were broken in
+   dark mode. */
+[data-theme='dark'] .bg-white { background-color: var(--color-surface); }
+[data-theme='dark'] .bg-gray-50,
+[data-theme='dark'] .bg-gray-100 { background-color: var(--color-surface-sunken); }
+[data-theme='dark'] .text-gray-900,
+[data-theme='dark'] .text-gray-800 { color: var(--color-text); }
+[data-theme='dark'] .text-gray-700,
+[data-theme='dark'] .text-gray-600 { color: var(--color-text-2); }
+[data-theme='dark'] .text-gray-500,
+[data-theme='dark'] .text-gray-400 { color: var(--color-text-3); }
+[data-theme='dark'] .border-gray-200,
+[data-theme='dark'] .border-gray-100 { border-color: var(--color-border); }
+
+[data-theme='dark'] .bg-emerald-50,
+[data-theme='dark'] .bg-green-50 { background-color: var(--color-success-surface); }
 [data-theme='dark'] .text-emerald-700,
-[data-theme='dark'] .text-emerald-600 {
-  color: #6ee7b7;
-}
-[data-theme='dark'] .bg-red-50 {
-  background-color: #3d2224;
-}
-[data-theme='dark'] .border-red-100 {
-  border-color: #572e31;
-}
-[data-theme='dark'] .bg-amber-50 {
-  background-color: #3a2f1a;
-}
-[data-theme='dark'] .text-amber-700 {
-  color: #fcd34d;
-}
+[data-theme='dark'] .text-emerald-600,
+[data-theme='dark'] .text-green-700,
+[data-theme='dark'] .text-green-600 { color: var(--color-success); }
+
+[data-theme='dark'] .bg-red-50 { background-color: var(--color-danger-surface); }
+[data-theme='dark'] .border-red-100 { border-color: var(--color-danger-surface); }
+[data-theme='dark'] .text-red-600,
+[data-theme='dark'] .text-red-500 { color: var(--color-danger); }
+
+[data-theme='dark'] .bg-amber-50 { background-color: var(--color-warn-surface); }
+[data-theme='dark'] .text-amber-700 { color: var(--color-warn); }
