@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using PartnR.Application.Interfaces.Services;
 using PartnR.Application.Services;
 using PartnR.Infrastructure.Data;
 using PartnR.Infrastructure.Repositories;
@@ -21,7 +22,15 @@ public class UploadServiceTests : IDisposable
             .Options;
 
         _db = new AppDbContext(options);
-        _service = new UploadService(new StoredImageRepository(_db), new UnitOfWork(_db));
+        _service = new UploadService(new StoredImageRepository(_db), new UnitOfWork(_db), new PassthroughProcessor());
+    }
+
+    // The real pipeline is covered by ImageProcessorTests; here the service's
+    // own rules (size, sniffing, persistence) are what is under test.
+    private sealed class PassthroughProcessor : IImageProcessor
+    {
+        public ProcessedImage Normalize(byte[] data) =>
+            new(data, UploadService.DetectImageType(data) ?? "application/octet-stream");
     }
 
     private static readonly byte[] Png = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 1, 2, 3];
