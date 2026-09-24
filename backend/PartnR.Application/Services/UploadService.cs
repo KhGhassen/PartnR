@@ -27,11 +27,13 @@ public class UploadService : IUploadService
 
     private readonly IStoredImageRepository _images;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IImageProcessor _processor;
 
-    public UploadService(IStoredImageRepository images, IUnitOfWork unitOfWork)
+    public UploadService(IStoredImageRepository images, IUnitOfWork unitOfWork, IImageProcessor processor)
     {
         _images = images;
         _unitOfWork = unitOfWork;
+        _processor = processor;
     }
 
     public async Task<Guid> SaveImageAsync(Guid uploaderId, byte[] data)
@@ -40,14 +42,18 @@ public class UploadService : IUploadService
             throw new ArgumentException("Le fichier est vide.");
         if (data.Length > MaxImageBytes)
             throw new ArgumentException("L'image ne doit pas dépasser 5 Mo.");
-        var contentType = DetectImageType(data)
-            ?? throw new ArgumentException("Format non supporté. Utilisez JPEG, PNG, WebP ou GIF.");
+        if (DetectImageType(data) is null)
+            throw new ArgumentException("Format non supporté. Utilisez JPEG, PNG, WebP ou GIF.");
+
+        // The cheap sniff above rejects obvious junk before the decoder runs;
+        // the processor is the real check, and what it returns is what we keep.
+        var processed = _processor.Normalize(data);
 
         var image = new StoredImage
         {
             UploaderId = uploaderId,
-            Data = data,
-            ContentType = contentType,
+            Data = processed.Data,
+            ContentType = processed.ContentType,
         };
         _images.Add(image);
         await _unitOfWork.SaveChangesAsync();

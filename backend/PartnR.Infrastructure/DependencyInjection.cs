@@ -51,6 +51,7 @@ public static class DependencyInjection
         services.AddScoped<IEmailService, SmtpEmailService>();
         services.AddScoped<IAccountService, AccountDeletionService>();
         services.AddSingleton<IAnalyticsTracker, AnalyticsTracker>();
+        services.AddSingleton<IImageProcessor, ImageSharpProcessor>();
 
         return services;
     }
