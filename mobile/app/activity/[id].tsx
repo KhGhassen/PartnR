@@ -189,8 +189,8 @@ export default function ActivityDetailScreen() {
             <TouchableOpacity onPress={handleShare} style={styles.shareBtn}>
               <Text style={styles.shareBtnText}>↗ Partager</Text>
             </TouchableOpacity>
-            <View style={[styles.statusBadge, { backgroundColor: event.status === 'Published' ? '#D1FAE5' : T.bg2 }]}>
-              <Text style={[styles.statusText, { color: event.status === 'Published' ? '#065F46' : T.textMid }]}>
+            <View style={[styles.statusBadge, { backgroundColor: event.status === 'Published' ? T.successL : T.bg2 }]}>
+              <Text style={[styles.statusText, { color: event.status === 'Published' ? T.success : T.textMid }]}>
                 {event.status === 'Published' ? 'Publié' : event.status === 'Completed' ? 'Terminé' : 'Annulé'}
               </Text>
             </View>
@@ -422,7 +422,7 @@ const styles = StyleSheet.create({
 
   reportLink: { fontSize: 12, color: T.textSub, marginTop: 4, fontFamily: 'DMSans_400Regular' },
   reportBox: { marginTop: 8 },
-  reportSend: { fontSize: 13, fontWeight: '600', color: '#E53E3E', fontFamily: 'DMSans_600SemiBold' },
+  reportSend: { fontSize: 13, fontWeight: '600', color: T.danger, fontFamily: 'DMSans_600SemiBold' },
   reportCancel: { fontSize: 13, color: T.textSub, fontFamily: 'DMSans_400Regular' },
   reportSent: { fontSize: 12, color: T.textSub, textAlign: 'right', marginTop: 4, fontFamily: 'DMSans_400Regular' },
 
@@ -456,7 +456,7 @@ const styles = StyleSheet.create({
   hostCard:  { backgroundColor: T.card, borderRadius: 16, padding: 12, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 12, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 2, marginBottom: 12 },
   hostedBy:  { fontSize: 11, color: T.textSub, fontFamily: 'DMSans_400Regular' },
   hostName:  { fontSize: 14, fontWeight: '600', color: T.text, fontFamily: 'DMSans_600SemiBold' },
-  errorText: { fontSize: 13, color: '#E53E3E', textAlign: 'center', fontFamily: 'DMSans_400Regular' },
+  errorText: { fontSize: 13, color: T.danger, textAlign: 'center', fontFamily: 'DMSans_400Regular' },
 
   ctaContainer: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 20, paddingTop: 12, backgroundColor: 'transparent' },
 });

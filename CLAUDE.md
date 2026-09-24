@@ -106,7 +106,7 @@ app/
 
 **SignalR :** `mobile/hooks/useEventChat.ts` — token passé via `?access_token=` (même pattern que web).
 
-**Design tokens :** `mobile/constants/tokens.ts` — encore sur l'ancienne charte (coral `#E8603A`, fond `#FAFAF7`), sans mécanisme de thème. À aligner sur « Le Programme » lors du chantier de thème mobile.
+**Design tokens :** `mobile/constants/tokens.ts` — mêmes valeurs que la charte web « Le Programme » (`coral` = accent `#c2451c`, `bg` `#f7f4ee`, `success/danger/warn` + surfaces `*L`, `night`). Les noms historiques (`coral`, `coralL`, `bg2`) sont conservés ; jamais de couleur littérale dans les écrans, toujours `T.*`. Pas de thème sombre mobile pour l'instant.
 
 **Builds :** `mobile/eas.json` (profils development / preview / production). Le push exige un `extra.eas.projectId` dans `app.json`, écrit par `eas init` — sans lui `registerForPush` échoue silencieusement.
 

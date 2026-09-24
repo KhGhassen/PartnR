@@ -410,6 +410,6 @@ const styles = StyleSheet.create({
   summaryMain:  { fontSize: 13, color: T.coralD, fontFamily: 'DMSans_400Regular' },
   summarySub:   { fontSize: 12, color: T.coralD, opacity: 0.8, marginTop: 2, fontFamily: 'DMSans_400Regular' },
 
-  errorText: { fontSize: 13, color: '#E53E3E', textAlign: 'center', fontFamily: 'DMSans_400Regular' },
+  errorText: { fontSize: 13, color: T.danger, textAlign: 'center', fontFamily: 'DMSans_400Regular' },
   footer: { paddingHorizontal: 20, paddingTop: 4 },
 });

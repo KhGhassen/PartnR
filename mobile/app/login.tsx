@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, borderColor: T.border, fontSize: 15,
     fontFamily: 'DMSans_400Regular', color: T.text, backgroundColor: '#fff',
   },
-  error: { fontSize: 13, color: '#E53E3E', fontFamily: 'DMSans_400Regular', textAlign: 'center' },
+  error: { fontSize: 13, color: T.danger, fontFamily: 'DMSans_400Regular', textAlign: 'center' },
 
   footer:     { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 28 },
   footerText: { fontSize: 14, color: T.textMid, fontFamily: 'DMSans_400Regular' },

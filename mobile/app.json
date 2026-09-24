@@ -7,7 +7,7 @@
     "scheme": "partnr",
     "userInterfaceStyle": "light",
     "splash": {
-      "backgroundColor": "#FAFAF7"
+      "backgroundColor": "#f7f4ee"
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {
@@ -16,7 +16,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#FAFAF7"
+        "backgroundColor": "#f7f4ee"
       },
       "package": "com.partnr.app"
     },
