@@ -40,6 +40,7 @@ export type EventPhoto = {
 export type Occurrence = { id: string; date: string };
 
 export type EventDetail = EventSummary & {
+  locationHidden?: boolean;
   description: string | null;
   createdAt: string;
   participants: Participant[];
