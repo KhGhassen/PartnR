@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import type { UserInfo } from '../types';
+import { ensureAwake } from '../api/client';
 
 interface AuthContextType {
   user: UserInfo | null;
@@ -26,6 +27,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const stored = localStorage.getItem('user');
     return stored ? JSON.parse(stored) : null;
   });
+
+  // Warm the API for every visitor, authenticated or not.
+  useEffect(() => {
+    ensureAwake();
+  }, []);
 
   const setAuth = (token: string, user: UserInfo) => {
     localStorage.setItem('token', token);

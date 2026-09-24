@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getEvent, updateEvent } from '../api/events';
 import { listCities } from '../api/cities';
+import { toApiError } from '../api/client';
 import { toLocalInputValue, fromLocalInputValue } from '../lib/datetime';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -115,7 +116,7 @@ export default function EditEvent() {
       toast.success(applyToSeries ? 'Toute la série a été mise à jour.' : 'Modifications enregistrées.');
       navigate(`/events/${id}`);
     } catch (err) {
-      setError((err as {response?: {data?: {error?: string}}}).response?.data?.error || 'Erreur lors de la modification');
+      setError(toApiError(err).message);
     } finally {
       setLoading(false);
     }
