@@ -32,7 +32,9 @@ public class EventReminderService : BackgroundService
                 using var scope = _scopeFactory.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 var email = scope.ServiceProvider.GetRequiredService<IEmailService>();
-                await RunOnceAsync(db, email, DateTime.UtcNow, _logger, stoppingToken);
+                var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+                var frontendUrl = (config["FrontendUrl"] ?? "http://localhost:5173").TrimEnd('/');
+                await RunOnceAsync(db, email, DateTime.UtcNow, frontendUrl, _logger, stoppingToken);
             }
             catch (Exception ex)
             {
@@ -43,7 +45,7 @@ public class EventReminderService : BackgroundService
     }
 
     /// <summary>One reminder pass. Public and clock-injected so tests can drive it.</summary>
-    public static async Task<int> RunOnceAsync(AppDbContext db, IEmailService email, DateTime now, ILogger logger, CancellationToken ct)
+    public static async Task<int> RunOnceAsync(AppDbContext db, IEmailService email, DateTime now, string frontendUrl, ILogger logger, CancellationToken ct)
     {
         var until = now.Add(Horizon);
         var due = await db.EventParticipants
@@ -80,7 +82,7 @@ public class EventReminderService : BackgroundService
             await db.SaveChangesAsync(ct);
             sent += batch.Count;
 
-            var place = string.IsNullOrEmpty(ev.Location) ? ev.City : $"{ev.City} ({ev.Location})";
+            var place = string.IsNullOrEmpty(ev.Location) ? ev.City : $"{ev.Location}, {ev.City}";
             foreach (var p in batch)
             {
                 if (string.IsNullOrEmpty(p.User?.Email)) continue;
@@ -89,7 +91,12 @@ public class EventReminderService : BackgroundService
                     await email.SendAsync(
                         p.User.Email,
                         $"Rappel — {ev.Title}, c'est {when}",
-                        $"<p>Bonjour {p.User.FirstName},</p><p>Petit rappel : <strong>{ev.Title}</strong> a lieu {when} à {place}.</p><p>À très vite sur PartnR !</p>");
+                        EmailTemplate.Render(
+                            $"C'est {when} : {ev.Title}",
+                            EmailTemplate.Paragraph($"Bonjour {EmailTemplate.Escape(p.User.FirstName)}, petit rappel : <strong>{EmailTemplate.Escape(ev.Title)}</strong> a lieu {when} à {EmailTemplate.Escape(place)}.")
+                            + EmailTemplate.Paragraph("Un empêchement ? Prévenez le groupe dans la discussion et libérez votre place pour la liste d'attente."),
+                            "Voir l'événement", $"{frontendUrl}/events/{ev.Id}",
+                            "Vous recevez ce rappel parce que vous participez à cet événement."));
                 }
                 catch (Exception ex)
                 {

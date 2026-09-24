@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using PartnR.Application.DTOs.Events;
+using PartnR.Application.Interfaces.Services;
 using PartnR.Application.Services;
 using PartnR.Domain.Entities;
 using PartnR.Infrastructure.Data;
@@ -59,7 +60,20 @@ public class EventServiceTests : IDisposable
             unitOfWork,
             new ConfigurationBuilder()
                 .AddInMemoryCollection(new Dictionary<string, string?> { ["FrontendUrl"] = "https://partnr.test/" })
-                .Build());
+                .Build(),
+            _emails);
+    }
+
+    private readonly CapturingEmailService _emails = new();
+
+    private sealed class CapturingEmailService : IEmailService
+    {
+        public List<(string To, string Subject, string Body)> Sent { get; } = [];
+        public Task SendAsync(string to, string subject, string htmlBody)
+        {
+            Sent.Add((to, subject, htmlBody));
+            return Task.CompletedTask;
+        }
     }
 
     [Fact]
@@ -760,6 +774,33 @@ public class EventServiceTests : IDisposable
         Assert.Equal("Paris Event", result.Items[0].Title);
         Assert.NotNull(result.Items[0].DistanceKm);
         Assert.True(result.Items[0].DistanceKm < 50);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_Cancel_EmailsConfirmedParticipants_NotTheOrganiser()
+    {
+        var bobId = Guid.NewGuid();
+        _db.Users.Add(new AppUser
+        {
+            Id = bobId, UserName = "bob@test.com", Email = "bob@test.com", FirstName = "Bob <b>", City = "Paris",
+            NormalizedEmail = "BOB@TEST.COM", NormalizedUserName = "BOB@TEST.COM", SecurityStamp = Guid.NewGuid().ToString()
+        });
+        await _db.SaveChangesAsync();
+
+        var created = await _service.CreateAsync(_userId, new CreateEventDto
+        {
+            Title = "Apéro & co", City = "Paris", Date = DateTime.UtcNow.AddDays(2), MaxParticipants = 5, ActivityId = _activityId
+        });
+        await _service.JoinAsync(created.Id, bobId);
+
+        await _service.UpdateAsync(created.Id, _userId, new UpdateEventDto { Status = EventStatus.Cancelled });
+
+        var mail = Assert.Single(_emails.Sent);
+        Assert.Equal("bob@test.com", mail.To);
+        Assert.Contains("Apéro & co", mail.Subject);
+        Assert.Contains("Apéro &amp; co", mail.Body);
+        Assert.Contains("Bob &lt;b&gt;", mail.Body);
+        Assert.Contains("https://partnr.test/events", mail.Body);
     }
 
     [Fact]
