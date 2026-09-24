@@ -30,7 +30,7 @@ public class UploadsController : ControllerBase
         using var ms = new MemoryStream();
         await file.CopyToAsync(ms);
 
-        var id = await _uploadService.SaveImageAsync(User.GetUserId(), ms.ToArray(), file.ContentType);
+        var id = await _uploadService.SaveImageAsync(User.GetUserId(), ms.ToArray());
         var url = $"{Request.Scheme}://{Request.Host}/api/uploads/{id}";
         return Created(url, new { id, url });
     }
@@ -42,6 +42,10 @@ public class UploadsController : ControllerBase
         if (image is null) return NotFound();
 
         Response.Headers.CacheControl = "public, max-age=31536000, immutable";
+        // Belt and braces with the sniffing above: never let a browser
+        // re-interpret a stored blob as something else, never as a download.
+        Response.Headers["X-Content-Type-Options"] = "nosniff";
+        Response.Headers.ContentDisposition = "inline";
         return File(image.Data, image.ContentType);
     }
 }

@@ -157,20 +157,44 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Auto-create database schema on first startup (EF Core manages the schema)
+// Schema bootstrap. Two failure modes that must NOT be conflated: a database
+// that is temporarily unreachable (Supabase free tier pauses; Render starts
+// before it wakes) is tolerated with a bounded retry, but a migration whose
+// SQL fails is fatal — serving traffic on a half-migrated schema is worse than
+// not starting, and the old single catch logged it as "not reachable".
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    try
-    {
-        if (db.Database.EnsureCreated())
-            Log.Information("Database schema created");
-        else
-            Log.Information("Database connection verified — schema already exists");
 
+    var reachable = false;
+    for (var attempt = 1; attempt <= 5 && !reachable; attempt++)
+    {
+        try
+        {
+            if (db.Database.EnsureCreated())
+                Log.Information("Database schema created");
+            else
+                Log.Information("Database connection verified — schema already exists");
+            reachable = true;
+        }
+        catch (Exception ex)
+        {
+            var delay = TimeSpan.FromSeconds(Math.Pow(2, attempt)); // 2, 4, 8, 16, 32 s
+            Log.Warning(ex, "Database not reachable (attempt {Attempt}/5) — retrying in {Delay}s", attempt, delay.TotalSeconds);
+            if (attempt < 5) await Task.Delay(delay);
+        }
+    }
+
+    if (!reachable)
+    {
+        Log.Error("Database unreachable after 5 attempts — starting anyway; requests will fail until it is back");
+    }
+    else
+    {
         var migrationsDir = Path.Combine(AppContext.BaseDirectory, "db-migrations");
         if (Directory.Exists(migrationsDir))
         {
+            // No try/catch on purpose: an invalid migration takes the process down.
             var executed = await SqlMigrationRunner.ApplyAsync(db, migrationsDir);
             Log.Information(executed.Count > 0
                 ? $"Applied SQL migrations: {string.Join(", ", executed)}"
@@ -180,10 +204,6 @@ using (var scope = app.Services.CreateScope())
         {
             Log.Error("SQL migrations directory missing from the build output ({Dir}) — schema may drift", migrationsDir);
         }
-    }
-    catch (Exception ex)
-    {
-        Log.Warning(ex, "Database not reachable at startup — will retry on first request");
     }
 }
 

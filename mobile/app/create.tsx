@@ -38,6 +38,7 @@ export default function CreateScreen() {
   const [step, setStep] = useState(0);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loadingActivities, setLoadingActivities] = useState(true);
+  const [activitiesError, setActivitiesError] = useState('');
   const [cities, setCities] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -59,11 +60,17 @@ export default function CreateScreen() {
     }
   };
 
-  useEffect(() => {
+  const loadActivities = () => {
+    setLoadingActivities(true);
+    setActivitiesError('');
     listActivities()
       .then(setActivities)
-      .catch(() => {})
+      .catch(() => setActivitiesError('Impossible de charger le catalogue.'))
       .finally(() => setLoadingActivities(false));
+  };
+
+  useEffect(() => {
+    loadActivities();
     listCities().then(setCities).catch(() => {});
     captureLocation();
   }, []);
@@ -140,6 +147,13 @@ export default function CreateScreen() {
           {step === 0 && (
             loadingActivities ? (
               <ActivityIndicator color={T.coral} style={{ marginTop: 40 }} />
+            ) : activitiesError ? (
+              <View style={{ alignItems: 'center', paddingTop: 40, gap: 8 }}>
+                <Text style={styles.errorText}>{activitiesError}</Text>
+                <TouchableOpacity onPress={loadActivities}>
+                  <Text style={{ fontSize: 14, color: T.coral, fontWeight: '600', fontFamily: 'DMSans_600SemiBold' }}>Réessayer</Text>
+                </TouchableOpacity>
+              </View>
             ) : (
               <View style={{ gap: 18 }}>
                 {groupByCategory(activities).map((g) => (

@@ -63,11 +63,14 @@ export default function EventList() {
   }, []);
 
   const applyFilters = (c: string, a: string, cat = category) => {
+    // A search typed within the last 400 ms would otherwise fire with the
+    // filters captured before this click and overwrite the result.
+    clearTimeout(searchDebounce.current);
     setCity(c);
     setActivityId(a);
     setCategory(cat);
     fetchEvents(1, c, a, search, cat);
-    trackAction({ action: 'events_searched', metadata: JSON.stringify({ city: c, activityId: a }) });
+    trackAction({ action: 'events_searched', metadata: JSON.stringify({ city: c, activityId: a, category: cat }) });
   };
 
   const applySearch = (s: string) => {
@@ -173,7 +176,7 @@ export default function EventList() {
             ))}
           </div>
           {selectedGroup && (
-            <div className="flex flex-wrap gap-2 pl-1" aria-label={`Activités — ${selectedGroup.category}`}>
+            <div role="group" className="flex flex-wrap gap-2 pl-1" aria-label={`Activités — ${selectedGroup.category}`}>
               {selectedGroup.activities.map((a) => (
                 <Chip
                   key={a.id}

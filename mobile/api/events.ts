@@ -58,6 +58,7 @@ export type PaginatedResult<T> = {
 export const listEvents = (params?: {
   city?: string;
   activityId?: string;
+  category?: string;
   status?: string;
   mine?: boolean;
   search?: string;

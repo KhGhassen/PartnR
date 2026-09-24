@@ -31,12 +31,15 @@ export default function HomeScreen() {
   const [unreadCount, setUnreadCount] = useState(0);
   const searchDebounce = useRef<ReturnType<typeof setTimeout>>();
 
-  const fetchEvents = useCallback(async (c: { lat: number; lng: number } | null, s: string) => {
+  // The category goes to the server: filtering client-side on one page of 20
+  // would silently hide any matching event beyond the first page.
+  const fetchEvents = useCallback(async (c: { lat: number; lng: number } | null, s: string, cat = '') => {
     setError('');
     try {
       const result = await listEvents({
         pageSize: 20,
         search: s.trim() || undefined,
+        category: cat || undefined,
         ...(c ? { lat: c.lat, lng: c.lng, radiusKm: 25 } : {}),
       });
       setEvents(result.items);
@@ -58,14 +61,14 @@ export default function HomeScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchEvents(coords, search);
+    await fetchEvents(coords, search, activeCategory);
     setRefreshing(false);
-  }, [fetchEvents, coords, search]);
+  }, [fetchEvents, coords, search, activeCategory]);
 
   const applySearch = (s: string) => {
     setSearch(s);
     clearTimeout(searchDebounce.current);
-    searchDebounce.current = setTimeout(() => fetchEvents(coords, s), 400);
+    searchDebounce.current = setTimeout(() => fetchEvents(coords, s, activeCategory), 400);
   };
 
   const toggleNearMe = useCallback(async () => {
@@ -73,7 +76,7 @@ export default function HomeScreen() {
       setNearMe(false);
       setCoords(null);
       setLoading(true);
-      await fetchEvents(null, search);
+      await fetchEvents(null, search, activeCategory);
       setLoading(false);
       return;
     }
@@ -90,24 +93,28 @@ export default function HomeScreen() {
       setNearMe(true);
       setCoords(c);
       setLoading(true);
-      await fetchEvents(c, search);
+      await fetchEvents(c, search, activeCategory);
       setLoading(false);
     } catch {
       setError('Impossible de récupérer votre position.');
     } finally {
       setLocating(false);
     }
-  }, [nearMe, fetchEvents, search]);
+  }, [nearMe, fetchEvents, search, activeCategory]);
 
   const groups = groupByCategory(activities);
   const selectedGroup = groups.find((g) => g.category === activeCategory) ?? null;
-  const categoryNames = new Set(selectedGroup?.activities.map((a) => a.name) ?? []);
 
   const filtered = activeFilter !== 'Tous'
     ? events.filter((e) => e.activityName === activeFilter)
-    : selectedGroup
-    ? events.filter((e) => categoryNames.has(e.activityName))
     : events;
+
+  const selectCategory = (next: string) => {
+    setActiveFilter('Tous');
+    setActiveCategory(next);
+    setLoading(true);
+    fetchEvents(coords, search, next).finally(() => setLoading(false));
+  };
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
@@ -169,22 +176,19 @@ export default function HomeScreen() {
         <Pill
           label="Tous"
           active={activeFilter === 'Tous' && !activeCategory}
-          onPress={() => { setActiveFilter('Tous'); setActiveCategory(''); }}
+          onPress={() => (activeCategory ? selectCategory('') : setActiveFilter('Tous'))}
         />
         {groups.map((g) => (
           <Pill
             key={g.category}
             label={`${g.icon} ${g.category}`}
             active={activeCategory === g.category}
-            onPress={() => {
-              setActiveFilter('Tous');
-              setActiveCategory((c) => (c === g.category ? '' : g.category));
-            }}
+            onPress={() => selectCategory(activeCategory === g.category ? '' : g.category)}
           />
         ))}
       </ScrollView>
       {selectedGroup && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters} style={styles.filtersScroll}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters} style={styles.filtersSub}>
           {selectedGroup.activities.map((a) => (
             <Pill
               key={a.id}
@@ -217,7 +221,7 @@ export default function HomeScreen() {
         ) : error ? (
           <View style={styles.errorBox}>
             <Text style={styles.errorText}>{error}</Text>
-            <TouchableOpacity onPress={() => fetchEvents(coords, search)}>
+            <TouchableOpacity onPress={() => fetchEvents(coords, search, activeCategory)}>
               <Text style={styles.retryText}>Réessayer</Text>
             </TouchableOpacity>
           </View>
@@ -292,6 +296,7 @@ const styles = StyleSheet.create({
   searchInput: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 14, borderWidth: 1.5, borderColor: T.border, fontSize: 14, fontFamily: 'DMSans_400Regular', color: T.text, backgroundColor: '#fff' },
 
   filtersScroll: { flexShrink: 0, marginTop: 14 },
+  filtersSub: { flexShrink: 0, marginTop: -4 },
   filters: { paddingHorizontal: 20, gap: 6, paddingBottom: 12 },
 
   feed: { paddingHorizontal: 20, paddingBottom: 100 },
