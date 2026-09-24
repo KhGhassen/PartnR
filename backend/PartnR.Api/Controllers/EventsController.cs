@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.SignalR;
 using PartnR.Api.Extensions;
 using PartnR.Api.Hubs;
+using PartnR.Application.Common;
 using PartnR.Application.DTOs;
 using PartnR.Application.DTOs.Events;
 using PartnR.Application.Interfaces.Services;
@@ -53,6 +54,19 @@ public class EventsController : ControllerBase
         Guid? viewer = User.Identity?.IsAuthenticated == true ? User.GetUserId() : null;
         var ev = await _eventService.GetByIdAsync(id, viewer);
         return Ok(ev);
+    }
+
+    // Opened by the mobile app in the system browser, so it is anonymous:
+    // the entry carries what an outsider may see (city, not the doorstep).
+    [HttpGet("{id:guid}/calendar.ics")]
+    [EnableRateLimiting("api")]
+    public async Task<IActionResult> Calendar(Guid id)
+    {
+        Guid? viewer = User.Identity?.IsAuthenticated == true ? User.GetUserId() : null;
+        var ev = await _eventService.GetByIdAsync(id, viewer);
+        var ics = IcsCalendar.Build(ev);
+        Response.Headers.ContentDisposition = $"inline; filename=\"{IcsCalendar.FileName(ev.Title)}\"";
+        return File(System.Text.Encoding.UTF8.GetBytes(ics), "text/calendar; charset=utf-8");
     }
 
     [Authorize]

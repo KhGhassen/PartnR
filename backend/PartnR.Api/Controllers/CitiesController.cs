@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using PartnR.Domain.Constants;
+using PartnR.Application.Interfaces.Services;
 
 namespace PartnR.Api.Controllers;
 
@@ -7,6 +7,10 @@ namespace PartnR.Api.Controllers;
 [Route("api/[controller]")]
 public class CitiesController : ControllerBase
 {
+    private readonly ICityService _cities;
+
+    public CitiesController(ICityService cities) => _cities = cities;
+
     [HttpGet]
-    public IActionResult List() => Ok(FrenchCities.All);
+    public async Task<ActionResult<List<string>>> List() => Ok(await _cities.ListAsync());
 }

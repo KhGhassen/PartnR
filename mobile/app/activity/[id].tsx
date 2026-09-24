@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Image, Share, TextInput } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator, Image, Share, TextInput, Linking, Platform } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { T } from '../../constants/tokens';
+import { API_URL } from '../../config';
 import { getEvent, joinEvent, leaveEvent, type EventDetail } from '../../api/events';
 import { addEventPhoto, deleteEventPhoto } from '../../api/eventPhotos';
 import { listEventComments, addEventComment, deleteEventComment, type EventComment } from '../../api/eventComments';
@@ -61,12 +62,20 @@ export default function ActivityDetailScreen() {
   const isFull = event.participantCount >= event.maxParticipants;
   const spotsLeft = event.maxParticipants - event.participantCount;
 
+  // The link lands on the public web page, which offers to sign up and join.
+  // iOS carries the URL as its own field; Android only reads the message.
   const handleShare = () => {
+    const url = event.shareUrl ?? undefined;
+    const text = `Rejoins-moi sur PartnR : ${event.title} 🎉`;
     Share.share({
-      message: `Rejoins-moi sur PartnR : ${event.title} 🎉`,
+      message: url && Platform.OS !== 'ios' ? `${text}\n${url}` : text,
       title: event.title,
+      ...(url && Platform.OS === 'ios' ? { url } : {}),
     }).catch(() => {});
   };
+
+  const addToCalendar = () =>
+    Linking.openURL(`${API_URL}/api/events/${event.id}/calendar.ics`).catch(() => {});
 
   const handleJoin = async () => {
     setActionLoading(true);
@@ -195,7 +204,14 @@ export default function ActivityDetailScreen() {
 
         {event.description ? <Text style={styles.desc}>{event.description}</Text> : null}
 
-        <View style={styles.metaRow}><Text style={styles.meta}>📅 {new Date(event.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</Text></View>
+        <View style={styles.metaRow}>
+          <Text style={styles.meta}>📅 {new Date(event.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</Text>
+          {event.status === 'Published' && (
+            <TouchableOpacity onPress={addToCalendar} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={{ marginLeft: 'auto' }}>
+              <Text style={styles.metaLink}>+ Agenda</Text>
+            </TouchableOpacity>
+          )}
+        </View>
         <View style={styles.metaRow}><Text style={styles.meta}>📍 {event.city}{event.location ? ` — ${event.location}` : ''}</Text></View>
         {!event.location && event.locationHidden && (
           <View style={styles.metaRow}><Text style={styles.meta}>🔒 L'adresse exacte est communiquée aux participants.</Text></View>
@@ -425,6 +441,7 @@ const styles = StyleSheet.create({
   desc:     { fontSize: 14, color: T.textMid, lineHeight: 21, marginBottom: 12, fontFamily: 'DMSans_400Regular' },
   metaRow:  { flexDirection: 'row', marginBottom: 6 },
   meta:     { fontSize: 13, color: T.textMid, fontFamily: 'DMSans_400Regular' },
+  metaLink: { fontSize: 13, color: T.coral, fontFamily: 'DMSans_600SemiBold' },
 
   section:      { marginTop: 20, marginBottom: 16 },
   sectionTitle: { fontSize: 13, fontWeight: '600', color: T.text, marginBottom: 8, fontFamily: 'DMSans_600SemiBold' },

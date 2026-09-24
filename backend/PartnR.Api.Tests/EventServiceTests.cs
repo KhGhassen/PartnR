@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Configuration;
 using PartnR.Application.DTOs.Events;
 using PartnR.Application.Services;
 using PartnR.Domain.Entities;
@@ -55,7 +56,10 @@ public class EventServiceTests : IDisposable
             new EventParticipantRepository(_db),
             new NotificationRepository(_db),
             new UserBlockRepository(_db),
-            unitOfWork);
+            unitOfWork,
+            new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?> { ["FrontendUrl"] = "https://partnr.test/" })
+                .Build());
     }
 
     [Fact]
@@ -98,6 +102,7 @@ public class EventServiceTests : IDisposable
         Assert.Equal("Yoga Session", result.Title);
         Assert.Single(result.Participants);
         Assert.Equal(_userId, result.Participants[0].UserId);
+        Assert.Equal($"https://partnr.test/events/{created.Id}", result.ShareUrl);
     }
 
     [Fact]
