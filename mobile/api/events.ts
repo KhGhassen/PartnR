@@ -41,6 +41,7 @@ export type Occurrence = { id: string; date: string };
 
 export type EventDetail = EventSummary & {
   locationHidden?: boolean;
+  shareUrl?: string | null;
   description: string | null;
   createdAt: string;
   participants: Participant[];

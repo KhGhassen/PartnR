@@ -83,6 +83,7 @@ export interface Occurrence {
 export interface EventDetail extends EventSummary {
   /** The meeting point exists but is withheld until you join. */
   locationHidden?: boolean;
+  shareUrl?: string | null;
   participants: Participant[];
   photos: EventPhoto[];
   occurrences: Occurrence[];

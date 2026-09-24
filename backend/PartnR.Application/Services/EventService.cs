@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using PartnR.Application.Common;
 using PartnR.Application.DTOs;
 using PartnR.Application.DTOs.Events;
@@ -16,6 +17,7 @@ public class EventService : IEventService
     private readonly INotificationRepository _notifications;
     private readonly IUserBlockRepository _blocks;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly string _frontendUrl;
 
     public EventService(
         IEventRepository events,
@@ -23,7 +25,8 @@ public class EventService : IEventService
         IEventParticipantRepository participants,
         INotificationRepository notifications,
         IUserBlockRepository blocks,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IConfiguration config)
     {
         _events = events;
         _activities = activities;
@@ -31,6 +34,7 @@ public class EventService : IEventService
         _notifications = notifications;
         _blocks = blocks;
         _unitOfWork = unitOfWork;
+        _frontendUrl = (config["FrontendUrl"] ?? "http://localhost:5173").TrimEnd('/');
     }
 
     // Both directions: the person I blocked and the person who blocked me.
@@ -222,7 +226,11 @@ public class EventService : IEventService
             (ev.CreatorId == viewerId.Value ||
              ev.Participants.Any(p => p.UserId == viewerId.Value && p.Status != ParticipantStatus.Cancelled));
 
-        return MapToDetailDto(ev, occurrences, isInsider, viewerId.HasValue);
+        var dto = MapToDetailDto(ev, occurrences, isInsider, viewerId.HasValue);
+        // The mobile app has no idea where the web app lives; the link it
+        // shares must land on the public event page, whoever opens it.
+        dto.ShareUrl = $"{_frontendUrl}/events/{ev.Id}";
+        return dto;
     }
 
     public async Task<EventDetailDto> CreateAsync(Guid creatorId, CreateEventDto dto)

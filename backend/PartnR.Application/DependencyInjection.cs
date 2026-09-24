@@ -22,6 +22,7 @@ public static class DependencyInjection
         services.AddScoped<IEventCommentService, EventCommentService>();
         services.AddScoped<IReportService, ReportService>();
         services.AddScoped<IBlockService, BlockService>();
+        services.AddScoped<ICityService, CityService>();
 
         return services;
     }
