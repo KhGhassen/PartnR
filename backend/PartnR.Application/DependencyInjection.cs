@@ -21,6 +21,7 @@ public static class DependencyInjection
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IEventCommentService, EventCommentService>();
         services.AddScoped<IReportService, ReportService>();
+        services.AddScoped<IBlockService, BlockService>();
 
         return services;
     }

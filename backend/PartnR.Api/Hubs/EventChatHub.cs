@@ -40,7 +40,7 @@ public class EventChatHub : Hub
 
         await Groups.AddToGroupAsync(Context.ConnectionId, eventId);
 
-        var messages = await _chatService.GetHistoryAsync(eid);
+        var messages = await _chatService.GetHistoryAsync(eid, userId);
         await Clients.Caller.SendAsync("MessageHistory", messages);
     }
 

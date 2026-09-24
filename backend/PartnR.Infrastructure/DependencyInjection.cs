@@ -47,6 +47,7 @@ public static class DependencyInjection
         services.AddScoped<INotificationRepository, NotificationRepository>();
         services.AddScoped<IEventCommentRepository, EventCommentRepository>();
         services.AddScoped<IReportRepository, ReportRepository>();
+        services.AddScoped<IUserBlockRepository, UserBlockRepository>();
 
         services.AddScoped<IEmailService, SmtpEmailService>();
         services.AddScoped<IAccountService, AccountDeletionService>();

@@ -14,6 +14,7 @@ public class EventService : IEventService
     private readonly IActivityRepository _activities;
     private readonly IEventParticipantRepository _participants;
     private readonly INotificationRepository _notifications;
+    private readonly IUserBlockRepository _blocks;
     private readonly IUnitOfWork _unitOfWork;
 
     public EventService(
@@ -21,14 +22,27 @@ public class EventService : IEventService
         IActivityRepository activities,
         IEventParticipantRepository participants,
         INotificationRepository notifications,
+        IUserBlockRepository blocks,
         IUnitOfWork unitOfWork)
     {
         _events = events;
         _activities = activities;
         _participants = participants;
         _notifications = notifications;
+        _blocks = blocks;
         _unitOfWork = unitOfWork;
     }
+
+    // Both directions: the person I blocked and the person who blocked me.
+    private Task<List<Guid>> HiddenUserIdsAsync(Guid userId) =>
+        _blocks.Query()
+            .Where(b => b.BlockerId == userId || b.BlockedId == userId)
+            .Select(b => b.BlockerId == userId ? b.BlockedId : b.BlockerId)
+            .ToListAsync();
+
+    private Task<bool> IsBlockedEitherWayAsync(Guid a, Guid b) =>
+        _blocks.Query().AnyAsync(x =>
+            (x.BlockerId == a && x.BlockedId == b) || (x.BlockerId == b && x.BlockedId == a));
 
     public async Task<PaginatedResult<EventDto>> ListAsync(string? city, Guid? activityId, EventStatus? status, int page = 1, int pageSize = 20, bool mine = false, Guid? userId = null, double? lat = null, double? lng = null, double? radiusKm = null, string? search = null, string? category = null)
     {
@@ -43,6 +57,13 @@ public class EventService : IEventService
 
         if (mine && userId.HasValue)
             query = query.Where(e => e.Participants.Any(p => p.UserId == userId.Value && p.Status == ParticipantStatus.Confirmed));
+
+        if (userId.HasValue)
+        {
+            var hidden = await HiddenUserIdsAsync(userId.Value);
+            if (hidden.Count > 0)
+                query = query.Where(e => !hidden.Contains(e.CreatorId));
+        }
 
         if (!string.IsNullOrWhiteSpace(search))
         {
@@ -347,6 +368,10 @@ public class EventService : IEventService
 
             if (ev.Participants.Any(p => p.UserId == userId && p.Status != ParticipantStatus.Cancelled))
                 throw new InvalidOperationException("Already participating.");
+
+            // Same wording whichever side blocked: the block is never announced.
+            if (ev.CreatorId != userId && await IsBlockedEitherWayAsync(userId, ev.CreatorId))
+                throw new InvalidOperationException("Impossible de rejoindre cet événement.");
 
             var confirmed = ev.Participants.Count(p => p.Status == ParticipantStatus.Confirmed);
             var isFull = confirmed >= ev.MaxParticipants;

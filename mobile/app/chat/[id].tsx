@@ -1,13 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import {
   View, Text, ScrollView, TextInput, TouchableOpacity,
-  StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator,
+  StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator, Alert,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { T } from '../../constants/tokens';
 import { getEvent, type EventDetail } from '../../api/events';
+import { blockUser } from '../../api/blocks';
 import { useApp } from '../../context/AppContext';
 import { useEventChat } from '../../hooks/useEventChat';
 import BackBtn from '../../components/BackBtn';
@@ -21,8 +22,33 @@ export default function ChatDetail() {
 
   const [event, setEvent] = useState<EventDetail | null>(null);
   const [text, setText] = useState('');
+  // Blocked during this session: the server hides them on the next history
+  // load, this hides them right away.
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(() => new Set());
 
   const { messages, connected, error, sendMessage } = useEventChat(id!);
+  const visible = messages.filter((m) => !hiddenIds.has(m.userId));
+
+  const confirmBlock = (userId: string, name: string) =>
+    Alert.alert(
+      `Bloquer ${name} ?`,
+      "Cette personne ne verra plus vos événements, ne pourra plus les rejoindre, et vos messages seront masqués l'un pour l'autre.",
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Bloquer',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await blockUser(userId);
+              setHiddenIds((prev) => new Set(prev).add(userId));
+            } catch {
+              Alert.alert('Erreur', 'Le blocage a échoué. Réessayez dans un instant.');
+            }
+          },
+        },
+      ],
+    );
 
   useEffect(() => {
     getEvent(id!).then(setEvent).catch(() => {});
@@ -77,10 +103,10 @@ export default function ChatDetail() {
             contentContainerStyle={[styles.messageList, { paddingBottom: 16 }]}
             onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: false })}
           >
-            {messages.length === 0 && connected && (
+            {visible.length === 0 && connected && (
               <Text style={styles.empty}>Aucun message. Lancez la conversation !</Text>
             )}
-            {messages.map((m) => {
+            {visible.map((m) => {
               if (m.userId === 'system') {
                 return (
                   <View key={m.id} style={styles.systemRow}>
@@ -94,7 +120,13 @@ export default function ChatDetail() {
                   {!isMe && (
                     <Avatar initials={m.userName[0]} color={T.coralL} size={28} />
                   )}
-                  <View style={styles.bubbleWrap}>
+                  <TouchableOpacity
+                    style={styles.bubbleWrap}
+                    activeOpacity={0.9}
+                    disabled={isMe}
+                    delayLongPress={400}
+                    onLongPress={() => confirmBlock(m.userId, m.userName)}
+                  >
                     {!isMe && (
                       <Text style={styles.senderName}>{m.userName}</Text>
                     )}
@@ -106,7 +138,7 @@ export default function ChatDetail() {
                     <Text style={[styles.timestamp, isMe ? styles.tsMe : styles.tsThem]}>
                       {new Date(m.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                     </Text>
-                  </View>
+                  </TouchableOpacity>
                 </View>
               );
             })}

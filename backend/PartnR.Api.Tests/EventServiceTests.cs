@@ -54,6 +54,7 @@ public class EventServiceTests : IDisposable
             new ActivityRepository(_db),
             new EventParticipantRepository(_db),
             new NotificationRepository(_db),
+            new UserBlockRepository(_db),
             unitOfWork);
     }
 
@@ -754,6 +755,41 @@ public class EventServiceTests : IDisposable
         Assert.Equal("Paris Event", result.Items[0].Title);
         Assert.NotNull(result.Items[0].DistanceKm);
         Assert.True(result.Items[0].DistanceKm < 50);
+    }
+
+    [Fact]
+    public async Task Blocking_HidesEventsFromTheFeed_AndRefusesJoins_BothWays()
+    {
+        var bobId = Guid.NewGuid();
+        _db.Users.Add(new AppUser
+        {
+            Id = bobId, UserName = "bob@test.com", Email = "bob@test.com", FirstName = "Bob", City = "Paris",
+            NormalizedEmail = "BOB@TEST.COM", NormalizedUserName = "BOB@TEST.COM", SecurityStamp = Guid.NewGuid().ToString()
+        });
+        await _db.SaveChangesAsync();
+
+        var mine = await _service.CreateAsync(_userId, new CreateEventDto
+        {
+            Title = "Chez moi", City = "Paris", Date = DateTime.UtcNow.AddDays(2), MaxParticipants = 5, ActivityId = _activityId
+        });
+        var bobs = await _service.CreateAsync(bobId, new CreateEventDto
+        {
+            Title = "Chez Bob", City = "Paris", Date = DateTime.UtcNow.AddDays(2), MaxParticipants = 5, ActivityId = _activityId
+        });
+
+        // Only the test user blocks Bob; the effects must still apply to both.
+        _db.UserBlocks.Add(new UserBlock { BlockerId = _userId, BlockedId = bobId });
+        await _db.SaveChangesAsync();
+
+        var seenByMe = await _service.ListAsync(null, null, null, userId: _userId);
+        Assert.Equal(new[] { "Chez moi" }, seenByMe.Items.Select(e => e.Title));
+        var seenByBob = await _service.ListAsync(null, null, null, userId: bobId);
+        Assert.Equal(new[] { "Chez Bob" }, seenByBob.Items.Select(e => e.Title));
+        var anonymous = await _service.ListAsync(null, null, null);
+        Assert.Equal(2, anonymous.TotalCount);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _service.JoinAsync(mine.Id, bobId));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _service.JoinAsync(bobs.Id, _userId));
     }
 
     [Fact]
