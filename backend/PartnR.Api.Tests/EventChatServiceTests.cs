@@ -53,6 +53,7 @@ public class EventChatServiceTests : IDisposable
             new EventParticipantRepository(_db),
             new MessageRepository(_db),
             new UserRepository(_db),
+            new NotificationRepository(_db),
             new UnitOfWork(_db));
     }
 
@@ -112,6 +113,21 @@ public class EventChatServiceTests : IDisposable
 
         await Assert.ThrowsAsync<UnauthorizedAccessException>(
             () => _service.SendMessageAsync(_eventId, _outsiderId, "Je suis là"));
+    }
+
+    [Fact]
+    public async Task SendMessageAsync_NotifiesOtherParticipants_OncePerWindow()
+    {
+        _db.EventParticipants.Add(new EventParticipant { EventId = _eventId, UserId = _outsiderId, Status = ParticipantStatus.Confirmed });
+        await _db.SaveChangesAsync();
+
+        await _service.SendMessageAsync(_eventId, _creatorId, "On se retrouve devant ?");
+        await _service.SendMessageAsync(_eventId, _creatorId, "Je serai en retard de 10 min");
+
+        var toOutsider = _db.Notifications.Where(n => n.UserId == _outsiderId && n.Type == "chat_message").ToList();
+        Assert.Single(toOutsider);
+        Assert.StartsWith("Alice : On se retrouve", toOutsider[0].Message);
+        Assert.DoesNotContain(_db.Notifications, n => n.UserId == _creatorId && n.Type == "chat_message");
     }
 
     public void Dispose() => _db.Dispose();

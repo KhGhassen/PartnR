@@ -12,3 +12,5 @@ export const searchProfiles = (params?: { city?: string; activity?: string }) =>
 
 export const getRatingsForUser = (userId: string) =>
   api.get<RatingDto[]>(`/profiles/${userId}/ratings`).then((r) => r.data);
+
+export const deleteMyAccount = () => api.delete('/profiles/me');

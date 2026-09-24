@@ -302,6 +302,8 @@ public class EventService : IEventService
         await using var transaction = await _unitOfWork.BeginTransactionAsync();
         try
         {
+            await _events.LockAsync(eventId);
+
             var ev = await _events.Query()
                 .Include(e => e.Participants)
                 .FirstOrDefaultAsync(e => e.Id == eventId)
@@ -360,6 +362,24 @@ public class EventService : IEventService
     }
 
     public async Task LeaveAsync(Guid eventId, Guid userId)
+    {
+        // Two departures used to promote the same waitlisted person and leave a
+        // seat lost; the same lock as JoinAsync serialises the promotion.
+        await using var transaction = await _unitOfWork.BeginTransactionAsync();
+        try
+        {
+            await _events.LockAsync(eventId);
+            await LeaveCoreAsync(eventId, userId);
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+    }
+
+    private async Task LeaveCoreAsync(Guid eventId, Guid userId)
     {
         var participant = await _participants.Query()
             .FirstOrDefaultAsync(p => p.EventId == eventId && p.UserId == userId)

@@ -67,7 +67,7 @@ public class ExpoPushService : BackgroundService
                     title = "PartnR",
                     body = n.Message,
                     sound = "default",
-                    data = new { eventId = n.EventId },
+                    data = new { eventId = n.EventId, type = n.Type },
                 }))
             .ToList();
 

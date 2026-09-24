@@ -282,6 +282,14 @@ export default function ActivityDetailScreen() {
           )}
         </View>
 
+        {/* After joining, nothing on this screen led to the chat — people had to
+            guess it lived under the Messages tab. */}
+        {isParticipant && (
+          <TouchableOpacity onPress={() => router.push(`/chat/${event.id}`)} activeOpacity={0.85} style={styles.chatBtn}>
+            <Text style={styles.chatBtnText}>💬  Ouvrir la discussion du groupe</Text>
+          </TouchableOpacity>
+        )}
+
         {/* Photo gallery */}
         <View style={styles.section}>
           <View style={styles.galleryHeader}>
@@ -398,6 +406,9 @@ const styles = StyleSheet.create({
   reportSend: { fontSize: 13, fontWeight: '600', color: '#E53E3E', fontFamily: 'DMSans_600SemiBold' },
   reportCancel: { fontSize: 13, color: T.textSub, fontFamily: 'DMSans_400Regular' },
   reportSent: { fontSize: 12, color: T.textSub, textAlign: 'right', marginTop: 4, fontFamily: 'DMSans_400Regular' },
+
+  chatBtn: { marginTop: 4, marginBottom: 4, borderRadius: 14, borderWidth: 1.5, borderColor: T.violet, backgroundColor: T.violetL, paddingVertical: 12, alignItems: 'center' },
+  chatBtnText: { fontSize: 14, fontWeight: '600', color: T.violet, fontFamily: 'DMSans_600SemiBold' },
 
   shareBtn: { backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
   shareBtnText: { fontSize: 12, fontWeight: '600', color: T.text, fontFamily: 'DMSans_600SemiBold' },
