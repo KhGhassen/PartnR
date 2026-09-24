@@ -204,10 +204,8 @@ cd backend/PartnR.Api
 # Configurer la connexion DB dans appsettings.json
 # "ConnectionStrings": { "DefaultConnection": "Host=...;Port=5432;Database=partnr;..." }
 
-# Appliquer les migrations
-dotnet ef database update
-
-# Lancer l'API
+# Lancer l'API — les migrations SQL de supabase/migrations/ sont appliquées
+# automatiquement au démarrage (aucune commande dotnet ef à lancer)
 dotnet run
 ```
 
@@ -259,11 +257,7 @@ npm test
 
 ### Initialiser la base Supabase
 
-Si vous utilisez Supabase, exécutez le fichier de migration dans l'éditeur SQL :
-
-```
-supabase/migrations/00001_initial_schema.sql
-```
+Rien à faire à la main : au premier démarrage, l'API applique dans l'ordre tous les fichiers de `supabase/migrations/` et consigne ceux déjà passés dans la table `__PartnrMigrations`. Pour vérifier, cherchez `Applied SQL migrations` ou `SQL migrations up to date` dans les logs.
 
 ## Sécurité
 

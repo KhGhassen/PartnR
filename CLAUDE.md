@@ -52,7 +52,9 @@ backend/
 
 ## Frontend (`frontend/src/`)
 
-**Stack :** React 19, TypeScript, Tailwind CSS 4, Vite, Axios, React Router v7, Recharts
+**Stack :** React 19, TypeScript, Tailwind CSS 4, Vite, Axios, React Router v7, Recharts, Lucide (icônes)
+
+**Charte « Le Programme » :** tokens sémantiques dans `src/index.css` (`--color-bg`, `surface`, `surface-sunken`, `text`, `text-2`, `text-3`, `border`, `border-strong`, `accent`, `on-accent`, `success/danger/warn` + surfaces, `night`). Le thème sombre est une permutation de ces valeurs dans `[data-theme='dark']`. Les anciens noms (`cream`, `ink*`, `coral-*`, `line`) sont des **alias en cours de migration** : nouveau code = tokens sémantiques uniquement, jamais de couleur Tailwind littérale (`bg-white`, `text-gray-*`). Titres en Bricolage Grotesque (`font-display`, jamais sous 18 px), corps en Inter. Emojis = contenu (icône d'activité), Lucide = interface.
 
 **Pattern :**
 - `api/` — Fonctions Axios par domaine (auth, events, profiles, activities, analytics)
@@ -91,19 +93,20 @@ app/
 
 **SignalR :** `mobile/hooks/useEventChat.ts` — token passé via `?access_token=` (même pattern que web).
 
-**Design tokens :** `mobile/constants/tokens.ts` — coral `#E8603A`, violet `#7B65D4`, fond `#FAFAF7`.
+**Design tokens :** `mobile/constants/tokens.ts` — encore sur l'ancienne charte (coral `#E8603A`, fond `#FAFAF7`), sans mécanisme de thème. À aligner sur « Le Programme » lors du chantier de thème mobile (après un premier build EAS).
 
-**Fonts :** DMSans (400/500/600/700) via `@expo-google-fonts/dm-sans`, chargées dans `app/_layout.tsx`.
+**Fonts :** DMSans via `@expo-google-fonts/dm-sans` (le paquet ne fournit pas de 600 : `DMSans_600SemiBold` est un alias du 700 dans `app/_layout.tsx`).
 
 ## Base de données
 
-Migrations dans `supabase/migrations/` (ordre : 00001 → 00002 → 00003).
+**Il n'existe aucune migration EF Core dans le dépôt.** Le schéma est piloté par les fichiers SQL de `supabase/migrations/` (00001 → 00015), appliqués **automatiquement au démarrage de l'API** par `PartnR.Infrastructure/Data/SqlMigrationRunner.cs` :
 
-- `00001_initial_schema.sql` — Schema complet avec RLS, triggers, index
-- `00002_efcore_schema.sql` — Tables EF Core Identity (AspNetUsers, etc.)
-- `00003_user_actions.sql` — Table analytics UserActions
+- chaque fichier est exécuté une seule fois, dans une transaction, et son nom est consigné dans `__PartnrMigrations` ;
+- les fichiers doivent être **idempotents** (`IF NOT EXISTS`, `ON CONFLICT DO NOTHING`) — le runner ne les protège pas d'un rejeu manuel ;
+- `EnsureCreated()` ne s'exécute que sur une base vierge (tests, poste local) : **une donnée seedée via `HasData` doit aussi exister dans une migration SQL, avec les mêmes GUID** (cf. `00015_activity_catalog.sql`).
+- Le Dockerfile racine copie `supabase/` dans l'image ; sans ça le runner ne trouve rien et le logge en erreur.
 
-**EF Core** gère le schema en production via `dotnet ef database update`. Les migrations Supabase sont pour référence et Supabase directement.
+Pour ajouter une table ou une colonne : un nouveau fichier `000NN_nom.sql` + la propriété sur l'entité + sa config dans `AppDbContext`. Jamais `dotnet ef migrations`.
 
 ## Tests
 
