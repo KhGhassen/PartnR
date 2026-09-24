@@ -12,7 +12,9 @@ const TYPE_ICONS: Record<string, string> = {
   participant_waitlisted: '⏳',
   waitlist_promoted: '✅',
   event_cancelled: '🚫',
+  event_rescheduled: '📅',
   event_reminder: '⏰',
+  chat_message: '💬',
 };
 
 export default function NotificationsScreen() {

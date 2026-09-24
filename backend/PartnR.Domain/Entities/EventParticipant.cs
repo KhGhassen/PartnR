@@ -14,6 +14,9 @@ public class EventParticipant
     public Guid UserId { get; set; }
     public ParticipantStatus Status { get; set; } = ParticipantStatus.Confirmed;
     public DateTime JoinedAt { get; set; } = DateTime.UtcNow;
+    // Per participant, not per event: whoever joins after the reminder pass
+    // still gets one, and a rescheduled event re-arms it by nulling this.
+    public DateTime? ReminderSentAt { get; set; }
 
     // Navigation
     public Event Event { get; set; } = null!;

@@ -756,5 +756,38 @@ public class EventServiceTests : IDisposable
         Assert.True(result.Items[0].DistanceKm < 50);
     }
 
+    [Fact]
+    public async Task UpdateAsync_DateChange_NotifiesParticipants_AndRearmsReminder()
+    {
+        var memberId = Guid.NewGuid();
+        _db.Users.Add(new AppUser
+        {
+            Id = memberId, UserName = "bob@test.com", Email = "bob@test.com", FirstName = "Bob", City = "Paris",
+            NormalizedEmail = "BOB@TEST.COM", NormalizedUserName = "BOB@TEST.COM", SecurityStamp = Guid.NewGuid().ToString()
+        });
+        await _db.SaveChangesAsync();
+
+        var created = await _service.CreateAsync(_userId, new CreateEventDto
+        {
+            Title = "Apéro", City = "Paris", Date = DateTime.UtcNow.AddDays(3), MaxParticipants = 5, ActivityId = _activityId
+        });
+        await _service.JoinAsync(created.Id, memberId);
+        foreach (var p in _db.EventParticipants.Where(p => p.EventId == created.Id)) p.ReminderSentAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+
+        // A title-only edit is not a reschedule.
+        await _service.UpdateAsync(created.Id, _userId, new UpdateEventDto { Title = "Apéro bis" });
+        Assert.DoesNotContain(_db.Notifications, n => n.Type == "event_rescheduled");
+        Assert.All(_db.EventParticipants.Where(p => p.EventId == created.Id), p => Assert.NotNull(p.ReminderSentAt));
+
+        await _service.UpdateAsync(created.Id, _userId, new UpdateEventDto { Date = DateTime.UtcNow.AddDays(4) });
+
+        var rescheduled = _db.Notifications.Where(n => n.Type == "event_rescheduled").ToList();
+        Assert.Single(rescheduled);
+        Assert.Equal(memberId, rescheduled[0].UserId);
+        Assert.Contains("Apéro bis", rescheduled[0].Message);
+        Assert.All(_db.EventParticipants.Where(p => p.EventId == created.Id), p => Assert.Null(p.ReminderSentAt));
+    }
+
     public void Dispose() => _db.Dispose();
 }

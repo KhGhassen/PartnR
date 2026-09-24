@@ -5,7 +5,12 @@ import { listNotifications, markAllNotificationsRead, type NotificationItem } fr
 const TYPE_ICONS: Record<string, string> = {
   participant_joined: '🎉',
   participant_left: '👋',
+  participant_waitlisted: '⏳',
+  waitlist_promoted: '✅',
   event_cancelled: '🚫',
+  event_rescheduled: '📅',
+  event_reminder: '⏰',
+  chat_message: '💬',
 };
 
 export default function NotificationBell() {
