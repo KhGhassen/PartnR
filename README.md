@@ -182,7 +182,8 @@ Les erreurs sont renvoyées en JSON `{ "error": "…" }` : 400 (validation, règ
 | GET | `/api/uploads/{id}` | Non | Servir une image (cache 1 an) |
 | GET | `/api/activities` | Non | Catalogue des activités (avec `category`) |
 | GET | `/api/cities` | Non | Villes suggérées |
-| GET | `/api/health` | Non | Liveness (sans accès DB) — utilisé par les clients pour réveiller l'API |
+| GET | `/api/health` | Non | Liveness (sans accès DB) — utilisé par les clients pour réveiller l'API et par le pinger |
+| GET | `/api/health/ready` | Non | Readiness : 200 si la base répond, 503 sinon — pour l'alerting |
 
 ### Admin et analytics
 | Méthode | Route | Auth | Description |
@@ -323,6 +324,10 @@ npm test
 ### Initialiser la base Supabase
 
 Rien à faire à la main : au premier démarrage, l'API applique dans l'ordre tous les fichiers de `supabase/migrations/` et consigne ceux déjà passés dans la table `__PartnrMigrations`. Pour vérifier, cherchez `Applied SQL migrations` ou `SQL migrations up to date` dans les logs.
+
+### Éviter le cold start (Render free tier)
+
+Render endort l'API après 15 minutes sans trafic ; le réveil prend ~30 s, que les clients masquent avec un écran d'attente. Pour que les visiteurs ne le voient jamais, faites pinger `GET https://partnr-p3rv.onrender.com/api/health` toutes les 10 minutes par un service gratuit (UptimeRobot, cron-job.org, Better Stack). Ce endpoint ne touche pas la base ; pour être alerté d'une vraie panne, surveillez `GET /api/health/ready`, qui renvoie 503 quand PostgreSQL ne répond plus.
 
 ## Sécurité
 
