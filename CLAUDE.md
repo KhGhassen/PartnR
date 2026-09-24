@@ -134,7 +134,7 @@ cd frontend && npm test
 ```
 
 Tests backend : xUnit + EF Core InMemory. Couvrent EventService, AuthService, ProfileService, RatingService, EventChatService, EventCommentService, EventPhotoService, ReportService, BlockService, UploadService, ImageProcessor, EventReminderService (`RunOnceAsync` avec horloge injectée).
-Tests frontend : Vitest + Testing Library. Couvrent AuthContext, EventList, Register, RatingForm.
+Tests frontend : Vitest + Testing Library. Couvrent AuthContext, EventList, EventDetail (anonyme / inscrit / participant), Register, RatingForm.
 Mobile : `npx tsc --noEmit` (pas de tests).
 
 Le backend ne se compile que dans la CI GitHub (pas de SDK .NET dans l'environnement Claude) : relire attentivement avant de pousser, puis attendre le job « Backend (build + test) ».
