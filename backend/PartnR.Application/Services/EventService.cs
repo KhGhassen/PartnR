@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using PartnR.Application.Common;
 using PartnR.Application.DTOs;
 using PartnR.Application.DTOs.Events;
 using PartnR.Application.Interfaces.Repositories;
@@ -299,7 +300,28 @@ public class EventService : IEventService
 
         // The date only ever applies to the edited occurrence — shifting a
         // whole series' dates at once would silently move everyone's plans.
-        if (dto.Date.HasValue) ev.Date = ToUtc(dto.Date.Value);
+        if (dto.Date.HasValue && ToUtc(dto.Date.Value) != ev.Date)
+        {
+            ev.Date = ToUtc(dto.Date.Value);
+
+            // A reschedule is the one edit participants cannot afford to miss,
+            // and the J-1 reminder must fire again for the new date.
+            var confirmed = await _participants.Query()
+                .Where(p => p.EventId == ev.Id && p.Status == ParticipantStatus.Confirmed)
+                .ToListAsync();
+            foreach (var p in confirmed)
+            {
+                p.ReminderSentAt = null;
+                if (p.UserId == userId) continue;
+                _notifications.Add(new Notification
+                {
+                    UserId = p.UserId,
+                    Type = "event_rescheduled",
+                    Message = $"« {ev.Title} » est déplacé au {FrenchDate.Long(ev.Date)}.",
+                    EventId = ev.Id,
+                });
+            }
+        }
 
         await _unitOfWork.SaveChangesAsync();
         return await GetByIdAsync(ev.Id, userId);

@@ -1,15 +1,18 @@
 using Microsoft.EntityFrameworkCore;
+using PartnR.Application.Common;
 using PartnR.Application.Interfaces.Services;
 using PartnR.Domain.Entities;
 using PartnR.Infrastructure.Data;
 
 namespace PartnR.Api.Services;
 
-// Sends a reminder (in-app notification + email) to confirmed participants
-// of events happening within the next 24 hours.
+// Reminds each confirmed participant (in-app notification, pushed by
+// ExpoPushService, plus an email) once per event within the last 24 hours
+// before it starts.
 public class EventReminderService : BackgroundService
 {
     private static readonly TimeSpan Interval = TimeSpan.FromMinutes(30);
+    public static readonly TimeSpan Horizon = TimeSpan.FromHours(24);
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<EventReminderService> _logger;
@@ -26,7 +29,10 @@ public class EventReminderService : BackgroundService
         {
             try
             {
-                await SendRemindersAsync(stoppingToken);
+                using var scope = _scopeFactory.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                var email = scope.ServiceProvider.GetRequiredService<IEmailService>();
+                await RunOnceAsync(db, email, DateTime.UtcNow, _logger, stoppingToken);
             }
             catch (Exception ex)
             {
@@ -36,25 +42,28 @@ public class EventReminderService : BackgroundService
         }
     }
 
-    private async Task SendRemindersAsync(CancellationToken ct)
+    /// <summary>One reminder pass. Public and clock-injected so tests can drive it.</summary>
+    public static async Task<int> RunOnceAsync(AppDbContext db, IEmailService email, DateTime now, ILogger logger, CancellationToken ct)
     {
-        using var scope = _scopeFactory.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var email = scope.ServiceProvider.GetRequiredService<IEmailService>();
-
-        var now = DateTime.UtcNow;
-        var upcoming = await db.Events
-            .Include(e => e.Participants).ThenInclude(p => p.User)
-            .Where(e => e.Status == EventStatus.Published
-                        && !e.ReminderSent
-                        && e.Date > now
-                        && e.Date <= now.AddHours(24))
+        var until = now.Add(Horizon);
+        var due = await db.EventParticipants
+            .Include(p => p.Event)
+            .Include(p => p.User)
+            .Where(p => p.Status == ParticipantStatus.Confirmed
+                        && p.ReminderSentAt == null
+                        && p.Event.Status == EventStatus.Published
+                        && p.Event.Date > now
+                        && p.Event.Date <= until)
             .ToListAsync(ct);
 
-        foreach (var ev in upcoming)
+        var sent = 0;
+        foreach (var group in due.GroupBy(p => p.EventId))
         {
-            var when = ev.Date.ToString("dddd d MMMM 'à' HH:mm", new System.Globalization.CultureInfo("fr-FR"));
-            foreach (var p in ev.Participants.Where(p => p.Status == ParticipantStatus.Confirmed))
+            var batch = group.ToList();
+            var ev = batch[0].Event;
+            var when = FrenchDate.Relative(ev.Date, now);
+
+            foreach (var p in batch)
             {
                 db.Notifications.Add(new Notification
                 {
@@ -63,30 +72,34 @@ public class EventReminderService : BackgroundService
                     Message = $"Rappel : « {ev.Title} » a lieu {when}.",
                     EventId = ev.Id,
                 });
-
-                if (!string.IsNullOrEmpty(p.User?.Email))
-                {
-                    try
-                    {
-                        await email.SendAsync(
-                            p.User.Email,
-                            $"Rappel — {ev.Title} c'est demain !",
-                            $"<p>Bonjour {p.User.FirstName},</p><p>Petit rappel : <strong>{ev.Title}</strong> a lieu {when} à {ev.City}{(string.IsNullOrEmpty(ev.Location) ? "" : $" ({ev.Location})")}.</p><p>À très vite sur PartnR !</p>");
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "Reminder email failed for {Email}", p.User.Email);
-                    }
-                }
+                p.ReminderSentAt = now;
             }
 
-            ev.ReminderSent = true;
+            // Persist BEFORE emailing: a crash between the two costs an email
+            // (the push/in-app copy is already saved), never a duplicate reminder.
+            await db.SaveChangesAsync(ct);
+            sent += batch.Count;
+
+            var place = string.IsNullOrEmpty(ev.Location) ? ev.City : $"{ev.City} ({ev.Location})";
+            foreach (var p in batch)
+            {
+                if (string.IsNullOrEmpty(p.User?.Email)) continue;
+                try
+                {
+                    await email.SendAsync(
+                        p.User.Email,
+                        $"Rappel — {ev.Title}, c'est {when}",
+                        $"<p>Bonjour {p.User.FirstName},</p><p>Petit rappel : <strong>{ev.Title}</strong> a lieu {when} à {place}.</p><p>À très vite sur PartnR !</p>");
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Reminder email failed for {Email}", p.User.Email);
+                }
+            }
         }
 
-        if (upcoming.Count > 0)
-        {
-            await db.SaveChangesAsync(ct);
-            _logger.LogInformation("Sent reminders for {Count} event(s)", upcoming.Count);
-        }
+        if (sent > 0)
+            logger.LogInformation("Sent {Count} reminder(s) across {Events} event(s)", sent, due.Select(p => p.EventId).Distinct().Count());
+        return sent;
     }
 }
