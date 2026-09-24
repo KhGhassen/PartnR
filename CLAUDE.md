@@ -20,10 +20,10 @@ partnr/
 
 ```
 backend/
-├── PartnR.Domain/          # Entités (AppUser, Event, Activity, Rating, Message, UserAction...)
-├── PartnR.Application/      # DTOs, interfaces (Services + Repositories), implémentations des services
-├── PartnR.Infrastructure/    # AppDbContext, repositories EF Core, AnalyticsTracker, SmtpEmailService
-└── PartnR.Api/               # Controllers, Hubs, Program.cs, Middleware (composition root)
+├── PartnR.Domain/          # Entités (AppUser, Event, EventParticipant, Activity, Rating, Message, Notification, Report, UserBlock, StoredImage, UserAction...)
+├── PartnR.Application/      # DTOs, interfaces (Services + Repositories), implémentations des services, Common/FrenchDate
+├── PartnR.Infrastructure/    # AppDbContext, SqlMigrationRunner, repositories EF Core, AnalyticsTracker, SmtpEmailService, ImageSharpProcessor, AccountDeletionService
+└── PartnR.Api/               # Controllers, Hubs, Services (BackgroundServices), Program.cs, Middleware (composition root)
 ```
 
 **Pattern :** Controller → Service (interface dans `Application/Interfaces/Services`) → Repository (interface dans `Application/Interfaces/Repositories`, implém. dans `Infrastructure/Repositories`) → `AppDbContext`.
@@ -37,18 +37,28 @@ backend/
 - `PartnR.Api/Controllers/` — REST + `[Authorize]` sur les endpoints sensibles
 - `PartnR.Api/Hubs/EventChatHub.cs` — SignalR, délègue à `IEventChatService`. Auth via query string `?access_token=` (WebSocket ne supporte pas Authorization header)
 - `PartnR.Api/Middleware/ExceptionMiddleware.cs` — Gestion globale des erreurs
-- `PartnR.Application/Services/` — Logique métier (AuthService, EventService, ProfileService, RatingService, AdminService, AnalyticsService, ActivityService, EventChatService)
+- `PartnR.Application/Services/` — Logique métier (AuthService, EventService, ProfileService, RatingService, AdminService, AnalyticsService, ActivityService, EventChatService, EventCommentService, EventPhotoService, NotificationService, ReportService, BlockService, UploadService)
 - `PartnR.Application/DTOs/` — Validation avec DataAnnotations. Jamais d'entités exposées directement.
+- `PartnR.Application/Common/FrenchDate.cs` — toute date écrite **par le serveur** à un humain (email, texte de notification) passe par ici : Europe/Paris, français (« demain à 20h00 »). Les clients formatent leurs propres dates.
+- `PartnR.Api/Services/` — BackgroundServices : `EventReminderService` (rappel J-1, un par participant via `EventParticipant.ReminderSentAt`, sauvegarde avant email), `ExpoPushService` (pousse toute `Notification` non envoyée, retries avec backoff), `EventLifecycleService` (passe les événements en Terminé).
 - `PartnR.Infrastructure/Services/AnalyticsTracker.cs` — **Singleton** fire-and-forget via `IServiceScopeFactory`. Injecté via `IAnalyticsTracker`.
+- `PartnR.Infrastructure/Services/ImageSharpProcessor.cs` — `IImageProcessor` : tout upload est décodé, orienté, débarrassé de ses métadonnées, borné à 1600 px et ré-encodé. Ne jamais stocker les octets reçus tels quels.
 - `PartnR.Domain/Entities/` — AppUser hérite de IdentityUser\<Guid\>
 
 **DI lifetimes à respecter :**
-- `IAnalyticsTracker` (AnalyticsTracker) → Singleton
+- `IAnalyticsTracker` (AnalyticsTracker), `IImageProcessor` (ImageSharpProcessor) → Singleton
 - Repositories, `IUnitOfWork`, tous les Services → Scoped
 
-**Auth :** JWT Bearer. `User.GetUserId()` via `ClaimsPrincipalExtensions`.
+**Auth :** JWT Bearer. `User.GetUserId()` via `ClaimsPrincipalExtensions`. Le JWT porte un claim `sst` (SecurityStamp) revalidé toutes les 60 s : bannir ou changer le mot de passe fait tomber les sessions.
 
-**Rate limiting :** 10 req/min sur `/api/auth/*`, 60 req/min global.
+**Rate limiting :** partitionné — `auth` 10 req/min par IP, `api` 60 req/min par utilisateur (ou IP), 300 req/min global. `UseRateLimiter()` vient **après** `UseAuthentication()` pour partitionner par utilisateur.
+
+**Invariants métier à respecter :**
+- Toutes les dates en base sont UTC ; les clients envoient des instants ISO (`lib/datetime.ts`), `EventService.ToUtc` normalise.
+- `GetByIdAsync(id, viewerId)` : l'adresse exacte, les coordonnées précises et la liste des participants dépendent du viewer (organisateur / inscrit / connecté / anonyme, `LocationHidden`).
+- `ListAsync(..., userId: viewer)` : le contrôleur passe l'utilisateur dès qu'il est authentifié ; les événements des personnes bloquées (dans les deux sens) sont masqués. Le blocage refuse aussi les inscriptions et masque les messages de la paire — jamais annoncé à l'autre partie.
+- `JoinAsync` / `LeaveAsync` sont sérialisés par `IEventRepository.LockAsync` (`pg_advisory_xact_lock`, no-op hors PostgreSQL).
+- Changer la date d'un événement notifie les participants (`event_rescheduled`) et remet `ReminderSentAt` à null.
 
 ## Frontend (`frontend/src/`)
 
@@ -78,7 +88,10 @@ app/
 ├── register.tsx       # Register screen
 ├── create.tsx         # Modal : créer une activité (3 étapes)
 ├── activity/[id].tsx  # Détail événement + join/leave
-├── chat/[id].tsx      # Chat SignalR (id = eventId)
+├── chat/[id].tsx      # Chat SignalR (id = eventId) — appui long sur une bulle = bloquer
+├── notifications.tsx  # Liste des notifications
+├── map.tsx            # Carte des événements
+├── forgot-password.tsx / reset-password.tsx
 └── (tabs)/
     ├── _layout.tsx    # Tab bar custom avec FAB central coral
     ├── index.tsx      # Home — liste d'événements
@@ -93,13 +106,15 @@ app/
 
 **SignalR :** `mobile/hooks/useEventChat.ts` — token passé via `?access_token=` (même pattern que web).
 
-**Design tokens :** `mobile/constants/tokens.ts` — encore sur l'ancienne charte (coral `#E8603A`, fond `#FAFAF7`), sans mécanisme de thème. À aligner sur « Le Programme » lors du chantier de thème mobile (après un premier build EAS).
+**Design tokens :** `mobile/constants/tokens.ts` — encore sur l'ancienne charte (coral `#E8603A`, fond `#FAFAF7`), sans mécanisme de thème. À aligner sur « Le Programme » lors du chantier de thème mobile.
+
+**Builds :** `mobile/eas.json` (profils development / preview / production). Le push exige un `extra.eas.projectId` dans `app.json`, écrit par `eas init` — sans lui `registerForPush` échoue silencieusement.
 
 **Fonts :** DMSans via `@expo-google-fonts/dm-sans` (le paquet ne fournit pas de 600 : `DMSans_600SemiBold` est un alias du 700 dans `app/_layout.tsx`).
 
 ## Base de données
 
-**Il n'existe aucune migration EF Core dans le dépôt.** Le schéma est piloté par les fichiers SQL de `supabase/migrations/` (00001 → 00015), appliqués **automatiquement au démarrage de l'API** par `PartnR.Infrastructure/Data/SqlMigrationRunner.cs` :
+**Il n'existe aucune migration EF Core dans le dépôt.** Le schéma est piloté par les fichiers SQL de `supabase/migrations/` (00001 → 00018), appliqués **automatiquement au démarrage de l'API** par `PartnR.Infrastructure/Data/SqlMigrationRunner.cs` :
 
 - chaque fichier est exécuté une seule fois, dans une transaction, et son nom est consigné dans `__PartnrMigrations` ;
 - les fichiers doivent être **idempotents** (`IF NOT EXISTS`, `ON CONFLICT DO NOTHING`) — le runner ne les protège pas d'un rejeu manuel ;
@@ -118,8 +133,11 @@ cd backend/PartnR.Api.Tests && dotnet test
 cd frontend && npm test
 ```
 
-Tests backend : xUnit + EF Core InMemory. Couvrent EventService, AuthService, ProfileService, RatingService.
+Tests backend : xUnit + EF Core InMemory. Couvrent EventService, AuthService, ProfileService, RatingService, EventChatService, EventCommentService, EventPhotoService, ReportService, BlockService, UploadService, ImageProcessor, EventReminderService (`RunOnceAsync` avec horloge injectée).
 Tests frontend : Vitest + Testing Library. Couvrent AuthContext, EventList, Register, RatingForm.
+Mobile : `npx tsc --noEmit` (pas de tests).
+
+Le backend ne se compile que dans la CI GitHub (pas de SDK .NET dans l'environnement Claude) : relire attentivement avant de pousser, puis attendre le job « Backend (build + test) ».
 
 ## Variables d'environnement
 

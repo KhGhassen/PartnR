@@ -4,14 +4,17 @@ Plateforme sociale pour trouver des partenaires d'activités sportives et de loi
 
 ## Fonctionnalités
 
-- **Authentification** — Inscription, connexion, JWT avec rate limiting
-- **Profils** — Bio, ville, activités favorites, système de notation
-- **Événements** — Création, modification, recherche par ville/activité, gestion des participants (2-50)
-- **Chat temps réel** — Messagerie de groupe par événement via SignalR (web + mobile)
-- **Notation** — Évaluation post-activité entre participants (1-5 étoiles) avec UI dédiée
+- **Authentification** — Inscription avec confirmation d'email, connexion JWT, mot de passe oublié, verrouillage après 5 échecs, bannissement effectif immédiatement
+- **Profils** — Bio, ville (autocomplétion geo.api.gouv.fr), activités favorites, catégorie de profil, notation, suppression de compte
+- **Événements** — Création (photo, géolocalisation, récurrence hebdomadaire), recherche par ville / catégorie / activité / texte / rayon, liste d'attente, verrou de place, cycle de vie automatique (Terminé)
+- **Vie privée** — L'adresse exacte, les coordonnées précises et la liste des participants ne sont visibles que des inscrits ; les photos sont redimensionnées et débarrassées de leurs métadonnées EXIF/GPS
+- **Chat temps réel** — Messagerie de groupe par événement via SignalR (web + mobile), avec notification des absents
+- **Notifications** — In-app, push Expo (avec retries) et email : inscription, liste d'attente, annulation, report, rappel J-1
+- **Modération** — Signalement d'un profil ou d'un événement, blocage d'utilisateurs, console admin (utilisateurs, événements, signalements)
+- **Notation** — Évaluation post-activité entre participants (1-5 étoiles)
 - **Analytics** — Tracking d'actions utilisateur (fire-and-forget), dashboard admin avec graphiques
-- **Application mobile** — iOS/Android natif via Expo React Native, parité fonctionnelle avec le web
-- **10 activités** — Running, Randonnée, Vélo, Jeux de société, Tennis, Yoga, Natation, Escalade, Football, Badminton
+- **Application mobile** — iOS/Android via Expo React Native, parité fonctionnelle avec le web
+- **22 activités en 6 catégories** — Sport, Boire & manger, Culture, Balades, Jeux, Engagement
 
 ## Stack technique
 
@@ -118,48 +121,79 @@ partnr/
 
 ## API Endpoints
 
-### Authentification (rate limited: 10 req/min)
+Les erreurs sont renvoyées en JSON `{ "error": "…" }` : 400 (validation, règle métier), 403 (droit insuffisant), 404 (introuvable), 429 (rate limit).
+
+### Authentification (10 req/min par IP)
 | Méthode | Route | Auth | Description |
 |---------|-------|------|-------------|
-| POST | `/api/auth/register` | Non | Créer un compte |
-| POST | `/api/auth/login` | Non | Se connecter (retourne JWT) |
+| POST | `/api/auth/register` | Non | Créer un compte (email de confirmation) |
+| POST | `/api/auth/login` | Non | Se connecter (retourne JWT) — 5 échecs = 15 min de verrouillage |
 | GET | `/api/auth/me` | Oui | Profil de l'utilisateur connecté |
+| POST | `/api/auth/confirm-email` | Non | Confirmer l'adresse email |
+| POST | `/api/auth/resend-confirmation` | Non | Renvoyer l'email de confirmation |
+| POST | `/api/auth/forgot-password` | Non | Demander un lien de réinitialisation |
+| POST | `/api/auth/reset-password` | Non | Réinitialiser le mot de passe |
+| POST | `/api/auth/change-password` | Oui | Changer le mot de passe |
 
 ### Profils
 | Méthode | Route | Auth | Description |
 |---------|-------|------|-------------|
 | GET | `/api/profiles/{id}` | Non | Voir un profil |
+| GET | `/api/profiles/{id}/ratings` | Non | Avis reçus par un profil |
 | GET | `/api/profiles?city=&activity=` | Non | Rechercher des profils |
 | PUT | `/api/profiles/me` | Oui | Modifier son profil |
+| DELETE | `/api/profiles/me` | Oui | Supprimer son compte (annule ses événements à venir) |
 
 ### Événements
 | Méthode | Route | Auth | Description |
 |---------|-------|------|-------------|
-| GET | `/api/events?city=&activityId=&status=&mine=` | Non/Opt | Lister les événements (`mine=true` → mes événements, auth requise) |
-| GET | `/api/events/{id}` | Non | Détail d'un événement |
-| POST | `/api/events` | Oui | Créer un événement |
-| PUT | `/api/events/{id}` | Oui | Modifier (créateur uniquement) |
-| DELETE | `/api/events/{id}` | Oui | Supprimer (créateur uniquement) |
-| POST | `/api/events/{id}/join` | Oui | Rejoindre un événement |
-| POST | `/api/events/{id}/leave` | Oui | Quitter un événement |
+| GET | `/api/events?city=&category=&activityId=&status=&search=&lat=&lng=&radiusKm=&mine=&page=&pageSize=` | Opt | Lister (paginé). Une série récurrente = une carte. Connecté : les événements des personnes bloquées sont masqués |
+| GET | `/api/events/{id}` | Opt | Détail. Adresse exacte, coordonnées précises et participants réservés aux inscrits (`locationHidden`) |
+| POST | `/api/events` | Oui | Créer (`recurrenceWeeks` pour une série hebdomadaire) |
+| PUT | `/api/events/{id}?applyToSeries=` | Oui | Modifier (créateur). Un changement de date notifie les participants |
+| DELETE | `/api/events/{id}?applyToSeries=` | Oui | Supprimer (créateur) |
+| POST | `/api/events/{id}/join` | Oui | Rejoindre (liste d'attente si complet) |
+| POST | `/api/events/{id}/leave` | Oui | Quitter (promeut le premier en attente) |
+| GET | `/api/events/{id}/comments` | Non | Questions / réponses publiques |
+| POST | `/api/events/{id}/comments` | Oui | Poser une question |
+| DELETE | `/api/events/{id}/comments/{commentId}` | Oui | Supprimer (auteur ou créateur) |
+| POST | `/api/events/{id}/photos` | Oui | Ajouter une photo (participants) |
+| DELETE | `/api/events/{id}/photos/{photoId}` | Oui | Retirer une photo |
+| POST | `/api/events/{id}/ratings` | Oui | Noter un participant |
+| GET | `/api/events/{id}/ratings/user/{userId}` | Oui | Avis reçus sur cet événement |
 
-### Analytics
+### Notifications, blocages, signalements
 | Méthode | Route | Auth | Description |
 |---------|-------|------|-------------|
-| GET | `/api/analytics/summary` | Oui (admin) | Stats globales (utilisateurs, événements, messages) |
-| GET | `/api/analytics/events` | Oui (admin) | Événements par jour (30 derniers jours) |
-| GET | `/api/analytics/actions` | Oui (admin) | Top actions utilisateur |
+| GET | `/api/notifications` | Oui | Mes notifications |
+| POST | `/api/notifications/read-all` | Oui | Tout marquer lu |
+| POST | `/api/notifications/push-token` | Oui | Enregistrer un token Expo push |
+| GET | `/api/blocks` | Oui | Personnes que j'ai bloquées |
+| POST | `/api/blocks/{userId}` | Oui | Bloquer (masque événements et messages, refuse les inscriptions, dans les deux sens) |
+| DELETE | `/api/blocks/{userId}` | Oui | Débloquer |
+| POST | `/api/reports` | Oui | Signaler un profil ou un événement |
+| GET | `/api/reports` | Admin | Liste des signalements |
+| POST | `/api/reports/{id}/resolve` | Admin | Clore un signalement |
 
-### Notations
+### Fichiers, référentiels, santé
 | Méthode | Route | Auth | Description |
 |---------|-------|------|-------------|
-| POST | `/api/events/{eventId}/ratings` | Oui | Noter un participant |
-| GET | `/api/events/{eventId}/ratings/user/{userId}` | Oui | Voir les avis reçus |
+| POST | `/api/uploads` | Oui | Envoyer une image (≤ 5 Mo ; redimensionnée à 1600 px max, EXIF supprimé) |
+| GET | `/api/uploads/{id}` | Non | Servir une image (cache 1 an) |
+| GET | `/api/activities` | Non | Catalogue des activités (avec `category`) |
+| GET | `/api/cities` | Non | Villes suggérées |
+| GET | `/api/health` | Non | Liveness (sans accès DB) — utilisé par les clients pour réveiller l'API |
 
-### Activités
+### Admin et analytics
 | Méthode | Route | Auth | Description |
 |---------|-------|------|-------------|
-| GET | `/api/activities` | Non | Liste des activités disponibles |
+| GET | `/api/admin/users` | Admin | Utilisateurs |
+| POST | `/api/admin/users/{id}/ban` · `/unban` | Admin | Bannir / réhabiliter (les sessions du banni tombent dans la minute) |
+| GET | `/api/admin/events` | Admin | Événements |
+| POST | `/api/admin/events/{id}/cancel` | Admin | Annuler un événement |
+| DELETE | `/api/admin/events/{id}` | Admin | Supprimer un événement |
+| POST | `/api/analytics/track` | Oui | Envoyer un lot d'actions utilisateur |
+| GET | `/api/analytics/dashboard` | Admin | Données du dashboard |
 
 ### SignalR Hub — `/hubs/event-chat`
 | Méthode | Direction | Description |
@@ -172,22 +206,36 @@ partnr/
 
 ## Base de données
 
-Le schéma PostgreSQL inclut :
-- **Row Level Security (RLS)** — Contrôle d'accès par utilisateur
-- **Triggers** — Création auto de profil, ajout du créateur comme participant, calcul de la moyenne des notes, vérification du nombre max de participants
-- **Index** — Sur les colonnes fréquemment requêtées (ville, date, activité, statut)
+PostgreSQL hébergé sur Supabase, schéma piloté par EF Core (tables `AspNetUsers`, `Events`, `EventParticipants`, `Messages`, `Ratings`, `EventPhotos`, `EventComments`, `Notifications`, `PushTokens`, `Reports`, `UserBlocks`, `StoredImages`, `UserActions`, `Activities`).
+
+Toutes les règles d'accès sont dans les services de l'API (pas de RLS) : le schéma Supabase historique de `00001_initial_schema.sql` est conservé pour référence.
 
 ### Modèle de données
 
 ```
-profiles ──1:N── events (créateur)
-profiles ──M:N── events (via event_participants)
-profiles ──1:N── messages
-profiles ──1:N── ratings (rater / rated)
-events   ──N:1── activities
-events   ──1:N── messages
-events   ──1:N── ratings
+AspNetUsers ──1:N── Events (CreatorId)
+AspNetUsers ──M:N── Events (via EventParticipants : Confirmed / Waitlisted / Cancelled, ReminderSentAt)
+AspNetUsers ──1:N── Messages, EventComments, Notifications, PushTokens, Reports, StoredImages
+AspNetUsers ──M:N── AspNetUsers (via UserBlocks)
+AspNetUsers ──1:N── Ratings (RaterId / RatedUserId)
+Events      ──N:1── Activities (catalogue, avec Category)
+Events      ──1:N── Messages, Ratings, EventPhotos, EventComments
+Events      ──N:1── Events (RecurrenceGroupId : occurrences d'une série)
 ```
+
+### Migrations
+
+`supabase/migrations/` contient un fichier SQL idempotent par changement de schéma, appliqué par l'API au démarrage (voir « Initialiser la base Supabase »). Chaque ajout de colonne ou de table côté EF Core doit être accompagné de son fichier ; les données de référence (`HasData`) y sont reproduites avec les mêmes identifiants.
+
+| Fichier | Contenu |
+|---------|---------|
+| `00001` – `00003` | Schéma initial, tables Identity, analytics |
+| `00004` – `00009` | Modération admin, type de profil, photos, géolocalisation, images stockées, notifications |
+| `00010` – `00014` | Rappel J-1, questions/réponses, récurrence, signalements, tokens push |
+| `00015` | Catalogue de 22 activités en 6 catégories |
+| `00016` | Retries push avec backoff |
+| `00017` | Rappel J-1 par participant (`EventParticipants.ReminderSentAt`) |
+| `00018` | Blocages (`UserBlocks`) |
 
 ## Installation
 
@@ -243,6 +291,23 @@ Pour pointer vers un backend local, modifier `mobile/config.ts` :
 export const API_URL = 'http://YOUR_LOCAL_IP:5001';
 ```
 
+#### Builds natifs et notifications push (EAS)
+
+Expo Go suffit pour développer, mais les notifications push ont besoin d'un projet EAS (un `projectId` dans `app.json`) et un build natif est nécessaire pour distribuer l'app. Les profils sont dans `mobile/eas.json` :
+
+```bash
+cd mobile
+npm install -g eas-cli
+eas login
+eas init                     # crée le projet EAS et écrit extra.eas.projectId dans app.json (à committer)
+
+eas build --profile preview --platform android   # APK installable, partageable par lien
+eas build --profile development                   # dev client (hot reload + modules natifs)
+eas build --profile production                    # store-ready, version auto-incrémentée
+```
+
+Sans `projectId`, `registerForPush` échoue silencieusement et l'app fonctionne sans push.
+
 ### Tests
 
 ```bash
@@ -261,12 +326,14 @@ Rien à faire à la main : au premier démarrage, l'API applique dans l'ordre to
 
 ## Sécurité
 
-- **Rate limiting** — Auth endpoints: 10 req/min, API globale: 60 req/min
-- **CORS** — Origines configurables, méthodes (`GET`, `POST`, `PUT`, `DELETE`, `OPTIONS`) et headers (`Authorization`, `Content-Type`) restreints explicitement
-- **Transactions DB** — Opérations critiques (notation, inscription événement) encapsulées dans des transactions pour garantir l'atomicité
-- **Validation** — DataAnnotations côté backend + validation inline côté frontend
-- **JWT** — Tokens signés avec expiration configurable
-- **Endpoints protégés** — Tous les endpoints sensibles requièrent `[Authorize]`
+- **Rate limiting partitionné** — par IP (10 req/min sur `/api/auth/*`) puis par utilisateur (60 req/min sur les endpoints marqués `api`, 300 req/min global). `X-Forwarded-For` est honoré sur un seul saut derrière le proxy Render
+- **Comptes** — Verrouillage 15 min après 5 échecs de connexion ; bannissement et changement de mot de passe invalident les JWT existants dans la minute (claim `sst` comparé au `SecurityStamp`)
+- **Démarrage** — L'API refuse de démarrer hors développement si `Jwt__Key` est absente, trop courte ou encore la valeur d'exemple ; une migration SQL invalide est fatale
+- **Uploads** — Type déduit des octets (jamais du header client), image décodée, redimensionnée et ré-encodée : EXIF/GPS supprimés, `nosniff` à la lecture
+- **Vie privée** — Détail d'événement dépendant du viewer (adresse, coordonnées arrondies à ~1 km, participants) ; blocage silencieux entre utilisateurs
+- **Concurrence** — Inscription et désistement sérialisés par verrou consultatif PostgreSQL (`pg_advisory_xact_lock`)
+- **CORS** — Origines configurables (+ `*.vercel.app`), méthodes et headers restreints
+- **Validation** — DataAnnotations côté backend + validation inline côté clients ; les redirections post-login sont limitées aux chemins internes
 
 ## Variables d'environnement
 
