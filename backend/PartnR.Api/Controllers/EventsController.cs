@@ -50,7 +50,8 @@ public class EventsController : ControllerBase
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<EventDetailDto>> Get(Guid id)
     {
-        var ev = await _eventService.GetByIdAsync(id);
+        Guid? viewer = User.Identity?.IsAuthenticated == true ? User.GetUserId() : null;
+        var ev = await _eventService.GetByIdAsync(id, viewer);
         return Ok(ev);
     }
 

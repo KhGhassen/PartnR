@@ -174,7 +174,7 @@ public class EventService : IEventService
             ? DateTime.SpecifyKind(value, DateTimeKind.Utc)
             : value.ToUniversalTime();
 
-    public async Task<EventDetailDto> GetByIdAsync(Guid id)
+    public async Task<EventDetailDto> GetByIdAsync(Guid id, Guid? viewerId = null)
     {
         var ev = await _events.Query()
             .Include(e => e.Activity)
@@ -192,7 +192,15 @@ public class EventService : IEventService
                 .ToListAsync()
             : [];
 
-        return MapToDetailDto(ev, occurrences);
+        // GET /api/events/{id} is anonymous and used to return the exact address,
+        // raw coordinates and the full roster. For an app that introduces
+        // strangers, that is the dataset a stalker wants — and a GDPR problem.
+        // Only the organiser and enrolled participants get the precise view.
+        var isInsider = viewerId.HasValue &&
+            (ev.CreatorId == viewerId.Value ||
+             ev.Participants.Any(p => p.UserId == viewerId.Value && p.Status != ParticipantStatus.Cancelled));
+
+        return MapToDetailDto(ev, occurrences, isInsider, viewerId.HasValue);
     }
 
     public async Task<EventDetailDto> CreateAsync(Guid creatorId, CreateEventDto dto)
@@ -239,7 +247,7 @@ public class EventService : IEventService
 
         await _unitOfWork.SaveChangesAsync();
 
-        return await GetByIdAsync(first.Id);
+        return await GetByIdAsync(first.Id, creatorId);
     }
 
     public async Task<EventDetailDto> UpdateAsync(Guid eventId, Guid userId, UpdateEventDto dto, bool applyToSeries = false)
@@ -294,7 +302,7 @@ public class EventService : IEventService
         if (dto.Date.HasValue) ev.Date = ToUtc(dto.Date.Value);
 
         await _unitOfWork.SaveChangesAsync();
-        return await GetByIdAsync(ev.Id);
+        return await GetByIdAsync(ev.Id, userId);
     }
 
     public async Task JoinAsync(Guid eventId, Guid userId)
@@ -469,13 +477,14 @@ public class EventService : IEventService
         CreatedAt = e.CreatedAt
     };
 
-    private static EventDetailDto MapToDetailDto(Event e, List<OccurrenceDto>? occurrences = null) => new()
+    private static EventDetailDto MapToDetailDto(Event e, List<OccurrenceDto>? occurrences = null, bool isInsider = true, bool isAuthenticated = true) => new()
     {
         Id = e.Id,
         Title = e.Title,
         Description = e.Description,
         City = e.City,
-        Location = e.Location,
+        Location = isInsider ? e.Location : null,
+        LocationHidden = !isInsider && !string.IsNullOrEmpty(e.Location),
         Date = e.Date,
         MaxParticipants = e.MaxParticipants,
         Status = e.Status.ToString(),
@@ -485,12 +494,16 @@ public class EventService : IEventService
         CreatorName = e.Creator.FirstName,
         ParticipantCount = e.Participants.Count(p => p.Status == ParticipantStatus.Confirmed),
         PhotoUrl = e.PhotoUrl,
-        Latitude = e.Latitude,
-        Longitude = e.Longitude,
+        // Two decimals ≈ 1 km: enough to place the pin in the neighbourhood,
+        // not enough to find the doorstep.
+        Latitude = isInsider ? e.Latitude : e.Latitude is { } lat ? Math.Round(lat, 2) : null,
+        Longitude = isInsider ? e.Longitude : e.Longitude is { } lng ? Math.Round(lng, 2) : null,
         CreatedAt = e.CreatedAt,
         IsRecurring = e.RecurrenceGroupId != null,
         Occurrences = occurrences ?? [],
-        Participants = e.Participants.Select(p => new ParticipantDto
+        // Anonymous visitors get the headcount only; signed-in members see who
+        // is going — that is the trust signal before joining.
+        Participants = (isAuthenticated ? e.Participants : []).Select(p => new ParticipantDto
         {
             UserId = p.UserId,
             FirstName = p.User.FirstName,

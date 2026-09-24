@@ -7,7 +7,8 @@ namespace PartnR.Application.Interfaces.Services;
 public interface IEventService
 {
     Task<PaginatedResult<EventDto>> ListAsync(string? city, Guid? activityId, EventStatus? status, int page = 1, int pageSize = 20, bool mine = false, Guid? userId = null, double? lat = null, double? lng = null, double? radiusKm = null, string? search = null, string? category = null);
-    Task<EventDetailDto> GetByIdAsync(Guid id);
+    /// <param name="viewerId">Who is asking; the exact location and the roster depend on it.</param>
+    Task<EventDetailDto> GetByIdAsync(Guid id, Guid? viewerId = null);
     Task<EventDetailDto> CreateAsync(Guid creatorId, CreateEventDto dto);
     Task<EventDetailDto> UpdateAsync(Guid eventId, Guid userId, UpdateEventDto dto, bool applyToSeries = false);
     Task JoinAsync(Guid eventId, Guid userId);

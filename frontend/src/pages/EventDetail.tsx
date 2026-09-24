@@ -205,6 +205,13 @@ export default function EventDetail() {
                 <p className="font-semibold text-ink">{event.location}</p>
               </div>
             )}
+            {!event.location && event.locationHidden && (
+              <div className="rounded-2xl bg-cream p-4">
+                <p className="mb-0.5 text-xs text-ink-sub">Lieu / RDV</p>
+                {/* Withheld on purpose — and a reason to join. */}
+                <p className="text-sm text-text-2">🔒 L'adresse exacte est communiquée aux participants.</p>
+              </div>
+            )}
             <div className="rounded-2xl bg-cream p-4 col-span-2">
               <p className="mb-0.5 text-xs text-ink-sub">Date</p>
               <p className="font-semibold text-ink">

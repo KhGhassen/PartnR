@@ -91,7 +91,8 @@ public class EventServiceTests : IDisposable
         };
 
         var created = await _service.CreateAsync(_userId, dto);
-        var result = await _service.GetByIdAsync(created.Id);
+        // The roster is only served to signed-in viewers.
+        var result = await _service.GetByIdAsync(created.Id, Guid.NewGuid());
 
         Assert.Equal("Yoga Session", result.Title);
         Assert.Single(result.Participants);
@@ -619,6 +620,33 @@ public class EventServiceTests : IDisposable
         var sport = await _service.ListAsync(null, null, null, category: "Sport");
         Assert.Single(sport.Items);
         Assert.Equal("Footing", sport.Items[0].Title);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_WithholdsExactLocation_FromOutsiders()
+    {
+        var created = await _service.CreateAsync(_userId, new CreateEventDto
+        {
+            Title = "Apéro", City = "Paris", Location = "12 rue des Martyrs", Date = DateTime.UtcNow.AddDays(2),
+            MaxParticipants = 6, ActivityId = _activityId, Latitude = 48.880123, Longitude = 2.337456
+        });
+
+        var anonymous = await _service.GetByIdAsync(created.Id);
+        Assert.Null(anonymous.Location);
+        Assert.True(anonymous.LocationHidden);
+        Assert.Equal(48.88, anonymous.Latitude);
+        Assert.Empty(anonymous.Participants);
+        Assert.Equal(1, anonymous.ParticipantCount);
+
+        var stranger = Guid.NewGuid();
+        var signedIn = await _service.GetByIdAsync(created.Id, stranger);
+        Assert.Null(signedIn.Location);
+        Assert.Single(signedIn.Participants);
+
+        var organiser = await _service.GetByIdAsync(created.Id, _userId);
+        Assert.Equal("12 rue des Martyrs", organiser.Location);
+        Assert.False(organiser.LocationHidden);
+        Assert.Equal(48.880123, organiser.Latitude);
     }
 
     [Fact]

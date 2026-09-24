@@ -30,6 +30,8 @@ public class EventDto
 
 public class EventDetailDto : EventDto
 {
+    /// <summary>True when the exact meeting point exists but is withheld from this viewer.</summary>
+    public bool LocationHidden { get; set; }
     public List<ParticipantDto> Participants { get; set; } = [];
     public List<EventPhotoDto> Photos { get; set; } = [];
     public List<OccurrenceDto> Occurrences { get; set; } = [];

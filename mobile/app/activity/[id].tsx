@@ -197,6 +197,9 @@ export default function ActivityDetailScreen() {
 
         <View style={styles.metaRow}><Text style={styles.meta}>📅 {new Date(event.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}</Text></View>
         <View style={styles.metaRow}><Text style={styles.meta}>📍 {event.city}{event.location ? ` — ${event.location}` : ''}</Text></View>
+        {!event.location && event.locationHidden && (
+          <View style={styles.metaRow}><Text style={styles.meta}>🔒 L'adresse exacte est communiquée aux participants.</Text></View>
+        )}
 
         {/* Recurring series dates */}
         {(event.occurrences?.length ?? 0) > 1 && (
