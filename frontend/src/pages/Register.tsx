@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { register, resendConfirmation } from '../api/auth';
+import { toApiError } from '../api/client';
+import { safeRedirect } from '../lib/redirect';
 import { useAuth } from '../context/AuthContext';
 import { trackAction } from '../api/analytics';
 import CityPicker from '../components/CityPicker';
@@ -23,6 +25,8 @@ export default function Register() {
   const [resent, setResent] = useState(false);
   const { setAuth } = useAuth();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const redirect = safeRedirect(params.get('redirect'));
 
   const passwordValid = PASSWORD_RULES.every((r) => r.test(form.password));
 
@@ -30,6 +34,13 @@ export default function Register() {
     e.preventDefault();
     if (!passwordValid) {
       setError('Le mot de passe ne respecte pas les critères');
+      return;
+    }
+    // Typing "Lyo" without picking a suggestion leaves city empty; the server
+    // then rejected it and the screen showed a generic error that never named
+    // the field — the number one friction on the very first step.
+    if (!form.city.trim()) {
+      setError('Choisissez votre ville dans la liste de suggestions.');
       return;
     }
     setError('');
@@ -40,7 +51,7 @@ export default function Register() {
       trackAction({ action: 'user_registered', entityType: 'user', entityId: res.user.id });
       setRegistered(true);
     } catch (err) {
-      setError((err as {response?: {data?: {error?: string}}}).response?.data?.error || "Erreur lors de l'inscription");
+      setError(toApiError(err).message);
     } finally {
       setLoading(false);
     }
@@ -78,7 +89,7 @@ export default function Register() {
               Renvoyer l'email
             </button>
           )}
-          <Button size="lg" onClick={() => navigate('/')} className="w-full">
+          <Button size="lg" onClick={() => navigate(redirect, { replace: true })} className="w-full">
             Accéder à l'application
           </Button>
         </div>

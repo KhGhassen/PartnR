@@ -4,6 +4,8 @@ import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import '../lib/leafletIcons';
 import { getEvent, joinEvent, leaveEvent, deleteEvent } from '../api/events';
+import { toApiError } from '../api/client';
+import { loginUrl } from '../lib/redirect';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { trackAction } from '../api/analytics';
@@ -95,7 +97,7 @@ export default function EventDetail() {
       }
       await fetchEvent();
     } catch (err) {
-      setError((err as {response?: {data?: {error?: string}}}).response?.data?.error || 'Erreur');
+      setError(toApiError(err).message);
     } finally {
       setActionLoading(false);
     }
@@ -109,7 +111,7 @@ export default function EventDetail() {
       toast.info("Vous avez quitté l'événement.");
       await fetchEvent();
     } catch (err) {
-      setError((err as {response?: {data?: {error?: string}}}).response?.data?.error || 'Erreur');
+      setError(toApiError(err).message);
     } finally {
       setActionLoading(false);
     }
@@ -125,7 +127,7 @@ export default function EventDetail() {
       toast.info(applyToSeries ? 'Série supprimée.' : 'Événement supprimé.');
       navigate('/');
     } catch (err) {
-      setError((err as {response?: {data?: {error?: string}}}).response?.data?.error || 'Erreur');
+      setError(toApiError(err).message);
     }
   };
 
@@ -287,6 +289,23 @@ export default function EventDetail() {
           </div>
 
           {/* Actions */}
+          {!isAuthenticated && event.status === 'Published' && (
+            <div className="mb-8 rounded-2xl border border-border bg-surface-sunken p-5">
+              <p className="mb-3 text-sm text-text-2">
+                {isFull
+                  ? "Cet événement est complet — inscrivez-vous pour rejoindre la liste d'attente."
+                  : `${spotsLeft} place${spotsLeft > 1 ? 's' : ''} restante${spotsLeft > 1 ? 's' : ''} — rejoignez PartnR pour participer.`}
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <ButtonLink to={loginUrl(`/events/${event.id}`)} size="lg">
+                  Se connecter pour rejoindre
+                </ButtonLink>
+                <ButtonLink to={`/register?redirect=${encodeURIComponent(`/events/${event.id}`)}`} variant="ghost" size="lg">
+                  Créer un compte
+                </ButtonLink>
+              </div>
+            </div>
+          )}
           {isAuthenticated && (
             <div className="mb-8 flex flex-wrap gap-3">
               {!isParticipant && !isWaitlisted && !isCreator && !isFull && event.status === 'Published' && (

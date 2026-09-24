@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from '
 import * as SecureStore from 'expo-secure-store';
 import type { UserInfo } from '../api/auth';
 import { registerForPush, listenForNotificationTaps } from '../lib/push';
+import { ensureAwake } from '../api/client';
 
 type AppContextType = {
   token: string | null;
@@ -28,6 +29,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [pendingInterests, setPendingInterests] = useState<string[]>([]);
 
   useEffect(() => {
+    ensureAwake();
     (async () => {
       const stored = await SecureStore.getItemAsync('token');
       const storedUser = await SecureStore.getItemAsync('user');

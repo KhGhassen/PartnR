@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { createEvent } from '../api/events';
 import { listActivities } from '../api/activities';
 import { listCities } from '../api/cities';
+import { toApiError } from '../api/client';
 import { fromLocalInputValue } from '../lib/datetime';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -90,7 +91,7 @@ export default function CreateEvent() {
       toast.success('Événement créé 🎉');
       navigate(`/events/${ev.id}`);
     } catch (err) {
-      setError((err as {response?: {data?: {error?: string}}}).response?.data?.error || 'Erreur lors de la création');
+      setError(toApiError(err).message);
     } finally {
       setLoading(false);
     }

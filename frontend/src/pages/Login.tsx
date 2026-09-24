@@ -1,6 +1,8 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { login } from '../api/auth';
+import { toApiError } from '../api/client';
+import { safeRedirect } from '../lib/redirect';
 import { useAuth } from '../context/AuthContext';
 import AuthLayout from '../components/AuthLayout';
 import Button from '../components/ui/Button';
@@ -14,6 +16,8 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const { setAuth } = useAuth();
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const redirect = safeRedirect(params.get('redirect'));
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -22,9 +26,9 @@ export default function Login() {
     try {
       const res = await login({ email, password });
       setAuth(res.token, res.user);
-      navigate('/');
+      navigate(redirect, { replace: true });
     } catch (err) {
-      setError((err as {response?: {data?: {error?: string}}}).response?.data?.error || 'Erreur de connexion');
+      setError(toApiError(err).message);
     } finally {
       setLoading(false);
     }
@@ -72,7 +76,10 @@ export default function Login() {
 
       <p className="mt-5 text-center text-sm text-ink-sub">
         Pas encore de compte ?{' '}
-        <Link to="/register" className="font-semibold text-coral-600 hover:underline">
+        <Link
+          to={redirect !== '/' ? `/register?redirect=${encodeURIComponent(redirect)}` : '/register'}
+          className="font-semibold text-coral-600 hover:underline"
+        >
           S'inscrire
         </Link>
       </p>

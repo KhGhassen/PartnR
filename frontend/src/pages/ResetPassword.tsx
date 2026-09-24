@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { resetPassword } from '../api/auth';
+import { toApiError } from '../api/client';
 import Button from '../components/ui/Button';
 import Field from '../components/ui/Field';
 import { inputClass } from '../components/ui/classes';
@@ -56,7 +57,7 @@ export default function ResetPassword() {
       await resetPassword({ email, token, newPassword });
       setSuccess(true);
     } catch (err) {
-      setError((err as {response?: {data?: {error?: string}}}).response?.data?.error || 'Lien invalide ou expiré. Demandez un nouveau lien.');
+      setError(toApiError(err).status === 400 || toApiError(err).status === 404 ? 'Lien invalide ou expiré. Demandez un nouveau lien.' : toApiError(err).message);
     } finally {
       setLoading(false);
     }
