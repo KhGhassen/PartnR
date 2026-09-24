@@ -15,12 +15,14 @@ public class ProfilesController : ControllerBase
     private readonly IProfileService _profileService;
     private readonly IAnalyticsTracker _tracker;
     private readonly IRatingService _ratingService;
+    private readonly IAccountService _accounts;
 
-    public ProfilesController(IProfileService profileService, IAnalyticsTracker tracker, IRatingService ratingService)
+    public ProfilesController(IProfileService profileService, IAnalyticsTracker tracker, IRatingService ratingService, IAccountService accounts)
     {
         _profileService = profileService;
         _tracker = tracker;
         _ratingService = ratingService;
+        _accounts = accounts;
     }
 
     [HttpGet("{id:guid}")]
@@ -43,6 +45,14 @@ public class ProfilesController : ControllerBase
     {
         var profiles = await _profileService.SearchAsync(city, activity);
         return Ok(profiles);
+    }
+
+    [Authorize]
+    [HttpDelete("me")]
+    public async Task<IActionResult> DeleteMe()
+    {
+        await _accounts.DeleteAsync(User.GetUserId());
+        return NoContent();
     }
 
     [Authorize]

@@ -29,8 +29,11 @@ export async function registerForPush(): Promise<void> {
 // Routes notification taps to the related event screen.
 export function listenForNotificationTaps(): () => void {
   const sub = Notifications.addNotificationResponseReceivedListener((response) => {
-    const eventId = response.notification.request.content.data?.eventId as string | undefined;
-    if (eventId) router.push(`/activity/${eventId}`);
+    const data = response.notification.request.content.data ?? {};
+    const eventId = data.eventId as string | undefined;
+    if (!eventId) return;
+    // A chat push lands in the conversation, not on the event sheet.
+    router.push(data.type === 'chat_message' ? `/chat/${eventId}` : `/activity/${eventId}`);
   });
   return () => sub.remove();
 }

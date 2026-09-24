@@ -18,3 +18,5 @@ export const getProfile = (id: string) =>
 
 export const updateMyProfile = (data: Partial<Pick<Profile, 'bio' | 'city' | 'favoriteActivities' | 'profileType'>>) =>
   client.put<Profile>('/profiles/me', data).then((r) => r.data);
+
+export const deleteMyAccount = () => client.delete('/profiles/me');

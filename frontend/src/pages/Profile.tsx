@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { getProfile, updateMyProfile, getRatingsForUser } from '../api/profiles';
+import { useParams, useNavigate } from 'react-router-dom';
+import { getProfile, updateMyProfile, getRatingsForUser, deleteMyAccount } from '../api/profiles';
 import { listActivities } from '../api/activities';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -25,7 +25,8 @@ const PROFILE_TYPES = [
 
 export default function Profile() {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const toast = useToast();
   const [profile, setProfile] = useState<ProfileType | null>(null);
   const [editing, setEditing] = useState(false);
@@ -310,6 +311,30 @@ export default function Profile() {
           </div>
         )}
       </div>
+
+      {isOwn && (
+        <div className="mt-10 rounded-3xl border border-danger-surface bg-danger-surface/40 p-6">
+          <h2 className="mb-1 text-base font-bold text-danger">Supprimer mon compte</h2>
+          <p className="mb-4 text-sm text-text-2">
+            Vos événements, messages et notes seront définitivement effacés. Cette action est irréversible.
+          </p>
+          <Button
+            variant="danger"
+            onClick={async () => {
+              if (!confirm('Supprimer définitivement votre compte PartnR ?')) return;
+              try {
+                await deleteMyAccount();
+                logout();
+                navigate('/');
+              } catch {
+                toast.error('La suppression a échoué. Réessayez dans un instant.');
+              }
+            }}
+          >
+            Supprimer définitivement
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

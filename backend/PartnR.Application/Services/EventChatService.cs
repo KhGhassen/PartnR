@@ -11,17 +11,25 @@ public class EventChatService : IEventChatService
     private readonly IEventParticipantRepository _participants;
     private readonly IMessageRepository _messages;
     private readonly IUserRepository _users;
+    private readonly INotificationRepository _notifications;
     private readonly IUnitOfWork _unitOfWork;
+
+    // Chat was the one action in the product that emitted no Notification, so
+    // "je serai en retard de 10 min" reached only the clients connected at
+    // that exact second. Push depends on this table too.
+    private static readonly TimeSpan NotifyWindow = TimeSpan.FromMinutes(10);
 
     public EventChatService(
         IEventParticipantRepository participants,
         IMessageRepository messages,
         IUserRepository users,
+        INotificationRepository notifications,
         IUnitOfWork unitOfWork)
     {
         _participants = participants;
         _messages = messages;
         _users = users;
+        _notifications = notifications;
         _unitOfWork = unitOfWork;
     }
 
@@ -75,6 +83,7 @@ public class EventChatService : IEventChatService
         };
 
         _messages.Add(message);
+        await NotifyOtherParticipantsAsync(eventId, userId, user.FirstName, message.Content);
         await _unitOfWork.SaveChangesAsync();
 
         return new ChatMessageDto
@@ -85,5 +94,37 @@ public class EventChatService : IEventChatService
             UserId = userId,
             UserName = user.FirstName
         };
+    }
+
+    // One notification per recipient per 10-minute window, keyed on time and
+    // not on "an unread one already exists": MarkAllReadAsync re-arms the
+    // counter the moment the bell is opened, which would make a busy chat
+    // notify on every single message.
+    private async Task NotifyOtherParticipantsAsync(Guid eventId, Guid senderId, string senderName, string content)
+    {
+        var recipients = await _participants.Query()
+            .Where(p => p.EventId == eventId && p.UserId != senderId && p.Status == ParticipantStatus.Confirmed)
+            .Select(p => p.UserId)
+            .ToListAsync();
+        if (recipients.Count == 0) return;
+
+        var since = DateTime.UtcNow - NotifyWindow;
+        var recentlyNotified = await _notifications.Query()
+            .Where(n => n.EventId == eventId && n.Type == "chat_message" && n.CreatedAt >= since && recipients.Contains(n.UserId))
+            .Select(n => n.UserId)
+            .Distinct()
+            .ToListAsync();
+
+        var preview = content.Length > 60 ? content[..57] + "…" : content;
+        foreach (var uid in recipients.Except(recentlyNotified))
+        {
+            _notifications.Add(new Notification
+            {
+                UserId = uid,
+                Type = "chat_message",
+                Message = $"{senderName} : {preview}",
+                EventId = eventId,
+            });
+        }
     }
 }

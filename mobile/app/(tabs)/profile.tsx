@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,6 +9,7 @@ import { router } from 'expo-router';
 import { T } from '../../constants/tokens';
 import { getProfile, updateMyProfile, type Profile } from '../../api/profiles';
 import { useApp } from '../../context/AppContext';
+import { deleteMyAccount } from '../../api/profiles';
 import Pill from '../../components/Pill';
 import CTAButton from '../../components/CTAButton';
 
@@ -167,6 +169,32 @@ export default function ProfileScreen() {
         )}
 
         <CTAButton label="Se déconnecter" secondary onPress={handleLogout} />
+        <TouchableOpacity
+          onPress={() =>
+            Alert.alert(
+              'Supprimer mon compte',
+              'Vos événements, messages et notes seront définitivement effacés. Cette action est irréversible.',
+              [
+                { text: 'Annuler', style: 'cancel' },
+                {
+                  text: 'Supprimer',
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      await deleteMyAccount();
+                      await logout();
+                    } catch {
+                      Alert.alert('Erreur', "La suppression a échoué. Réessayez dans un instant.");
+                    }
+                  },
+                },
+              ]
+            )
+          }
+          style={{ alignSelf: 'center', paddingVertical: 10 }}
+        >
+          <Text style={{ fontSize: 12, color: T.textSub, fontFamily: 'DMSans_400Regular' }}>Supprimer mon compte</Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
