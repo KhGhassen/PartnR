@@ -24,6 +24,12 @@ public static class DependencyInjection
             options.Password.RequireUppercase = true;
             options.Password.RequiredLength = 8;
             options.User.RequireUniqueEmail = true;
+            // Login used CheckPasswordAsync, which never counts failures: with
+            // the old global rate limit that was 14 400 guesses a day on one
+            // account. Five misses lock the account for fifteen minutes.
+            options.Lockout.AllowedForNewUsers = true;
+            options.Lockout.MaxFailedAccessAttempts = 5;
+            options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
         })
         .AddEntityFrameworkStores<AppDbContext>()
         .AddDefaultTokenProviders();

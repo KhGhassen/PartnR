@@ -2,6 +2,9 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -86,28 +89,87 @@ builder.Services.AddAuthentication(options =>
                 context.Token = accessToken;
             }
             return Task.CompletedTask;
+        },
+        // A JWT is self-contained, so a ban or a password change would only
+        // take effect when it expires (24 h). Compare the stamp it carries
+        // with the stored one, cached for a minute. Fails OPEN on a DB error:
+        // a Supabase hiccup must not log everyone out.
+        OnTokenValidated = async context =>
+        {
+            var sub = context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                      ?? context.Principal?.FindFirst("sub")?.Value;
+            if (!Guid.TryParse(sub, out var userId)) return;
+
+            var tokenStamp = context.Principal?.FindFirst("sst")?.Value;
+            var cache = context.HttpContext.RequestServices.GetRequiredService<IMemoryCache>();
+            try
+            {
+                var state = await cache.GetOrCreateAsync($"sst:{userId}", async entry =>
+                {
+                    entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(60);
+                    var db = context.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
+                    return await db.Users.AsNoTracking()
+                        .Where(u => u.Id == userId)
+                        .Select(u => new { u.SecurityStamp, u.IsBanned })
+                        .FirstOrDefaultAsync();
+                });
+
+                if (state is null || state.IsBanned)
+                    context.Fail("Compte suspendu.");
+                else if (tokenStamp is not null && !string.Equals(tokenStamp, state.SecurityStamp, StringComparison.Ordinal))
+                    context.Fail("Session expirée.");
+            }
+            catch
+            {
+                // fail open
+            }
         }
     };
 });
 
 builder.Services.AddAuthorization();
+builder.Services.AddMemoryCache();
 
-// Rate Limiting
+// Rate limiting — partitioned. The previous fixed-window limiters were a
+// single shared bucket: the eleventh visitor trying to log in within a minute
+// got a 429, a free denial of service. Partitions are by client IP for
+// anonymous traffic and by user id once authenticated; ForwardedHeaders
+// below is what makes the IP meaningful behind Render's proxy.
+static string ClientKey(HttpContext ctx)
+{
+    var userId = ctx.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                 ?? ctx.User?.FindFirst("sub")?.Value;
+    if (!string.IsNullOrEmpty(userId)) return "u:" + userId;
+    return "ip:" + (ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown");
+}
+
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = 429;
 
-    options.AddFixedWindowLimiter("auth", opt =>
-    {
-        opt.PermitLimit = 10;
-        opt.Window = TimeSpan.FromMinutes(1);
-    });
+    options.AddPolicy("auth", ctx => RateLimitPartition.GetFixedWindowLimiter(
+        "ip:" + (ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown"),
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromMinutes(1) }));
 
-    options.AddFixedWindowLimiter("api", opt =>
-    {
-        opt.PermitLimit = 60;
-        opt.Window = TimeSpan.FromMinutes(1);
-    });
+    options.AddPolicy("api", ctx => RateLimitPartition.GetFixedWindowLimiter(
+        ClientKey(ctx),
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 60, Window = TimeSpan.FromMinutes(1) }));
+
+    // Safety net for everything else, per client.
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(ctx =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            ClientKey(ctx),
+            _ => new FixedWindowRateLimiterOptions { PermitLimit = 300, Window = TimeSpan.FromMinutes(1) }));
+});
+
+// Behind Render's proxy the connection IP is the proxy; trust exactly one
+// X-Forwarded-For hop so partitions are per client, not one shared bucket.
+builder.Services.Configure<ForwardedHeadersOptions>(o =>
+{
+    o.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    o.ForwardLimit = 1;
+    o.KnownNetworks.Clear();
+    o.KnownProxies.Clear();
 });
 
 // SignalR
@@ -213,6 +275,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseForwardedHeaders();
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseHttpsRedirection();
@@ -221,9 +285,10 @@ if (!app.Environment.IsDevelopment())
 app.UseSerilogRequestLogging();
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseCors("AllowFrontend");
-app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
+// After authentication on purpose: the "api" partition keys on the user id.
+app.UseRateLimiter();
 
 app.MapControllers();
 app.MapHub<EventChatHub>("/hubs/event-chat");
