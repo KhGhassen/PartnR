@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using PartnR.Application.Common;
 using PartnR.Application.DTOs.Auth;
 using PartnR.Application.Interfaces.Services;
 using PartnR.Domain.Entities;
@@ -116,7 +117,11 @@ public class AuthService : IAuthService
 
         await _emailService.SendAsync(email,
             "Réinitialisation de mot de passe — PartnR",
-            EmailBody.ResetPassword(user.FirstName, link));
+            EmailTemplate.Render(
+                "Réinitialiser votre mot de passe",
+                EmailTemplate.Paragraph($"Bonjour {EmailTemplate.Escape(user.FirstName)}, vous avez demandé un nouveau mot de passe. Le lien ci-dessous est valable une heure."),
+                "Choisir un nouveau mot de passe", link,
+                "Si vous n'êtes pas à l'origine de cette demande, ignorez cet email : votre mot de passe reste inchangé."));
     }
 
     public async Task ResetPasswordAsync(string email, string token, string newPassword)
@@ -200,33 +205,10 @@ public class AuthService : IAuthService
 
         await _emailService.SendAsync(user.Email!,
             "Confirmez votre adresse email — PartnR",
-            EmailBody.Confirmation(user.FirstName, link));
+            EmailTemplate.Render(
+                $"Bienvenue sur PartnR, {user.FirstName} !",
+                EmailTemplate.Paragraph("Une dernière étape : confirmez votre adresse email pour activer votre compte et rejoindre votre première sortie."),
+                "Confirmer mon email", link,
+                "Ce lien expire dans 24 heures. Si vous n'avez pas créé de compte, ignorez cet email."));
     }
-}
-
-internal static class EmailBody
-{
-    internal static string Confirmation(string firstName, string link) => $"""
-        <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:32px 16px">
-          <h2 style="color:#4F46E5">Bienvenue sur PartnR, {firstName} !</h2>
-          <p style="color:#374151">Cliquez sur le bouton ci-dessous pour confirmer votre adresse email :</p>
-          <a href="{link}"
-             style="display:inline-block;background:#4F46E5;color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;margin:16px 0">
-            Confirmer mon email
-          </a>
-          <p style="color:#9CA3AF;font-size:13px">Ce lien expire dans 24&nbsp;heures.<br>Si vous n'avez pas créé de compte, ignorez cet email.</p>
-        </div>
-        """;
-
-    internal static string ResetPassword(string firstName, string link) => $"""
-        <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:32px 16px">
-          <h2 style="color:#4F46E5">Réinitialisation de mot de passe</h2>
-          <p style="color:#374151">Bonjour {firstName}, vous avez demandé à réinitialiser votre mot de passe.</p>
-          <a href="{link}"
-             style="display:inline-block;background:#4F46E5;color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;margin:16px 0">
-            Réinitialiser mon mot de passe
-          </a>
-          <p style="color:#9CA3AF;font-size:13px">Ce lien expire dans 1&nbsp;heure.<br>Si vous n'avez pas fait cette demande, ignorez cet email.</p>
-        </div>
-        """;
 }

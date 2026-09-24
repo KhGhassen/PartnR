@@ -54,7 +54,7 @@ public class EventReminderServiceTests : IDisposable
     }
 
     private Task<int> Run(DateTime? now = null) =>
-        EventReminderService.RunOnceAsync(_db, new NoOpEmailService(), now ?? _now, NullLogger.Instance, CancellationToken.None);
+        EventReminderService.RunOnceAsync(_db, new NoOpEmailService(), now ?? _now, "https://partnr.test", NullLogger.Instance, CancellationToken.None);
 
     [Fact]
     public async Task RemindsConfirmedParticipants_OnceEach()

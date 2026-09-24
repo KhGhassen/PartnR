@@ -17,6 +17,7 @@ public class EventService : IEventService
     private readonly INotificationRepository _notifications;
     private readonly IUserBlockRepository _blocks;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IEmailService _emailService;
     private readonly string _frontendUrl;
 
     public EventService(
@@ -26,7 +27,8 @@ public class EventService : IEventService
         INotificationRepository notifications,
         IUserBlockRepository blocks,
         IUnitOfWork unitOfWork,
-        IConfiguration config)
+        IConfiguration config,
+        IEmailService emailService)
     {
         _events = events;
         _activities = activities;
@@ -34,6 +36,7 @@ public class EventService : IEventService
         _notifications = notifications;
         _blocks = blocks;
         _unitOfWork = unitOfWork;
+        _emailService = emailService;
         _frontendUrl = (config["FrontendUrl"] ?? "http://localhost:5173").TrimEnd('/');
     }
 
@@ -297,6 +300,7 @@ public class EventService : IEventService
                 .ToListAsync());
         }
 
+        var cancellationEmails = new List<(Event Ev, string Email, string FirstName)>();
         foreach (var target in targets)
         {
             if (dto.Title is not null) target.Title = dto.Title;
@@ -306,19 +310,21 @@ public class EventService : IEventService
             if (dto.MaxParticipants.HasValue) target.MaxParticipants = dto.MaxParticipants.Value;
             if (dto.Status.HasValue && dto.Status.Value == EventStatus.Cancelled && target.Status != EventStatus.Cancelled)
             {
-                var participantIds = await _participants.Query()
+                var affected = await _participants.Query()
+                    .Include(p => p.User)
                     .Where(p => p.EventId == target.Id && p.Status == ParticipantStatus.Confirmed && p.UserId != userId)
-                    .Select(p => p.UserId)
                     .ToListAsync();
-                foreach (var pid in participantIds)
+                foreach (var p in affected)
                 {
                     _notifications.Add(new Notification
                     {
-                        UserId = pid,
+                        UserId = p.UserId,
                         Type = "event_cancelled",
                         Message = $"L'événement « {target.Title} » a été annulé.",
                         EventId = target.Id,
                     });
+                    if (!string.IsNullOrEmpty(p.User?.Email))
+                        cancellationEmails.Add((target, p.User.Email, p.User.FirstName));
                 }
             }
             if (dto.Status.HasValue) target.Status = dto.Status.Value;
@@ -353,6 +359,30 @@ public class EventService : IEventService
         }
 
         await _unitOfWork.SaveChangesAsync();
+
+        // A cancellation is the one news people plan their evening around, so
+        // it goes by email too. After the save, best effort: the in-app and
+        // push copies are already committed, and a mail outage must not turn
+        // a successful cancellation into a 500 for the organiser.
+        foreach (var (target, to, firstName) in cancellationEmails)
+        {
+            try
+            {
+                await _emailService.SendAsync(to,
+                    $"Annulé — {target.Title}",
+                    EmailTemplate.Render(
+                        $"« {target.Title} » est annulé",
+                        EmailTemplate.Paragraph($"Bonjour {EmailTemplate.Escape(firstName)}, l'organisateur a annulé la sortie prévue {FrenchDate.Long(target.Date)} à {EmailTemplate.Escape(target.City)}.")
+                        + EmailTemplate.Paragraph("Désolé pour le contretemps. D'autres sorties vous attendent près de chez vous."),
+                        "Trouver une autre sortie", $"{_frontendUrl}/events",
+                        "Vous recevez cet email parce que vous étiez inscrit·e à cet événement."));
+            }
+            catch
+            {
+                // logged by the mail service; nothing to undo here
+            }
+        }
+
         return await GetByIdAsync(ev.Id, userId);
     }
 
