@@ -42,8 +42,9 @@ export default function RegisterScreen() {
       });
       await login(token, user);
       if (pendingInterests.length > 0) {
-        // Fire-and-forget: the account exists either way, favourites are a nicety.
-        updateMyProfile({ favoriteActivities: pendingInterests }).catch(() => {});
+        // Awaited so the tabs never read a profile without the picks; a failure
+        // must not surface as a sign-up error — the account exists either way.
+        await updateMyProfile({ favoriteActivities: pendingInterests }).catch(() => {});
         setPendingInterests([]);
       }
       router.replace('/(tabs)');

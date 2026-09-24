@@ -24,40 +24,44 @@ public class UploadServiceTests : IDisposable
         _service = new UploadService(new StoredImageRepository(_db), new UnitOfWork(_db));
     }
 
-    [Fact]
-    public async Task SaveImageAsync_StoresAndReturnsRetrievableImage()
-    {
-        var data = new byte[] { 1, 2, 3, 4 };
+    private static readonly byte[] Png = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 1, 2, 3];
+    private static readonly byte[] Jpeg = [0xFF, 0xD8, 0xFF, 0xE0, 0, 0];
 
-        var id = await _service.SaveImageAsync(_userId, data, "image/png");
+    [Fact]
+    public async Task SaveImageAsync_DetectsTypeFromBytes()
+    {
+        var id = await _service.SaveImageAsync(_userId, Png);
         var stored = await _service.GetImageAsync(id);
 
         Assert.NotNull(stored);
-        Assert.Equal(data, stored.Data);
+        Assert.Equal(Png, stored.Data);
         Assert.Equal("image/png", stored.ContentType);
     }
 
     [Fact]
-    public async Task SaveImageAsync_RejectsUnsupportedContentType()
+    public async Task SaveImageAsync_RejectsNonImageBytes_WhateverTheClientClaims()
     {
+        // "%PDF-1.4" — a real PDF header sent as image/png used to be stored and
+        // re-served as image/png with a one-year cache.
         await Assert.ThrowsAsync<ArgumentException>(
-            () => _service.SaveImageAsync(_userId, [1, 2, 3], "application/pdf"));
+            () => _service.SaveImageAsync(_userId, "%PDF-1.4 fake"u8.ToArray()));
     }
 
     [Fact]
     public async Task SaveImageAsync_RejectsEmptyFile()
     {
         await Assert.ThrowsAsync<ArgumentException>(
-            () => _service.SaveImageAsync(_userId, [], "image/jpeg"));
+            () => _service.SaveImageAsync(_userId, []));
     }
 
     [Fact]
     public async Task SaveImageAsync_RejectsOversizedFile()
     {
         var tooBig = new byte[UploadService.MaxImageBytes + 1];
+        Jpeg.CopyTo(tooBig, 0);
 
         await Assert.ThrowsAsync<ArgumentException>(
-            () => _service.SaveImageAsync(_userId, tooBig, "image/jpeg"));
+            () => _service.SaveImageAsync(_userId, tooBig));
     }
 
     [Fact]

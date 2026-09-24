@@ -9,5 +9,7 @@ public class Notification
     public Guid? EventId { get; set; }
     public bool IsRead { get; set; }
     public bool PushSent { get; set; }
+    public int PushAttempts { get; set; }
+    public DateTime? PushNextAttemptAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

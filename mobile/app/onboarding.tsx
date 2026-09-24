@@ -94,7 +94,7 @@ export default function Onboarding() {
         style={{ flex: 1 }}
       >
         {activities.length === 0 ? (
-          <Text style={styles.chipText}>Chargement du catalogue…</Text>
+          <Text style={[styles.chipText, styles.chipTextInactive]}>Chargement du catalogue…</Text>
         ) : (
           groupByCategory(activities).map((g) => (
             <View key={g.category} style={{ width: '100%', marginBottom: 6 }}>
@@ -129,7 +129,7 @@ export default function Onboarding() {
           onPress={() => finish()}
         />
         <TouchableOpacity onPress={() => finish([])} style={{ alignSelf: 'center', paddingVertical: 6 }}>
-          <Text style={styles.chipText}>Passer cette étape</Text>
+          <Text style={[styles.chipText, styles.chipTextInactive]}>Passer cette étape</Text>
         </TouchableOpacity>
       </View>
     </View>

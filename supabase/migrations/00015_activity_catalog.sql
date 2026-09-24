@@ -32,4 +32,4 @@ INSERT INTO "Activities" ("Id", "Name", "Slug", "Icon", "Category", "CreatedAt")
   ('a1000000-0000-0000-0000-000000000020', 'Marché',           'marche',           '🧺',  'Balades',        now()),
   ('a1000000-0000-0000-0000-000000000021', 'Jeux vidéo',       'jeux-video',       '🎮',  'Jeux',           now()),
   ('a1000000-0000-0000-0000-000000000022', 'Bénévolat',        'benevolat',        '🤝',  'Engagement',     now())
-ON CONFLICT DO NOTHING;
+ON CONFLICT ("Id") DO NOTHING;

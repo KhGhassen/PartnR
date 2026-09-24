@@ -31,7 +31,7 @@ const mockPaginatedResult = {
       date: '2026-04-15T08:00:00Z',
       maxParticipants: 10,
       status: 'Published',
-      activityName: 'Running',
+      activityName: 'Course à pied',
       activityIcon: '🏃',
       creatorId: 'u1',
       creatorName: 'Alice',

@@ -81,11 +81,6 @@ export const MESSAGES: Message[] = [
   { id: 3, sender: 'Luca M.',        avatar: 'LM',  color: '#D4A870', preview: 'Are you joining the brunch on Sunday?',    time: 'Tue',       unread: 0, activity: 'Brunch' },
 ];
 
-export const INTERESTS = [
-  'Running', 'Cycling', 'Yoga', 'Hiking', 'Food', 'Coffee', 'Travel', 'Music',
-  'Jazz', 'Rock', 'Art', 'Photography', 'Cinema', 'Dancing', 'Tennis', 'Swimming',
-  'Basketball', 'Reading', 'Gaming', 'Meditation',
-];
 
 export const AVATAR_COLORS: Record<string, string> = {
   MR: '#8DC5A0',

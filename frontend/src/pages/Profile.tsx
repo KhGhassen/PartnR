@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getProfile, updateMyProfile, getRatingsForUser, deleteMyAccount } from '../api/profiles';
+import { groupByCategory } from '../lib/catalogue';
 import { listActivities } from '../api/activities';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -230,15 +231,24 @@ export default function Profile() {
           {editing ? (
             <div className="mb-6">
               <h2 className="mb-2 text-xs font-semibold text-ink-mid">Activités favorites</h2>
-              <div className="flex flex-wrap gap-2">
-                {activities.map((a) => (
-                  <Chip
-                    key={a.id}
-                    active={form.favoriteActivities.includes(a.name)}
-                    onClick={() => toggleFavoriteActivity(a.name)}
-                  >
-                    {a.icon} {a.name}
-                  </Chip>
+              <div className="space-y-3">
+                {groupByCategory(activities).map((g) => (
+                  <div key={g.category}>
+                    <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-3">
+                      {g.icon} {g.category}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {g.activities.map((a) => (
+                        <Chip
+                          key={a.id}
+                          active={form.favoriteActivities.includes(a.name)}
+                          onClick={() => toggleFavoriteActivity(a.name)}
+                        >
+                          {a.icon} {a.name}
+                        </Chip>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
