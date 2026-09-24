@@ -9,6 +9,7 @@ import ChangePasswordForm from '../components/ChangePasswordForm';
 import PhotoInput from '../components/PhotoInput';
 import CityPicker from '../components/CityPicker';
 import ReportButton from '../components/ReportButton';
+import { listBlockedUsers, blockUser, unblockUser, type BlockedUser } from '../api/blocks';
 import Avatar from '../components/ui/Avatar';
 import Button from '../components/ui/Button';
 import Chip from '../components/ui/Chip';
@@ -38,8 +39,36 @@ export default function Profile() {
   const [error, setError] = useState('');
   const [changingPassword, setChangingPassword] = useState(false);
   const [ratings, setRatings] = useState<RatingDto[]>([]);
+  const [blocked, setBlocked] = useState<BlockedUser[]>([]);
+  const [blocking, setBlocking] = useState(false);
 
   const isOwn = user?.id === id;
+  const isBlocked = blocked.some((b) => b.id === id);
+
+  useEffect(() => {
+    if (user?.id) listBlockedUsers().then(setBlocked).catch(() => {});
+  }, [user?.id]);
+
+  const toggleBlock = async (targetId: string, targetName: string) => {
+    const currentlyBlocked = blocked.some((b) => b.id === targetId);
+    if (!currentlyBlocked && !confirm(`Bloquer ${targetName} ? Cette personne ne verra plus vos événements, ne pourra plus les rejoindre, et vos messages seront masqués l'un pour l'autre.`)) return;
+    setBlocking(true);
+    try {
+      if (currentlyBlocked) {
+        await unblockUser(targetId);
+        setBlocked((list) => list.filter((b) => b.id !== targetId));
+        toast.success(`${targetName} n'est plus bloqué·e.`);
+      } else {
+        await blockUser(targetId);
+        setBlocked(await listBlockedUsers());
+        toast.success(`${targetName} est bloqué·e.`);
+      }
+    } catch {
+      toast.error("L'opération a échoué. Réessayez dans un instant.");
+    } finally {
+      setBlocking(false);
+    }
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -158,8 +187,26 @@ export default function Profile() {
                 Modifier
               </Button>
             )}
-            {!isOwn && <ReportButton targetType="user" targetId={id!} />}
+            {!isOwn && (
+              <div className="flex flex-col items-end gap-2">
+                <ReportButton targetType="user" targetId={id!} />
+                {user && (
+                  <button
+                    onClick={() => toggleBlock(id!, profile.firstName)}
+                    disabled={blocking}
+                    className="text-xs text-ink-sub transition-colors hover:text-red-500 disabled:opacity-50"
+                  >
+                    {isBlocked ? '🔓 Débloquer' : '⛔ Bloquer'}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
+          {isBlocked && (
+            <p className="mb-6 rounded-2xl bg-cream px-4 py-3 text-sm text-ink-mid">
+              Vous avez bloqué {profile.firstName} : ses événements et ses messages vous sont masqués.
+            </p>
+          )}
 
           <div className="mb-6 grid grid-cols-2 gap-4">
             <div className="rounded-2xl bg-cream p-4">
@@ -296,6 +343,32 @@ export default function Profile() {
             <ChangePasswordForm onClose={() => setChangingPassword(false)} />
           ) : (
             <p className="text-sm text-ink-sub">Modifiez votre mot de passe à tout moment.</p>
+          )}
+        </div>
+      )}
+
+      {isOwn && (
+        <div className="mt-6 rounded-3xl border border-line bg-white p-8 shadow-card">
+          <h2 className="mb-1 text-lg font-bold text-ink">Personnes bloquées</h2>
+          <p className="mb-4 text-sm text-ink-sub">
+            Une personne bloquée ne voit plus vos événements, ne peut plus les rejoindre, et vos messages sont masqués l'un pour l'autre.
+          </p>
+          {blocked.length === 0 ? (
+            <p className="text-sm text-ink-sub">Personne pour l'instant.</p>
+          ) : (
+            <ul className="space-y-2">
+              {blocked.map((b) => (
+                <li key={b.id} className="flex items-center justify-between rounded-2xl bg-cream px-4 py-3">
+                  <span className="flex items-center gap-3">
+                    <Avatar name={b.firstName} url={b.avatarUrl} size="sm" />
+                    <span className="text-sm font-semibold text-ink">{b.firstName}</span>
+                  </span>
+                  <Button size="sm" variant="ghost" disabled={blocking} onClick={() => toggleBlock(b.id, b.firstName)}>
+                    Débloquer
+                  </Button>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       )}

@@ -6,6 +6,7 @@ namespace PartnR.Application.Interfaces.Services;
 
 public interface IEventService
 {
+    /// <param name="userId">The signed-in viewer, when there is one. Drives "mine" and hides blocked pairs.</param>
     Task<PaginatedResult<EventDto>> ListAsync(string? city, Guid? activityId, EventStatus? status, int page = 1, int pageSize = 20, bool mine = false, Guid? userId = null, double? lat = null, double? lng = null, double? radiusKm = null, string? search = null, string? category = null);
     /// <param name="viewerId">Who is asking; the exact location and the roster depend on it.</param>
     Task<EventDetailDto> GetByIdAsync(Guid id, Guid? viewerId = null);

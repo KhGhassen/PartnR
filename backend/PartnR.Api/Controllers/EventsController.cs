@@ -42,7 +42,7 @@ public class EventsController : ControllerBase
         [FromQuery] string? search = null,
         [FromQuery] string? category = null)
     {
-        Guid? userId = mine && User.Identity?.IsAuthenticated == true ? User.GetUserId() : null;
+        Guid? userId = User.Identity?.IsAuthenticated == true ? User.GetUserId() : null;
         var result = await _eventService.ListAsync(city, activityId, status, page, pageSize, mine, userId, lat, lng, radiusKm, search, category);
         return Ok(result);
     }

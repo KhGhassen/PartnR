@@ -32,6 +32,7 @@ public class AccountDeletionService : IAccountService
         await _db.Notifications.Where(n => n.UserId == userId).ExecuteDeleteAsync();
         await _db.PushTokens.Where(t => t.UserId == userId).ExecuteDeleteAsync();
         await _db.Reports.Where(r => r.ReporterId == userId).ExecuteDeleteAsync();
+        await _db.UserBlocks.Where(b => b.BlockerId == userId || b.BlockedId == userId).ExecuteDeleteAsync();
         await _db.UserActions.Where(a => a.UserId == userId).ExecuteDeleteAsync();
 
         // Participants of the events this user organised must not learn about

@@ -12,6 +12,7 @@ public class EventChatService : IEventChatService
     private readonly IMessageRepository _messages;
     private readonly IUserRepository _users;
     private readonly INotificationRepository _notifications;
+    private readonly IUserBlockRepository _blocks;
     private readonly IUnitOfWork _unitOfWork;
 
     // Chat was the one action in the product that emitted no Notification, so
@@ -24,14 +25,22 @@ public class EventChatService : IEventChatService
         IMessageRepository messages,
         IUserRepository users,
         INotificationRepository notifications,
+        IUserBlockRepository blocks,
         IUnitOfWork unitOfWork)
     {
         _participants = participants;
         _messages = messages;
         _users = users;
         _notifications = notifications;
+        _blocks = blocks;
         _unitOfWork = unitOfWork;
     }
+
+    private Task<List<Guid>> HiddenUserIdsAsync(Guid userId) =>
+        _blocks.Query()
+            .Where(b => b.BlockerId == userId || b.BlockedId == userId)
+            .Select(b => b.BlockerId == userId ? b.BlockedId : b.BlockerId)
+            .ToListAsync();
 
     public async Task EnsureParticipantAsync(Guid eventId, Guid userId)
     {
@@ -42,11 +51,13 @@ public class EventChatService : IEventChatService
             throw new UnauthorizedAccessException("You are not a participant of this event.");
     }
 
-    public async Task<List<ChatMessageDto>> GetHistoryAsync(Guid eventId, int take = 100)
+    public async Task<List<ChatMessageDto>> GetHistoryAsync(Guid eventId, Guid viewerId, int take = 100)
     {
+        var hidden = await HiddenUserIdsAsync(viewerId);
+
         var messages = await _messages.Query()
             .Include(m => m.User)
-            .Where(m => m.EventId == eventId)
+            .Where(m => m.EventId == eventId && !hidden.Contains(m.UserId))
             .OrderByDescending(m => m.CreatedAt)
             .Take(take)
             .Select(m => new ChatMessageDto
@@ -102,8 +113,10 @@ public class EventChatService : IEventChatService
     // notify on every single message.
     private async Task NotifyOtherParticipantsAsync(Guid eventId, Guid senderId, string senderName, string content)
     {
+        var hidden = await HiddenUserIdsAsync(senderId);
         var recipients = await _participants.Query()
-            .Where(p => p.EventId == eventId && p.UserId != senderId && p.Status == ParticipantStatus.Confirmed)
+            .Where(p => p.EventId == eventId && p.UserId != senderId && p.Status == ParticipantStatus.Confirmed
+                        && !hidden.Contains(p.UserId))
             .Select(p => p.UserId)
             .ToListAsync();
         if (recipients.Count == 0) return;

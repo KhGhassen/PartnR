@@ -54,6 +54,7 @@ public class EventChatServiceTests : IDisposable
             new MessageRepository(_db),
             new UserRepository(_db),
             new NotificationRepository(_db),
+            new UserBlockRepository(_db),
             new UnitOfWork(_db));
     }
 
@@ -128,6 +129,33 @@ public class EventChatServiceTests : IDisposable
         Assert.Single(toOutsider);
         Assert.StartsWith("Alice : On se retrouve", toOutsider[0].Message);
         Assert.DoesNotContain(_db.Notifications, n => n.UserId == _creatorId && n.Type == "chat_message");
+    }
+
+    [Fact]
+    public async Task Blocking_HidesTheirMessages_AndStopsChatNotifications()
+    {
+        _db.EventParticipants.Add(new EventParticipant { EventId = _eventId, UserId = _outsiderId, Status = ParticipantStatus.Confirmed });
+        await _db.SaveChangesAsync();
+
+        await _service.SendMessageAsync(_eventId, _outsiderId, "Avant le blocage");
+
+        _db.UserBlocks.Add(new UserBlock { BlockerId = _creatorId, BlockedId = _outsiderId });
+        await _db.SaveChangesAsync();
+
+        await _service.SendMessageAsync(_eventId, _outsiderId, "Après le blocage");
+        await _service.SendMessageAsync(_eventId, _creatorId, "Réponse d'Alice");
+
+        // Each side sees only their own messages; nobody else is affected.
+        var forAlice = await _service.GetHistoryAsync(_eventId, _creatorId);
+        Assert.Equal(new[] { "Réponse d'Alice" }, forAlice.Select(m => m.Content));
+        var forEve = await _service.GetHistoryAsync(_eventId, _outsiderId);
+        Assert.Equal(new[] { "Avant le blocage", "Après le blocage" }, forEve.Select(m => m.Content));
+        var forAThird = await _service.GetHistoryAsync(_eventId, Guid.NewGuid());
+        Assert.Equal(3, forAThird.Count);
+
+        // Only the pre-block message notified Alice; Alice's reply did not notify Eve.
+        Assert.Single(_db.Notifications.Where(n => n.UserId == _creatorId && n.Type == "chat_message"));
+        Assert.DoesNotContain(_db.Notifications, n => n.UserId == _outsiderId && n.Type == "chat_message");
     }
 
     public void Dispose() => _db.Dispose();

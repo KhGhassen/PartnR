@@ -20,6 +20,7 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<EventComment> EventComments => Set<EventComment>();
     public DbSet<Report> Reports => Set<Report>();
+    public DbSet<UserBlock> UserBlocks => Set<UserBlock>();
     public DbSet<PushToken> PushTokens => Set<PushToken>();
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -251,6 +252,15 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
             e.Property(r => r.Reason).HasMaxLength(500);
             e.Property(r => r.Status).HasMaxLength(10).HasDefaultValue("Pending");
             e.HasIndex(r => new { r.Status, r.CreatedAt });
+        });
+
+        // ── USER_BLOCKS ─────────────────────────────────────
+        builder.Entity<UserBlock>(e =>
+        {
+            e.HasIndex(b => new { b.BlockerId, b.BlockedId }).IsUnique();
+            e.HasIndex(b => b.BlockedId);
+            e.HasOne<AppUser>().WithMany().HasForeignKey(b => b.BlockerId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne<AppUser>().WithMany().HasForeignKey(b => b.BlockedId).OnDelete(DeleteBehavior.Cascade);
         });
     }
 

@@ -10,6 +10,7 @@ import { T } from '../../constants/tokens';
 import { getProfile, updateMyProfile, type Profile } from '../../api/profiles';
 import { useApp } from '../../context/AppContext';
 import { deleteMyAccount } from '../../api/profiles';
+import { listBlockedUsers, unblockUser, type BlockedUser } from '../../api/blocks';
 import Pill from '../../components/Pill';
 import CTAButton from '../../components/CTAButton';
 
@@ -30,6 +31,7 @@ export default function ProfileScreen() {
   const [editingType, setEditingType] = useState(false);
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [savingType, setSavingType] = useState(false);
+  const [blocked, setBlocked] = useState<BlockedUser[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -40,7 +42,24 @@ export default function ProfileScreen() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+    listBlockedUsers().then(setBlocked).catch(() => {});
   }, [user]);
+
+  const handleUnblock = (b: BlockedUser) =>
+    Alert.alert(`Débloquer ${b.firstName} ?`, undefined, [
+      { text: 'Annuler', style: 'cancel' },
+      {
+        text: 'Débloquer',
+        onPress: async () => {
+          try {
+            await unblockUser(b.id);
+            setBlocked((list) => list.filter((x) => x.id !== b.id));
+          } catch {
+            Alert.alert('Erreur', 'Le déblocage a échoué. Réessayez dans un instant.');
+          }
+        },
+      },
+    ]);
 
   const handleSaveType = async () => {
     setSavingType(true);
@@ -165,6 +184,21 @@ export default function ProfileScreen() {
                 </View>
               )}
             </View>
+
+            {/* Blocked users */}
+            {blocked.length > 0 && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Personnes bloquées</Text>
+                {blocked.map((b) => (
+                  <View key={b.id} style={styles.blockedRow}>
+                    <Text style={styles.blockedName}>{b.firstName}</Text>
+                    <TouchableOpacity onPress={() => handleUnblock(b)}>
+                      <Text style={styles.editLink}>Débloquer</Text>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
           </>
         )}
 
@@ -244,4 +278,7 @@ const styles = StyleSheet.create({
   editActionsRow: { flexDirection: 'row', gap: 16, marginTop: 12 },
   saveLink:     { fontSize: 12, color: T.coral, fontFamily: 'DMSans_600SemiBold' },
   cancelLink:   { fontSize: 12, color: T.textSub, fontFamily: 'DMSans_500Medium' },
+
+  blockedRow:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6 },
+  blockedName: { fontSize: 13, color: T.text, fontFamily: 'DMSans_500Medium' },
 });
