@@ -32,6 +32,7 @@ export interface Activity {
   name: string;
   slug: string;
   icon: string;
+  category: string;
 }
 
 export interface EventSummary {

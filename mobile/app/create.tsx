@@ -7,7 +7,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import { T } from '../constants/tokens';
-import { listActivities, type Activity } from '../api/activities';
+import { listActivities, groupByCategory, type Activity } from '../api/activities';
 import { listCities } from '../api/cities';
 import { createEvent } from '../api/events';
 import { pickAndUploadImage } from '../api/uploads';
@@ -141,23 +141,30 @@ export default function CreateScreen() {
             loadingActivities ? (
               <ActivityIndicator color={T.coral} style={{ marginTop: 40 }} />
             ) : (
-              <View style={styles.activityGrid}>
-                {activities.map((a) => {
-                  const active = form.activityId === a.id;
-                  return (
-                    <TouchableOpacity
-                      key={a.id}
-                      onPress={() => setForm((f) => ({ ...f, activityId: a.id, activityName: a.name }))}
-                      activeOpacity={0.8}
-                      style={[styles.activityBtn, active ? styles.activityActive : styles.activityInactive]}
-                    >
-                      <Text style={styles.activityEmoji}>{a.icon}</Text>
-                      <Text style={[styles.activityLabel, active ? styles.activityLabelActive : styles.activityLabelInactive]}>
-                        {a.name}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
+              <View style={{ gap: 18 }}>
+                {groupByCategory(activities).map((g) => (
+                  <View key={g.category}>
+                    <Text style={styles.categoryLabel}>{g.icon}  {g.category}</Text>
+                    <View style={styles.activityGrid}>
+                      {g.activities.map((a) => {
+                        const active = form.activityId === a.id;
+                        return (
+                          <TouchableOpacity
+                            key={a.id}
+                            onPress={() => setForm((f) => ({ ...f, activityId: a.id, activityName: a.name }))}
+                            activeOpacity={0.8}
+                            style={[styles.activityBtn, active ? styles.activityActive : styles.activityInactive]}
+                          >
+                            <Text style={styles.activityEmoji}>{a.icon}</Text>
+                            <Text style={[styles.activityLabel, active ? styles.activityLabelActive : styles.activityLabelInactive]}>
+                              {a.name}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </View>
+                ))}
               </View>
             )
           )}
@@ -338,6 +345,7 @@ const styles = StyleSheet.create({
 
   content: { paddingHorizontal: 20, paddingBottom: 16 },
 
+  categoryLabel: { fontSize: 11, fontWeight: '600', color: T.textSub, letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 8, fontFamily: 'DMSans_600SemiBold' },
   activityGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   activityBtn: { width: '47%', paddingVertical: 18, paddingHorizontal: 12, borderRadius: 16, borderWidth: 2, alignItems: 'center', gap: 6 },
   activityActive:   { borderColor: T.coral, backgroundColor: T.coralL },

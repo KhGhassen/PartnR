@@ -12,6 +12,7 @@ import Button, { ButtonLink } from '../components/ui/Button';
 import { EventCardSkeleton } from '../components/ui/Skeleton';
 import EmptyState from '../components/ui/EmptyState';
 import { inputClass } from '../components/ui/classes';
+import { groupByCategory } from '../lib/catalogue';
 import EventCard from '../components/EventCard';
 import type { EventSummary, Activity } from '../types';
 
@@ -22,6 +23,7 @@ export default function EventList() {
   const [cities, setCities] = useState<string[]>([]);
   const [city, setCity] = useState('');
   const [activityId, setActivityId] = useState('');
+  const [category, setCategory] = useState('');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -30,13 +32,14 @@ export default function EventList() {
   const [totalCount, setTotalCount] = useState(0);
   const searchDebounce = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  const fetchEvents = async (p: number, c = city, a = activityId, s = search) => {
+  const fetchEvents = async (p: number, c = city, a = activityId, s = search, cat = category) => {
     setLoading(true);
     setError('');
     try {
       const result = await listEvents({
         city: c || undefined,
         activityId: a || undefined,
+        category: !a && cat ? cat : undefined,
         search: s.trim() || undefined,
         page: p,
         pageSize: 20,
@@ -59,10 +62,11 @@ export default function EventList() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const applyFilters = (c: string, a: string) => {
+  const applyFilters = (c: string, a: string, cat = category) => {
     setCity(c);
     setActivityId(a);
-    fetchEvents(1, c, a);
+    setCategory(cat);
+    fetchEvents(1, c, a, search, cat);
     trackAction({ action: 'events_searched', metadata: JSON.stringify({ city: c, activityId: a }) });
   };
 
@@ -73,6 +77,9 @@ export default function EventList() {
   };
 
   useEffect(() => () => clearTimeout(searchDebounce.current), []);
+
+  const groups = groupByCategory(activities);
+  const selectedGroup = groups.find((g) => g.category === category) ?? null;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
@@ -148,19 +155,37 @@ export default function EventList() {
 
       {/* Filters */}
       <div className="mb-6 flex flex-wrap items-center gap-2">
-        <div className="flex flex-1 flex-wrap gap-2">
-          <Chip active={activityId === ''} onClick={() => applyFilters(city, '')}>
-            Tout
-          </Chip>
-          {activities.map((a) => (
-            <Chip
-              key={a.id}
-              active={activityId === a.id}
-              onClick={() => applyFilters(city, activityId === a.id ? '' : a.id)}
-            >
-              {a.icon} {a.name}
+        <div className="flex flex-1 flex-col gap-2">
+          {/* 22 activities flat would be worse than the old 10: pick a category
+              first, then narrow to an activity inside it. */}
+          <div className="flex flex-wrap gap-2">
+            <Chip active={category === '' && activityId === ''} onClick={() => applyFilters(city, '', '')}>
+              Tout
             </Chip>
-          ))}
+            {groups.map((g) => (
+              <Chip
+                key={g.category}
+                active={category === g.category}
+                onClick={() => applyFilters(city, '', category === g.category ? '' : g.category)}
+              >
+                {g.icon} {g.category}
+              </Chip>
+            ))}
+          </div>
+          {selectedGroup && (
+            <div className="flex flex-wrap gap-2 pl-1" aria-label={`Activités — ${selectedGroup.category}`}>
+              {selectedGroup.activities.map((a) => (
+                <Chip
+                  key={a.id}
+                  active={activityId === a.id}
+                  onClick={() => applyFilters(city, activityId === a.id ? '' : a.id, selectedGroup.category)}
+                  className="text-xs"
+                >
+                  {a.icon} {a.name}
+                </Chip>
+              ))}
+            </div>
+          )}
         </div>
         <select
           value={city}

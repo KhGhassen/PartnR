@@ -49,18 +49,40 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
             e.Property(a => a.Name).HasMaxLength(50);
             e.Property(a => a.Slug).HasMaxLength(50);
             e.Property(a => a.Icon).HasMaxLength(10);
+            e.Property(a => a.Category).HasMaxLength(30);
 
+            // Ids are fixed and MUST match supabase/migrations/00015_activity_catalog.sql:
+            // EnsureCreated() only seeds a brand-new database (tests, local), the
+            // production schema is driven by the SQL migrations.
             e.HasData(
-                new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000001"), Name = "Running", Slug = "running", Icon = "🏃" },
-                new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000002"), Name = "Randonnée", Slug = "randonnee", Icon = "🥾" },
-                new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000003"), Name = "Vélo", Slug = "velo", Icon = "🚴" },
-                new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000004"), Name = "Jeux de société", Slug = "jeux-de-societe", Icon = "🎲" },
-                new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000005"), Name = "Tennis", Slug = "tennis", Icon = "🎾" },
-                new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000006"), Name = "Yoga", Slug = "yoga", Icon = "🧘" },
-                new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000007"), Name = "Natation", Slug = "natation", Icon = "🏊" },
-                new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000008"), Name = "Escalade", Slug = "escalade", Icon = "🧗" },
-                new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000009"), Name = "Football", Slug = "football", Icon = "⚽" },
-                new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000010"), Name = "Badminton", Slug = "badminton", Icon = "🏸" }
+                // ── Sport ─────────────────────────────────────────────────
+                new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000001"), Name = "Course à pied", Slug = "running", Icon = "🏃", Category = "Sport" },
+                new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000002"), Name = "Randonnée", Slug = "randonnee", Icon = "🥾", Category = "Sport" },
+                new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000003"), Name = "Vélo", Slug = "velo", Icon = "🚴", Category = "Sport" },
+                new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000005"), Name = "Tennis", Slug = "tennis", Icon = "🎾", Category = "Sport" },
+                new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000006"), Name = "Yoga", Slug = "yoga", Icon = "🧘", Category = "Sport" },
+                new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000007"), Name = "Natation", Slug = "natation", Icon = "🏊", Category = "Sport" },
+                new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000008"), Name = "Escalade", Slug = "escalade", Icon = "🧗", Category = "Sport" },
+                new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000009"), Name = "Football", Slug = "football", Icon = "⚽", Category = "Sport" },
+                new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000010"), Name = "Badminton", Slug = "badminton", Icon = "🏸", Category = "Sport" },
+                // ── Boire & manger ────────────────────────────────────────
+                new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000011"), Name = "Café / Verre", Slug = "cafe-verre", Icon = "☕", Category = "Boire & manger" },
+                new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000012"), Name = "Restaurant", Slug = "restaurant", Icon = "🍽️", Category = "Boire & manger" },
+                new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000013"), Name = "Brunch", Slug = "brunch", Icon = "🥐", Category = "Boire & manger" },
+                new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000014"), Name = "Cours de cuisine", Slug = "cours-de-cuisine", Icon = "🍳", Category = "Boire & manger" },
+                // ── Culture ───────────────────────────────────────────────
+                new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000015"), Name = "Cinéma", Slug = "cinema", Icon = "🎬", Category = "Culture" },
+                new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000016"), Name = "Concert", Slug = "concert", Icon = "🎵", Category = "Culture" },
+                new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000017"), Name = "Musée / Expo", Slug = "musee-expo", Icon = "🖼️", Category = "Culture" },
+                new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000018"), Name = "Théâtre", Slug = "theatre", Icon = "🎭", Category = "Culture" },
+                // ── Balades ───────────────────────────────────────────────
+                new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000019"), Name = "Balade urbaine", Slug = "balade-urbaine", Icon = "🚶", Category = "Balades" },
+                new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000020"), Name = "Marché", Slug = "marche", Icon = "🧺", Category = "Balades" },
+                // ── Jeux ──────────────────────────────────────────────────
+                new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000004"), Name = "Jeux de société", Slug = "jeux-de-societe", Icon = "🎲", Category = "Jeux" },
+                new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000021"), Name = "Jeux vidéo", Slug = "jeux-video", Icon = "🎮", Category = "Jeux" },
+                // ── Engagement ────────────────────────────────────────────
+                new Activity { Id = Guid.Parse("a1000000-0000-0000-0000-000000000022"), Name = "Bénévolat", Slug = "benevolat", Icon = "🤝", Category = "Engagement" }
             );
         });
 

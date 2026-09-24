@@ -15,7 +15,7 @@ public class ActivityService : IActivityService
     {
         return await _activities.Query()
             .OrderBy(a => a.Name)
-            .Select(a => new ActivityDto { Id = a.Id, Name = a.Name, Slug = a.Slug, Icon = a.Icon })
+            .Select(a => new ActivityDto { Id = a.Id, Name = a.Name, Slug = a.Slug, Icon = a.Icon, Category = a.Category })
             .ToListAsync();
     }
 }

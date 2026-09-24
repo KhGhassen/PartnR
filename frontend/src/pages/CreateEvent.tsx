@@ -14,6 +14,7 @@ import Button from '../components/ui/Button';
 import Chip from '../components/ui/Chip';
 import Field from '../components/ui/Field';
 import { inputClass } from '../components/ui/classes';
+import { groupByCategory } from '../lib/catalogue';
 import type { Activity } from '../types';
 
 export default function CreateEvent() {
@@ -106,16 +107,25 @@ export default function CreateEvent() {
 
       <form onSubmit={handleSubmit} className="space-y-5 rounded-3xl border border-line bg-white p-8 shadow-card">
         <div>
-          <label className="mb-1.5 block text-xs font-semibold text-ink-mid">Activité</label>
-          <div className="flex flex-wrap gap-2">
-            {activities.map((a) => (
-              <Chip
-                key={a.id}
-                active={form.activityId === a.id}
-                onClick={() => set('activityId', a.id)}
-              >
-                {a.icon} {a.name}
-              </Chip>
+          <label className="mb-1.5 block text-xs font-semibold text-text-2">Activité</label>
+          <div className="space-y-3">
+            {groupByCategory(activities).map((g) => (
+              <div key={g.category}>
+                <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-3">
+                  {g.icon} {g.category}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {g.activities.map((a) => (
+                    <Chip
+                      key={a.id}
+                      active={form.activityId === a.id}
+                      onClick={() => set('activityId', a.id)}
+                    >
+                      {a.icon} {a.name}
+                    </Chip>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
           {validationErrors.activityId && <p className="mt-1 text-xs text-red-500">{validationErrors.activityId}</p>}

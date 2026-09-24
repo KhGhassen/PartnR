@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   StyleSheet, KeyboardAvoidingView, Platform,
@@ -6,22 +6,33 @@ import {
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { T } from '../constants/tokens';
-import { INTERESTS } from '../constants/data';
+import { listActivities, groupByCategory, type Activity } from '../api/activities';
 import { useApp } from '../context/AppContext';
 import CTAButton from '../components/CTAButton';
 
 export default function Onboarding() {
   const insets = useSafeAreaInsets();
-  const { setPendingName } = useApp();
+  const { setPendingName, setPendingInterests } = useApp();
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
   const [selected, setSelected] = useState<string[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
+
+  // The picks used to be a hard-coded English list ("Running", "Coffee",
+  // "Jazz") that matched nothing in the French catalogue — and were then
+  // thrown away anyway. This is the real catalogue, and it is saved.
+  useEffect(() => {
+    listActivities().then(setActivities).catch(() => {});
+  }, []);
 
   const toggle = (item: string) =>
     setSelected((s) => (s.includes(item) ? s.filter((x) => x !== item) : [...s, item]));
 
-  const finish = () => {
+  // Takes the picks explicitly: "Passer" calls setSelected([]) then finish() in
+  // the same tick, and a closure over `selected` would still see the old list.
+  const finish = (interests: string[] = selected) => {
     setPendingName(name.trim());
+    setPendingInterests(interests);
     router.push('/register');
   };
 
@@ -75,36 +86,51 @@ export default function Onboarding() {
     <View style={[styles.screen, { paddingTop: insets.top + 24 }]}>
       <StepDots current={1} />
       <Text style={styles.stepTitle}>Vos centres d'intérêt</Text>
-      <Text style={styles.stepSub}>Sélectionnez-en au moins 3.</Text>
+      <Text style={styles.stepSub}>Choisissez ce qui vous fait envie — modifiable à tout moment.</Text>
 
       <ScrollView
         contentContainerStyle={styles.interestsGrid}
         showsVerticalScrollIndicator={false}
         style={{ flex: 1 }}
       >
-        {INTERESTS.map((item) => {
-          const active = selected.includes(item);
-          return (
-            <TouchableOpacity
-              key={item}
-              onPress={() => toggle(item)}
-              activeOpacity={0.75}
-              style={[styles.interestChip, active ? styles.chipActive : styles.chipInactive]}
-            >
-              <Text style={[styles.chipText, active ? styles.chipTextActive : styles.chipTextInactive]}>
-                {item}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
+        {activities.length === 0 ? (
+          <Text style={styles.chipText}>Chargement du catalogue…</Text>
+        ) : (
+          groupByCategory(activities).map((g) => (
+            <View key={g.category} style={{ width: '100%', marginBottom: 6 }}>
+              <Text style={styles.categoryLabel}>{g.icon}  {g.category}</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                {g.activities.map((a) => {
+                  const active = selected.includes(a.name);
+                  return (
+                    <TouchableOpacity
+                      key={a.id}
+                      onPress={() => toggle(a.name)}
+                      activeOpacity={0.75}
+                      style={[styles.interestChip, active ? styles.chipActive : styles.chipInactive]}
+                    >
+                      <Text style={[styles.chipText, active ? styles.chipTextActive : styles.chipTextInactive]}>
+                        {a.icon} {a.name}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          ))
+        )}
       </ScrollView>
 
-      <View style={{ paddingHorizontal: 24, paddingBottom: insets.bottom + 16, paddingTop: 12 }}>
+      {/* Never gate sign-up on this step: with the API cold-starting for 30 s,
+          a catalogue that has not loaded yet would otherwise be a dead end. */}
+      <View style={{ paddingHorizontal: 24, paddingBottom: insets.bottom + 16, paddingTop: 12, gap: 10 }}>
         <CTAButton
-          label={`Créer mon compte${selected.length >= 3 ? ' →' : ''}`}
-          onPress={finish}
-          disabled={selected.length < 3}
+          label={selected.length > 0 ? `Créer mon compte (${selected.length}) →` : 'Créer mon compte →'}
+          onPress={() => finish()}
         />
+        <TouchableOpacity onPress={() => finish([])} style={{ alignSelf: 'center', paddingVertical: 6 }}>
+          <Text style={styles.chipText}>Passer cette étape</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -151,6 +177,7 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_400Regular', color: T.text, backgroundColor: '#fff',
   },
 
+  categoryLabel: { fontSize: 11, fontWeight: '600', color: T.textSub, letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 8, marginTop: 6, fontFamily: 'DMSans_600SemiBold' },
   interestsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingBottom: 8 },
   interestChip:  { borderRadius: 999, borderWidth: 1.5, paddingHorizontal: 14, paddingVertical: 7 },
   chipActive:    { borderColor: T.coral, backgroundColor: T.coralL },

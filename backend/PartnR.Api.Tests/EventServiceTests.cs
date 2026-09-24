@@ -596,6 +596,32 @@ public class EventServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task ListAsync_FiltersByCategory()
+    {
+        var concertId = Guid.Parse("a1000000-0000-0000-0000-000000000016");
+        _db.Activities.Add(new Activity { Id = concertId, Name = "Concert", Slug = "concert", Icon = "🎵", Category = "Culture" });
+        await _db.SaveChangesAsync();
+
+        await _service.CreateAsync(_userId, new CreateEventDto
+        {
+            Title = "Footing", City = "Paris", Date = DateTime.UtcNow.AddDays(2), MaxParticipants = 5, ActivityId = _activityId
+        });
+        await _service.CreateAsync(_userId, new CreateEventDto
+        {
+            Title = "Jazz au caveau", City = "Paris", Date = DateTime.UtcNow.AddDays(3), MaxParticipants = 5, ActivityId = concertId
+        });
+
+        var culture = await _service.ListAsync(null, null, null, category: "Culture");
+        Assert.Single(culture.Items);
+        Assert.Equal("Jazz au caveau", culture.Items[0].Title);
+
+        // The seeded test activity has the default category.
+        var sport = await _service.ListAsync(null, null, null, category: "Sport");
+        Assert.Single(sport.Items);
+        Assert.Equal("Footing", sport.Items[0].Title);
+    }
+
+    [Fact]
     public async Task JoinAsync_NotifiesCreator()
     {
         var created = await _service.CreateAsync(_userId, new CreateEventDto
