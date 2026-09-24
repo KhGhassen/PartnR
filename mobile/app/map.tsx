@@ -32,12 +32,12 @@ var map = L.map('map').setView([${center.lat}, ${center.lng}], ${center.zoom});
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
-${hasUser ? `L.circleMarker([${center.lat}, ${center.lng}], {radius:8,color:'#fff',weight:3,fillColor:'#7B65D4',fillOpacity:1}).addTo(map).bindPopup('Vous êtes ici');` : ''}
+${hasUser ? `L.circleMarker([${center.lat}, ${center.lng}], {radius:8,color:'#fff',weight:3,fillColor:'${T.violet}',fillOpacity:1}).addTo(map).bindPopup('Vous êtes ici');` : ''}
 var events = ${JSON.stringify(markers)};
 events.forEach(function(e){
-  var icon = L.divIcon({className:'', html:'<div style="width:38px;height:38px;border-radius:50% 50% 50% 4px;background:#E8603A;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.35);border:2px solid #fff"><span style="transform:rotate(45deg);font-size:17px">'+e.icon+'</span></div>', iconSize:[38,38], iconAnchor:[8,34], popupAnchor:[11,-30]});
+  var icon = L.divIcon({className:'', html:'<div style="width:38px;height:38px;border-radius:50% 50% 50% 4px;background:${T.coral};transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.35);border:2px solid #fff"><span style="transform:rotate(45deg);font-size:17px">'+e.icon+'</span></div>', iconSize:[38,38], iconAnchor:[8,34], popupAnchor:[11,-30]});
   L.marker([e.lat, e.lng], {icon: icon}).addTo(map)
-    .bindPopup('<b>'+e.icon+' '+e.title+'</b><br><small>'+e.sub+'</small><br><a href="#" onclick="window.ReactNativeWebView.postMessage(\\''+e.id+'\\');return false" style="color:#E8603A;font-weight:600">Voir l\\'événement →</a>');
+    .bindPopup('<b>'+e.icon+' '+e.title+'</b><br><small>'+e.sub+'</small><br><a href="#" onclick="window.ReactNativeWebView.postMessage(\\''+e.id+'\\');return false" style="color:${T.coral};font-weight:600">Voir l\\'événement →</a>');
 });
 </script></body></html>`;
 }

@@ -125,11 +125,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: T.text,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: T.border,
     marginBottom: 16,
   },
   error: {
-    color: '#EF4444',
+    color: T.danger,
     fontSize: 13,
     marginBottom: 12,
   },

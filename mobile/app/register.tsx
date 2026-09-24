@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, borderColor: T.border, fontSize: 15,
     fontFamily: 'DMSans_400Regular', color: T.text, backgroundColor: '#fff',
   },
-  error: { fontSize: 13, color: '#E53E3E', fontFamily: 'DMSans_400Regular', textAlign: 'center' },
+  error: { fontSize: 13, color: T.danger, fontFamily: 'DMSans_400Regular', textAlign: 'center' },
 
   cityGrid:  { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   cityChip:  { borderRadius: 999, borderWidth: 1.5, paddingHorizontal: 14, paddingVertical: 7 },
