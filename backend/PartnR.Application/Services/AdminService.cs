@@ -77,6 +77,10 @@ public class AdminService : IAdminService
             throw new InvalidOperationException("Impossible de bannir un administrateur.");
 
         user.IsBanned = isBanned;
+        // The ban used to be read at login only: with 24 h tokens a banned
+        // harasser kept writing in chats for a day while the admin screen said
+        // "banni". Rotating the stamp invalidates every live token.
+        user.SecurityStamp = Guid.NewGuid().ToString();
         await _unitOfWork.SaveChangesAsync();
 
         return MapToDto(user);

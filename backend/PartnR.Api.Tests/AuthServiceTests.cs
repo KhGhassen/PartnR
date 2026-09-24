@@ -128,6 +128,30 @@ public class AuthServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task LoginAsync_LocksAccountAfterFiveFailures_EvenWithRightPassword()
+    {
+        await _service.RegisterAsync(new RegisterDto
+        {
+            FirstName = "Dora",
+            Email = "dora@test.com",
+            Password = "Password1!",
+            City = "Nice"
+        });
+
+        for (var i = 0; i < 5; i++)
+        {
+            await Assert.ThrowsAsync<UnauthorizedAccessException>(
+                () => _service.LoginAsync(new LoginDto { Email = "dora@test.com", Password = "Nope12345!" }));
+        }
+
+        // The sixth attempt carries the correct password and is still refused:
+        // the account is locked, not merely mistyped.
+        var ex = await Assert.ThrowsAsync<UnauthorizedAccessException>(
+            () => _service.LoginAsync(new LoginDto { Email = "dora@test.com", Password = "Password1!" }));
+        Assert.Contains("tentatives", ex.Message);
+    }
+
+    [Fact]
     public async Task LoginAsync_ThrowsOnNonExistentUser()
     {
         await Assert.ThrowsAsync<UnauthorizedAccessException>(

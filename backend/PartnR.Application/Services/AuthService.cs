@@ -51,9 +51,16 @@ public class AuthService : IAuthService
         var user = await _userManager.FindByEmailAsync(dto.Email)
             ?? throw new UnauthorizedAccessException("Invalid credentials.");
 
+        if (await _userManager.IsLockedOutAsync(user))
+            throw new UnauthorizedAccessException("Trop de tentatives. Réessayez dans quelques minutes.");
+
         var valid = await _userManager.CheckPasswordAsync(user, dto.Password);
         if (!valid)
+        {
+            await _userManager.AccessFailedAsync(user);
             throw new UnauthorizedAccessException("Invalid credentials.");
+        }
+        await _userManager.ResetAccessFailedCountAsync(user);
 
         if (user.IsBanned)
             throw new UnauthorizedAccessException("Votre compte a été suspendu.");
@@ -152,7 +159,11 @@ public class AuthService : IAuthService
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email!),
             new Claim(ClaimTypes.Name, user.FirstName),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            // Checked on every request against the stored stamp: banning or a
+            // password change rotates it, which invalidates the token at once
+            // instead of after ExpireMinutes.
+            new Claim("sst", user.SecurityStamp ?? string.Empty)
         };
 
         var token = new JwtSecurityToken(
