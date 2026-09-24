@@ -10,6 +10,10 @@ type AppContextType = {
   // Kept for onboarding pre-fill
   pendingName: string;
   setPendingName: (n: string) => void;
+  // Interests chosen during onboarding, before an account exists. Register
+  // flushes them into the profile once it holds a token.
+  pendingInterests: string[];
+  setPendingInterests: (i: string[]) => void;
   login: (token: string, user: UserInfo) => Promise<void>;
   logout: () => Promise<void>;
 };
@@ -21,6 +25,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [pendingName, setPendingName] = useState('');
+  const [pendingInterests, setPendingInterests] = useState<string[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -52,7 +57,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AppContext.Provider value={{ token, user, isLoading, pendingName, setPendingName, login, logout }}>
+    <AppContext.Provider value={{ token, user, isLoading, pendingName, setPendingName, pendingInterests, setPendingInterests, login, logout }}>
       {children}
     </AppContext.Provider>
   );

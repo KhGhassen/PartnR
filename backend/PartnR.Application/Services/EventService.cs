@@ -29,7 +29,7 @@ public class EventService : IEventService
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<PaginatedResult<EventDto>> ListAsync(string? city, Guid? activityId, EventStatus? status, int page = 1, int pageSize = 20, bool mine = false, Guid? userId = null, double? lat = null, double? lng = null, double? radiusKm = null, string? search = null)
+    public async Task<PaginatedResult<EventDto>> ListAsync(string? city, Guid? activityId, EventStatus? status, int page = 1, int pageSize = 20, bool mine = false, Guid? userId = null, double? lat = null, double? lng = null, double? radiusKm = null, string? search = null, string? category = null)
     {
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 50);
@@ -56,6 +56,8 @@ public class EventService : IEventService
             query = query.Where(e => e.City.ToLower() == city.ToLower());
         if (activityId.HasValue)
             query = query.Where(e => e.ActivityId == activityId.Value);
+        if (!string.IsNullOrWhiteSpace(category))
+            query = query.Where(e => e.Activity.Category == category);
         if (status.HasValue)
             query = query.Where(e => e.Status == status.Value);
         else

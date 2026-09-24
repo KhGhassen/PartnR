@@ -7,7 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { T } from '../../constants/tokens';
 import { listEvents, type EventSummary } from '../../api/events';
-import { listActivities, type Activity } from '../../api/activities';
+import { listActivities, groupByCategory, type Activity } from '../../api/activities';
 import { listNotifications } from '../../api/notifications';
 import { useApp } from '../../context/AppContext';
 import Avatar from '../../components/Avatar';
@@ -18,6 +18,7 @@ export default function HomeScreen() {
   const { user } = useApp();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [activeFilter, setActiveFilter] = useState('Tous');
+  const [activeCategory, setActiveCategory] = useState('');
   const [events, setEvents] = useState<EventSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -98,9 +99,15 @@ export default function HomeScreen() {
     }
   }, [nearMe, fetchEvents, search]);
 
-  const filtered = activeFilter === 'Tous'
-    ? events
-    : events.filter((e) => e.activityName === activeFilter);
+  const groups = groupByCategory(activities);
+  const selectedGroup = groups.find((g) => g.category === activeCategory) ?? null;
+  const categoryNames = new Set(selectedGroup?.activities.map((a) => a.name) ?? []);
+
+  const filtered = activeFilter !== 'Tous'
+    ? events.filter((e) => e.activityName === activeFilter)
+    : selectedGroup
+    ? events.filter((e) => categoryNames.has(e.activityName))
+    : events;
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
@@ -159,16 +166,35 @@ export default function HomeScreen() {
           active={nearMe}
           onPress={toggleNearMe}
         />
-        <Pill label="Tous" active={activeFilter === 'Tous'} onPress={() => setActiveFilter('Tous')} />
-        {activities.map((a) => (
+        <Pill
+          label="Tous"
+          active={activeFilter === 'Tous' && !activeCategory}
+          onPress={() => { setActiveFilter('Tous'); setActiveCategory(''); }}
+        />
+        {groups.map((g) => (
           <Pill
-            key={a.id}
-            label={`${a.icon} ${a.name}`}
-            active={activeFilter === a.name}
-            onPress={() => setActiveFilter(a.name)}
+            key={g.category}
+            label={`${g.icon} ${g.category}`}
+            active={activeCategory === g.category}
+            onPress={() => {
+              setActiveFilter('Tous');
+              setActiveCategory((c) => (c === g.category ? '' : g.category));
+            }}
           />
         ))}
       </ScrollView>
+      {selectedGroup && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filters} style={styles.filtersScroll}>
+          {selectedGroup.activities.map((a) => (
+            <Pill
+              key={a.id}
+              label={`${a.icon} ${a.name}`}
+              active={activeFilter === a.name}
+              onPress={() => setActiveFilter((f) => (f === a.name ? 'Tous' : a.name))}
+            />
+          ))}
+        </ScrollView>
+      )}
 
       {/* Feed */}
       <ScrollView

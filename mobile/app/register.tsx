@@ -10,11 +10,12 @@ import { register as apiRegister } from '../api/auth';
 import { listCities } from '../api/cities';
 import { toApiError } from '../api/client';
 import { useApp } from '../context/AppContext';
+import { updateMyProfile } from '../api/profiles';
 import CTAButton from '../components/CTAButton';
 
 export default function RegisterScreen() {
   const insets = useSafeAreaInsets();
-  const { login, pendingName } = useApp();
+  const { login, pendingName, pendingInterests, setPendingInterests } = useApp();
 
   const [firstName, setFirstName] = useState(pendingName);
   const [email, setEmail] = useState('');
@@ -40,6 +41,11 @@ export default function RegisterScreen() {
         city: city.trim(),
       });
       await login(token, user);
+      if (pendingInterests.length > 0) {
+        // Fire-and-forget: the account exists either way, favourites are a nicety.
+        updateMyProfile({ favoriteActivities: pendingInterests }).catch(() => {});
+        setPendingInterests([]);
+      }
       router.replace('/(tabs)');
     } catch (err) {
       setError(toApiError(err).message);

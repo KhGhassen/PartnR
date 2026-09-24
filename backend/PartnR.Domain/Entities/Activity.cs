@@ -6,6 +6,7 @@ public class Activity
     public string Name { get; set; } = string.Empty;       // "Running"
     public string Slug { get; set; } = string.Empty;       // "running"
     public string Icon { get; set; } = "🏃";               // Emoji
+    public string Category { get; set; } = "Sport";       // Groups the picker; see AppDbContext seed
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Navigation
