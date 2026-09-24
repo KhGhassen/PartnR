@@ -91,7 +91,8 @@ public class EventServiceTests : IDisposable
         };
 
         var created = await _service.CreateAsync(_userId, dto);
-        var result = await _service.GetByIdAsync(created.Id);
+        // The roster is only served to signed-in viewers.
+        var result = await _service.GetByIdAsync(created.Id, Guid.NewGuid());
 
         Assert.Equal("Yoga Session", result.Title);
         Assert.Single(result.Participants);
