@@ -10,9 +10,9 @@
    button on a screen, and pastel tones per activity category so a card can
    be recognised before it is read.
 
-   Two layers: semantic tokens are what new code uses; the legacy aliases
-   (cream, ink*, coral-*, violet-*) keep the pages not yet migrated coherent
-   with the new palette and disappear file by file.
+   Semantic tokens only: a theme is a permutation of their values, and no
+   page carries a literal Tailwind colour (white on the primary is the one
+   exception, and it is deliberate).
 
    Every text/background pair was checked against WCAG 2.1 AA (4.5:1 for
    text, 3:1 for control outlines). Ratios noted where they matter.
@@ -77,43 +77,6 @@
   --color-cat-games-text: #9d174d;
   --color-cat-care: #fef3c7;
   --color-cat-care-text: #92400e;
-
-  /* ── Legacy aliases (migrating) ───────────────────────────────────────── */
-  --color-accent: #2563eb;
-  --color-accent-strong: #1d4ed8;
-  --color-accent-surface: #e8f0fe;
-  --color-on-accent: #ffffff;
-  --color-night: #0f172a;
-  --color-night-2: #1e293b;
-
-  --color-cream: #f4f7fb;
-  --color-cream-deep: #e9eff6;
-  --color-ink: #111827;
-  --color-ink-mid: #374151;
-  --color-ink-sub: #5b6472;
-  --color-line: #e2e8f0;
-
-  --color-coral-50: #e8f0fe;
-  --color-coral-100: #d2e2fd;
-  --color-coral-200: #a9c6fb;
-  --color-coral-300: #7ea8f7;
-  --color-coral-400: #4f86f0;
-  --color-coral-500: #2563eb;
-  --color-coral-600: #1d4ed8;
-  --color-coral-700: #1e40af;
-  --color-coral-800: #1e3a8a;
-  --color-coral-900: #172554;
-
-  --color-violet-50: #ede9fe;
-  --color-violet-100: #ddd6fe;
-  --color-violet-200: #c4b5fd;
-  --color-violet-300: #a78bfa;
-  --color-violet-400: #8b5cf6;
-  --color-violet-500: #7c3aed;
-  --color-violet-600: #6d28d9;
-  --color-violet-700: #5b21b6;
-  --color-violet-800: #4c1d95;
-  --color-violet-900: #3b0764;
 
   /* ── Shape: generous, friendly, one scale ─────────────────────────────── */
   --radius-lg: 0.75rem;
@@ -221,60 +184,6 @@
   --color-cat-care: #382a0c;
   --color-cat-care-text: #fcd34d;
 
-  --color-accent: #7cb0ff;
-  --color-accent-strong: #a8ccff;
-  --color-accent-surface: #1e3260;
-  --color-on-accent: #0f172a;
-
-  --color-cream: #0f172a;
-  --color-cream-deep: #263247;
-  --color-ink: #f1f5f9;
-  --color-ink-mid: #cbd5e1;
-  --color-ink-sub: #9aa8bc;
-  --color-line: #2f3d54;
-
-  --color-coral-50: #1e3260;
-  --color-coral-100: #23407a;
-  --color-coral-300: #5b8fe6;
-  --color-coral-400: #6ea3ff;
-  --color-coral-500: #7cb0ff;
-  --color-coral-600: #a8ccff;
-  --color-coral-700: #a8ccff;
-
-  --color-violet-50: #2e2650;
-  --color-violet-500: #b39cff;
-  --color-violet-700: #cdbfff;
-
   --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.4), 0 8px 24px -8px rgb(0 0 0 / 0.5);
   --shadow-card-hover: 0 2px 4px 0 rgb(0 0 0 / 0.5), 0 16px 36px -10px rgb(0 0 0 / 0.6);
 }
-
-/* Literal Tailwind utilities that carry their own colour and therefore cannot
-   follow a token. Temporary: this block shrinks as files migrate to semantic
-   classes, and is deleted once a grep returns nothing. */
-[data-theme='dark'] .bg-white { background-color: var(--color-surface); }
-[data-theme='dark'] .bg-gray-50,
-[data-theme='dark'] .bg-gray-100 { background-color: var(--color-surface-sunken); }
-[data-theme='dark'] .text-gray-900,
-[data-theme='dark'] .text-gray-800 { color: var(--color-text); }
-[data-theme='dark'] .text-gray-700,
-[data-theme='dark'] .text-gray-600 { color: var(--color-text-2); }
-[data-theme='dark'] .text-gray-500,
-[data-theme='dark'] .text-gray-400 { color: var(--color-text-3); }
-[data-theme='dark'] .border-gray-200,
-[data-theme='dark'] .border-gray-100 { border-color: var(--color-border); }
-
-[data-theme='dark'] .bg-emerald-50,
-[data-theme='dark'] .bg-green-50 { background-color: var(--color-success-surface); }
-[data-theme='dark'] .text-emerald-700,
-[data-theme='dark'] .text-emerald-600,
-[data-theme='dark'] .text-green-700,
-[data-theme='dark'] .text-green-600 { color: var(--color-success); }
-
-[data-theme='dark'] .bg-red-50 { background-color: var(--color-danger-surface); }
-[data-theme='dark'] .border-red-100 { border-color: var(--color-danger-surface); }
-[data-theme='dark'] .text-red-600,
-[data-theme='dark'] .text-red-500 { color: var(--color-danger); }
-
-[data-theme='dark'] .bg-amber-50 { background-color: var(--color-warn-surface); }
-[data-theme='dark'] .text-amber-700 { color: var(--color-warn); }
