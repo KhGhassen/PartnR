@@ -49,7 +49,7 @@ function NavItem({
       }
     >
       <span aria-hidden="true">{icon}</span>
-      <span className={compact ? 'sr-only xl:not-sr-only' : undefined}>{children}</span>
+      <span className={compact ? 'sr-only 2xl:not-sr-only' : undefined}>{children}</span>
     </NavLink>
   );
 }
