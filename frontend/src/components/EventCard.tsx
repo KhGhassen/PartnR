@@ -48,7 +48,7 @@ export default function EventCard({ ev, showStatus = false }: EventCardProps) {
         {/* The date is what people scan first; a calendar leaf reads at a glance. */}
         <div className="absolute left-4 top-4 flex min-w-14 flex-col items-center rounded-2xl bg-surface px-3 py-1.5 shadow-card">
           <span className="text-2xl font-extrabold leading-none tabular-nums text-text">{dayFmt.format(date)}</span>
-          <span className="text-xs font-bold uppercase text-text-3">{monthFmt.format(date).replace('.', '')}</span>
+          <span className="text-sm font-bold uppercase text-text-3">{monthFmt.format(date).replace('.', '')}</span>
         </div>
 
         <span className={`absolute right-4 top-4 rounded-full bg-surface/95 px-3 py-1 text-sm font-bold ${tone.text}`}>
@@ -71,7 +71,7 @@ export default function EventCard({ ev, showStatus = false }: EventCardProps) {
             <span className="capitalize">{weekdayFmt.format(date)}</span> à {timeFmt.format(date).replace(':', 'h')}
           </span>
           {ev.isRecurring && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-violet-surface px-2 py-0.5 text-xs font-bold text-violet-strong">
+            <span className="inline-flex items-center gap-1 rounded-full bg-violet-surface px-2 py-0.5 text-sm font-bold text-violet-strong">
               <Repeat2 size={12} aria-hidden="true" />
               {ev.upcomingOccurrences ? `${ev.upcomingOccurrences} dates` : 'Chaque semaine'}
             </span>

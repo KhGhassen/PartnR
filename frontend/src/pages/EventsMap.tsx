@@ -17,7 +17,7 @@ const RADII = [5, 10, 25, 50];
 const eventIcon = (emoji: string, highlighted = false) =>
   L.divIcon({
     className: '',
-    html: `<div style="width:38px;height:38px;border-radius:50% 50% 50% 4px;background:${highlighted ? '#B8421E' : '#E8603A'};transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgb(0 0 0 / .35);border:2px solid #fff"><span style="transform:rotate(45deg);font-size:17px">${emoji}</span></div>`,
+    html: `<div style="width:38px;height:38px;border-radius:50% 50% 50% 4px;background:${highlighted ? '#1D4ED8' : '#2563EB'};transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgb(0 0 0 / .35);border:2px solid #fff"><span style="transform:rotate(45deg);font-size:17px">${emoji}</span></div>`,
     iconSize: [38, 38],
     iconAnchor: [8, 34],
     popupAnchor: [11, -30],
@@ -25,7 +25,7 @@ const eventIcon = (emoji: string, highlighted = false) =>
 
 const userIcon = L.divIcon({
   className: '',
-  html: '<div style="width:16px;height:16px;border-radius:50%;background:#7B65D4;border:3px solid #fff;box-shadow:0 0 0 4px rgb(123 101 212 / .3)"></div>',
+  html: '<div style="width:16px;height:16px;border-radius:50%;background:#7C3AED;border:3px solid #fff;box-shadow:0 0 0 4px rgb(124 58 237 / .3)"></div>',
   iconSize: [16, 16],
   iconAnchor: [8, 8],
 });
@@ -77,7 +77,7 @@ export default function EventsMap() {
             // fall through to the generic notice
           }
         }
-        setNotice('Position indisponible — affichage de tous les événements géolocalisés.');
+        setNotice('Position indisponible — affichage de tous les sorties géolocalisés.');
       },
       { enableHighAccuracy: false, timeout: 10000 }
     );
@@ -92,7 +92,7 @@ export default function EventsMap() {
         : await listEvents({ pageSize: 100 });
       setEvents(res.items.filter((e) => e.latitude != null && e.longitude != null));
     } catch {
-      setNotice('Erreur lors du chargement des événements.');
+      setNotice('Erreur lors du chargement des sorties.');
     } finally {
       setLoading(false);
     }
@@ -116,14 +116,14 @@ export default function EventsMap() {
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-ink">
-            {anchor ? 'Événements près de vous' : 'Carte des événements'}
+          <h1 className="text-2xl font-bold tracking-tight text-text">
+            {anchor ? 'Sorties près de vous' : 'Carte des sorties'}
           </h1>
-          {notice && <p className="mt-1 text-sm text-ink-sub">{notice}</p>}
+          {notice && <p className="mt-1 text-sm text-text-3">{notice}</p>}
         </div>
         {anchor && (
           <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-ink-sub">Rayon</span>
+            <span className="text-sm font-medium text-text-3">Rayon</span>
             {RADII.map((r) => (
               <Chip key={r} active={radiusKm === r} onClick={() => setRadiusKm(r)}>
                 {r} km
@@ -146,8 +146,8 @@ export default function EventsMap() {
           ) : events.length === 0 ? (
             <EmptyState
               emoji="📍"
-              title="Aucun événement dans ce rayon."
-              hint={anchor ? 'Essayez un rayon plus large.' : 'Aucun événement géolocalisé pour le moment.'}
+              title="Aucune sortie dans ce rayon."
+              hint={anchor ? 'Essayez un rayon plus large.' : 'Aucune sortie géolocalisé pour le moment.'}
             />
           ) : (
             events.map((ev) => (
@@ -159,20 +159,20 @@ export default function EventsMap() {
                   markerRefs.current[ev.id]?.openPopup();
                 }}
                 onMouseLeave={() => setHovered(null)}
-                className="flex items-center gap-4 rounded-2xl border border-line bg-white p-4 shadow-card transition-all hover:-translate-y-0.5 hover:border-coral-300 hover:shadow-card-hover"
+                className="flex items-center gap-4 rounded-2xl border border-border bg-surface p-4 shadow-card transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-card-hover"
               >
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-coral-50 text-2xl">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary-surface text-2xl">
                   {ev.activityIcon}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold text-ink">{ev.title}</p>
-                  <p className="truncate text-xs text-ink-sub">
+                  <p className="truncate font-semibold text-text">{ev.title}</p>
+                  <p className="truncate text-sm text-text-3">
                     {new Date(ev.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                     {' · '}{ev.city}
                   </p>
                 </div>
                 {ev.distanceKm != null && (
-                  <span className="shrink-0 rounded-full bg-violet-50 px-2.5 py-1 text-xs font-semibold text-violet-700">
+                  <span className="shrink-0 rounded-full bg-violet-surface px-2.5 py-1 text-sm font-semibold text-violet-strong">
                     {ev.distanceKm.toFixed(1)} km
                   </span>
                 )}
@@ -182,7 +182,7 @@ export default function EventsMap() {
         </div>
 
         {/* Map */}
-        <div className="order-1 h-[380px] overflow-hidden rounded-3xl border border-line shadow-card lg:order-2 lg:h-[560px]">
+        <div className="order-1 h-[380px] overflow-hidden rounded-3xl border border-border shadow-card lg:order-2 lg:h-[560px]">
           <MapContainer center={center} zoom={zoom} style={{ height: '100%', width: '100%' }}>
             <Recenter center={center} zoom={zoom} />
             <TileLayer
@@ -206,15 +206,15 @@ export default function EventsMap() {
                 <Popup>
                   <div className="space-y-1">
                     <p className="font-semibold">{ev.activityIcon} {ev.title}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-sm text-text-3">
                       {ev.activityName} · {ev.city}
                       {ev.distanceKm != null ? ` · ${ev.distanceKm.toFixed(1)} km` : ''}
                     </p>
                     <button
                       onClick={() => navigate(`/events/${ev.id}`)}
-                      className="text-sm font-medium text-coral-600 hover:underline"
+                      className="text-sm font-medium text-primary-strong hover:underline"
                     >
-                      Voir l'événement →
+                      Voir la sortie →
                     </button>
                   </div>
                 </Popup>

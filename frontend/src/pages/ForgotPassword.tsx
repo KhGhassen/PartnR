@@ -28,14 +28,14 @@ export default function ForgotPassword() {
   if (sent) {
     return (
       <div className="flex min-h-[80vh] items-center justify-center px-4">
-        <div className="w-full max-w-md rounded-3xl border border-line bg-white p-8 text-center shadow-card">
+        <div className="w-full max-w-md rounded-3xl border border-border bg-surface p-8 text-center shadow-card">
           <div className="mb-4 text-5xl">📧</div>
-          <h1 className="mb-2 text-2xl font-bold tracking-tight text-ink">Email envoyé</h1>
-          <p className="mb-6 text-sm text-ink-sub">
-            Si un compte existe pour <span className="font-medium text-ink">{email}</span>,
+          <h1 className="mb-2 text-2xl font-bold tracking-tight text-text">Email envoyé</h1>
+          <p className="mb-6 text-sm text-text-3">
+            Si un compte existe pour <span className="font-medium text-text">{email}</span>,
             vous recevrez un lien de réinitialisation sous peu.
           </p>
-          <Link to="/login" className="text-sm font-medium text-coral-600 hover:underline">
+          <Link to="/login" className="text-sm font-medium text-primary-strong hover:underline">
             Retour à la connexion
           </Link>
         </div>
@@ -45,14 +45,14 @@ export default function ForgotPassword() {
 
   return (
     <div className="flex min-h-[80vh] items-center justify-center px-4">
-      <div className="w-full max-w-md rounded-3xl border border-line bg-white p-8 shadow-card">
-        <h1 className="mb-2 text-center text-2xl font-bold tracking-tight text-ink">Mot de passe oublié</h1>
-        <p className="mb-6 text-center text-sm text-ink-sub">
+      <div className="w-full max-w-md rounded-3xl border border-border bg-surface p-8 shadow-card">
+        <h1 className="mb-2 text-center text-2xl font-bold tracking-tight text-text">Mot de passe oublié</h1>
+        <p className="mb-6 text-center text-sm text-text-3">
           Entrez votre email pour recevoir un lien de réinitialisation.
         </p>
 
         {error && (
-          <div className="mb-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
+          <div className="mb-4 rounded-2xl border border-danger-surface bg-danger-surface px-4 py-3 text-sm text-danger-strong">{error}</div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -72,7 +72,7 @@ export default function ForgotPassword() {
         </form>
 
         <p className="mt-4 text-center text-sm">
-          <Link to="/login" className="font-medium text-coral-600 hover:underline">
+          <Link to="/login" className="font-medium text-primary-strong hover:underline">
             Retour à la connexion
           </Link>
         </p>

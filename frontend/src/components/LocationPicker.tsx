@@ -99,16 +99,16 @@ export default function LocationPicker({ latitude, longitude, onChange }: Locati
           className={inputClass(false)}
         />
         {searching && (
-          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-ink-sub">Recherche…</span>
+          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-text-3">Recherche…</span>
         )}
         {results.length > 0 && (
-          <ul className="absolute left-0 right-0 top-full z-[1200] mt-1 overflow-hidden rounded-2xl border border-line bg-white shadow-card-hover">
+          <ul className="absolute left-0 right-0 top-full z-[1200] mt-1 overflow-hidden rounded-2xl border border-border bg-surface shadow-card-hover">
             {results.map((r) => (
               <li key={r.place_id}>
                 <button
                   type="button"
                   onClick={() => pick(r)}
-                  className="w-full truncate px-4 py-2.5 text-left text-sm text-ink-mid transition-colors hover:bg-coral-50 hover:text-ink"
+                  className="w-full truncate px-4 py-2.5 text-left text-sm text-text-2 transition-colors hover:bg-primary-surface hover:text-text"
                 >
                   📍 {r.display_name}
                 </button>
@@ -118,7 +118,7 @@ export default function LocationPicker({ latitude, longitude, onChange }: Locati
         )}
       </div>
 
-      <div className="overflow-hidden rounded-2xl border-[1.5px] border-line" style={{ height: 260 }}>
+      <div className="overflow-hidden rounded-2xl border-[1.5px] border-border" style={{ height: 260 }}>
         <MapContainer center={center} zoom={hasPosition ? 13 : 5} style={{ height: '100%', width: '100%' }}>
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -129,8 +129,8 @@ export default function LocationPicker({ latitude, longitude, onChange }: Locati
           {hasPosition && <Marker position={[latitude, longitude]} />}
         </MapContainer>
       </div>
-      <p className="mt-1 text-xs text-ink-sub">
-        Cherchez une adresse ou cliquez sur la carte pour positionner l'événement (optionnel)
+      <p className="mt-1 text-sm text-text-3">
+        Cherchez une adresse ou cliquez sur la carte pour positionner la sortie (optionnel)
       </p>
     </div>
   );

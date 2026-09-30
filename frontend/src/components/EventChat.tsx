@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { HubConnectionBuilder, LogLevel, type HubConnection } from '@microsoft/signalr';
+import { SendHorizontal } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE_URL } from '../api/client';
+import { inputClass } from './ui/classes';
+import Button from './ui/Button';
 import type { ChatMessage } from '../types';
 
 interface Props {
@@ -46,14 +49,14 @@ export default function EventChat({ eventId }: Props) {
     connection.on('ParticipantJoined', (data: { userId: string; firstName: string }) => {
       setMessages((prev) => [
         ...prev,
-        { id: `sys-${Date.now()}`, type: 'system', content: `${data.firstName} a rejoint l'événement` },
+        { id: `sys-${Date.now()}`, type: 'system', content: `${data.firstName} a rejoint la sortie` },
       ]);
     });
 
     connection.on('ParticipantLeft', (data: { userId: string; firstName: string }) => {
       setMessages((prev) => [
         ...prev,
-        { id: `sys-${Date.now()}`, type: 'system', content: `${data.firstName} a quitté l'événement` },
+        { id: `sys-${Date.now()}`, type: 'system', content: `${data.firstName} a quitté la sortie` },
       ]);
     });
 
@@ -86,36 +89,33 @@ export default function EventChat({ eventId }: Props) {
   };
 
   return (
-    <div className="border-t border-gray-200 pt-6">
-      <h2 className="text-lg font-semibold mb-3">Chat du groupe</h2>
+    <section className="mt-8 border-t border-border pt-8">
+      <h2 className="mb-1 text-xl font-extrabold text-text">Discussion du groupe</h2>
+      <p className="mb-3 text-[15px] text-text-2">Visible uniquement par les participants.</p>
 
-      <div className="bg-gray-50 rounded-lg h-80 overflow-y-auto p-4 mb-3 space-y-3">
+      <div className="mb-3 h-80 space-y-3 overflow-y-auto rounded-2xl bg-surface-sunken p-4">
         {messages.length === 0 && (
-          <p className="text-center text-gray-400 text-sm mt-8">
-            Aucun message. Lancez la conversation !
-          </p>
+          <p className="mt-8 text-center text-[15px] text-text-3">Aucun message. Dites bonjour !</p>
         )}
         {messages.map((msg) => {
           if (isSystem(msg)) {
             return (
               <div key={msg.id} className="flex justify-center">
-                <span className="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
-                  {msg.content}
-                </span>
+                <span className="rounded-full bg-surface px-3 py-1 text-sm text-text-3">{msg.content}</span>
               </div>
             );
           }
           const isOwn = msg.userId === user?.id;
           return (
             <div key={msg.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[70%] px-3 py-2 rounded-lg ${
-                isOwn ? 'bg-coral-500 text-white' : 'bg-white border border-line'
-              }`}>
-                {!isOwn && (
-                  <p className="text-xs font-medium text-coral-600 mb-1">{msg.userName}</p>
-                )}
-                <p className="text-sm">{msg.content}</p>
-                <p className={`text-xs mt-1 ${isOwn ? 'text-coral-100' : 'text-ink-sub'}`}>
+              <div
+                className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
+                  isOwn ? 'rounded-br-md bg-primary text-on-primary' : 'rounded-bl-md bg-surface text-text ring-1 ring-border'
+                }`}
+              >
+                {!isOwn && <p className="mb-0.5 text-sm font-bold text-primary-strong">{msg.userName}</p>}
+                <p className="text-base leading-snug">{msg.content}</p>
+                <p className={`mt-1 text-xs ${isOwn ? 'text-white/80' : 'text-text-3'}`}>
                   {new Date(msg.createdAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
                 </p>
               </div>
@@ -131,18 +131,15 @@ export default function EventChat({ eventId }: Props) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={connected ? 'Écrire un message...' : 'Connexion...'}
+          placeholder={connected ? 'Écrire un message…' : 'Connexion…'}
           disabled={!connected}
-          className="flex-1 border-[1.5px] border-line rounded-2xl px-3 py-2 focus:ring-2 focus:ring-coral-500/30 focus:border-coral-500 outline-none disabled:opacity-50"
+          aria-label="Votre message"
+          className={inputClass(false, 'flex-1 disabled:opacity-50')}
         />
-        <button
-          onClick={send}
-          disabled={!connected || !input.trim()}
-          className="bg-coral-500 text-white px-4 py-2 rounded-full font-semibold hover:bg-coral-600 disabled:opacity-50"
-        >
-          Envoyer
-        </button>
+        <Button onClick={send} disabled={!connected || !input.trim()}>
+          <SendHorizontal size={18} aria-hidden="true" /> Envoyer
+        </Button>
       </div>
-    </div>
+    </section>
   );
 }

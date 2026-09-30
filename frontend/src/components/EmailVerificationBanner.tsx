@@ -24,27 +24,27 @@ export default function EmailVerificationBanner() {
   };
 
   return (
-    <div className="bg-amber-50 border-b border-amber-200 text-amber-800 text-sm">
+    <div className="bg-warn-surface border-b border-warn-surface text-warn-strong text-sm">
       <div className="max-w-6xl mx-auto px-4 py-2 flex items-center justify-between gap-4">
         <p>
           Confirmez votre adresse email pour profiter pleinement de PartnR.
           {status === 'sent' && (
             <span className="font-medium"> Email envoyé, vérifiez votre boîte de réception.</span>
           )}
-          {status === 'error' && <span className="font-medium text-red-600"> {error}</span>}
+          {status === 'error' && <span className="font-medium text-danger-strong"> {error}</span>}
         </p>
         <div className="flex items-center gap-3 shrink-0">
           <button
             onClick={handleResend}
             disabled={status === 'sending' || status === 'sent'}
-            className="text-amber-900 font-medium hover:underline disabled:opacity-50"
+            className="text-warn-strong font-medium hover:underline disabled:opacity-50"
           >
             {status === 'sending' ? 'Envoi...' : "Renvoyer l'email"}
           </button>
           <button
             onClick={() => setDismissed(true)}
             aria-label="Fermer"
-            className="text-amber-600 hover:text-amber-900"
+            className="text-warn hover:text-warn-strong"
           >
             ✕
           </button>

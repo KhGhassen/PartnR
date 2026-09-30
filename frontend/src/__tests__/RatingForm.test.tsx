@@ -25,7 +25,7 @@ describe('RatingForm', () => {
   it('renders the form with user name', () => {
     render(<RatingForm {...defaultProps} />);
     expect(screen.getByText('Alice')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Commentaire (optionnel)')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Un mot (facultatif)')).toBeInTheDocument();
   });
 
   it('shows 5 star buttons', () => {
@@ -83,7 +83,7 @@ describe('RatingForm', () => {
     const stars = screen.getAllByRole('button', { name: /étoile/ });
     await userEvent.click(stars[4]);
 
-    const textarea = screen.getByPlaceholderText('Commentaire (optionnel)');
+    const textarea = screen.getByPlaceholderText('Un mot (facultatif)');
     await userEvent.type(textarea, 'Super partenaire !');
 
     await userEvent.click(screen.getByText('Envoyer'));

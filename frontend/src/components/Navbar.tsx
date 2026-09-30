@@ -132,10 +132,12 @@ export default function Navbar() {
               <NotificationBell />
               <Link
                 to={`/profile/${user?.id}`}
-                className="flex min-h-11 items-center gap-2 rounded-full py-1 pl-1 pr-4 transition-colors hover:bg-surface-sunken"
+                aria-label={`Mon profil, ${user?.firstName ?? ''}`}
+                title="Mon profil"
+                className="flex min-h-11 items-center gap-2 rounded-full py-1 pl-1 pr-1 transition-colors hover:bg-surface-sunken 2xl:pr-4"
               >
                 <Avatar name={user?.firstName ?? '?'} url={user?.avatarUrl} size="sm" />
-                <span className="text-[15px] font-bold text-text">{user?.firstName}</span>
+                <span className="hidden text-[15px] font-bold text-text 2xl:inline">{user?.firstName}</span>
               </Link>
               <button
                 onClick={handleLogout}

@@ -56,34 +56,34 @@ export default function AdminUsersPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold tracking-tight text-ink mb-8">Gestion des utilisateurs</h1>
+      <h1 className="text-3xl font-bold tracking-tight text-text mb-8">Gestion des utilisateurs</h1>
 
       <form onSubmit={handleSearchSubmit} className="mb-6 flex gap-3">
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Rechercher par nom ou email..."
-          className="flex-1 border-[1.5px] border-line rounded-2xl px-3 py-2"
+          className="flex-1 rounded-2xl border-2 border-border-input px-4 py-3 text-base outline-none focus:border-primary"
         />
         <button
           type="submit"
-          className="bg-coral-500 text-white px-6 py-2 rounded-full font-semibold hover:bg-coral-600"
+          className="inline-flex min-h-12 items-center rounded-full bg-primary px-6 font-bold text-on-primary hover:bg-primary-hover"
         >
           Rechercher
         </button>
       </form>
 
-      {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+      {error && <p className="text-danger-strong text-sm mb-4">{error}</p>}
 
-      <div className="bg-white rounded-3xl border border-line p-6 shadow-card">
+      <div className="bg-surface rounded-3xl ring-1 ring-border p-6 shadow-card">
         {loading ? (
-          <p className="text-center py-8 text-ink-sub">Chargement...</p>
+          <p className="text-center py-8 text-text-3">Chargement...</p>
         ) : users.length === 0 ? (
-          <p className="text-center py-8 text-ink-sub">Aucun utilisateur trouvé.</p>
+          <p className="text-center py-8 text-text-3">Aucun utilisateur trouvé.</p>
         ) : (
           <table className="w-full text-sm">
             <thead>
-              <tr className="text-left text-ink-sub border-b border-line text-xs uppercase tracking-wide">
+              <tr className="text-left text-text-3 border-b border-border text-sm uppercase tracking-wide">
                 <th className="pb-2 font-medium">Nom</th>
                 <th className="pb-2 font-medium">Email</th>
                 <th className="pb-2 font-medium">Ville</th>
@@ -94,31 +94,31 @@ export default function AdminUsersPage() {
             </thead>
             <tbody>
               {users.map((u) => (
-                <tr key={u.id} className="border-b border-cream-deep last:border-0 hover:bg-cream transition-colors">
+                <tr key={u.id} className="border-b border-border last:border-0 hover:bg-surface-sunken transition-colors">
                   <td className="py-3 font-medium">{u.firstName}</td>
-                  <td className="py-3 text-ink-mid">{u.email}</td>
-                  <td className="py-3 text-ink-mid">{u.city}</td>
-                  <td className="py-3 text-ink-mid">{u.role}</td>
+                  <td className="py-3 text-text-2">{u.email}</td>
+                  <td className="py-3 text-text-2">{u.city}</td>
+                  <td className="py-3 text-text-2">{u.role}</td>
                   <td className="py-3">
                     {u.isBanned ? (
-                      <span className="bg-red-50 text-red-600 px-2 py-1 rounded-full text-xs font-medium">
+                      <span className="bg-danger-surface text-danger-strong px-2 py-1 rounded-full text-sm font-medium">
                         Banni
                       </span>
                     ) : (
-                      <span className="bg-emerald-50 text-emerald-700 px-2 py-1 rounded-full text-xs font-medium">
+                      <span className="bg-success-surface text-success-strong px-2 py-1 rounded-full text-sm font-medium">
                         Actif
                       </span>
                     )}
                   </td>
                   <td className="py-3 text-right">
                     {u.role === 'admin' ? (
-                      <span className="text-ink-sub text-xs">—</span>
+                      <span className="text-text-3 text-sm">—</span>
                     ) : (
                       <button
                         onClick={() => toggleBan(u)}
                         disabled={updatingId === u.id}
                         className={`text-sm font-medium hover:underline disabled:opacity-50 ${
-                          u.isBanned ? 'text-green-600' : 'text-red-600'
+                          u.isBanned ? 'text-success-strong' : 'text-danger-strong'
                         }`}
                       >
                         {updatingId === u.id ? '...' : u.isBanned ? 'Débannir' : 'Bannir'}

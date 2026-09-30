@@ -18,7 +18,7 @@ function renderRegister() {
 describe('Register', () => {
   it('renders the registration form', () => {
     renderRegister();
-    expect(screen.getByText('Inscription')).toBeInTheDocument();
+    expect(screen.getByText('Créer mon compte')).toBeInTheDocument();
     expect(screen.getByText('Prénom')).toBeInTheDocument();
     expect(screen.getByText('Email')).toBeInTheDocument();
     expect(screen.getByText('Mot de passe')).toBeInTheDocument();
@@ -45,7 +45,7 @@ describe('Register', () => {
     const pwInput = document.querySelector('input[type="password"]') as HTMLInputElement;
     await userEvent.type(pwInput, 'weak');
 
-    const submitBtn = screen.getByRole('button', { name: /inscrire/i });
+    const submitBtn = screen.getByRole('button', { name: /inscris/i });
     expect(submitBtn).toBeDisabled();
   });
 
@@ -54,7 +54,7 @@ describe('Register', () => {
     const pwInput = document.querySelector('input[type="password"]') as HTMLInputElement;
     await userEvent.type(pwInput, 'StrongPass1');
 
-    const submitBtn = screen.getByRole('button', { name: /inscrire/i });
+    const submitBtn = screen.getByRole('button', { name: /inscris/i });
     expect(submitBtn).not.toBeDisabled();
   });
 });

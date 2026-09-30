@@ -22,7 +22,7 @@ export default function VerifyEmail() {
   if (status === 'loading') {
     return (
       <div className="flex min-h-[80vh] items-center justify-center">
-        <p className="text-ink-sub">Vérification en cours...</p>
+        <p className="text-text-3">Vérification en cours...</p>
       </div>
     );
   }
@@ -30,10 +30,10 @@ export default function VerifyEmail() {
   if (status === 'success') {
     return (
       <div className="flex min-h-[80vh] items-center justify-center px-4">
-        <div className="w-full max-w-md rounded-3xl border border-line bg-white p-8 text-center shadow-card">
+        <div className="w-full max-w-md rounded-3xl border border-border bg-surface p-8 text-center shadow-card">
           <div className="mb-4 text-5xl">✅</div>
-          <h1 className="mb-2 text-2xl font-bold tracking-tight text-ink">Email confirmé !</h1>
-          <p className="mb-6 text-sm text-ink-sub">Votre adresse email a bien été vérifiée.</p>
+          <h1 className="mb-2 text-2xl font-bold tracking-tight text-text">Email confirmé !</h1>
+          <p className="mb-6 text-sm text-text-3">Votre adresse email a bien été vérifiée.</p>
           <ButtonLink to="/" size="lg">Accéder à l'application</ButtonLink>
         </div>
       </div>
@@ -42,14 +42,14 @@ export default function VerifyEmail() {
 
   return (
     <div className="flex min-h-[80vh] items-center justify-center px-4">
-      <div className="w-full max-w-md rounded-3xl border border-line bg-white p-8 text-center shadow-card">
+      <div className="w-full max-w-md rounded-3xl border border-border bg-surface p-8 text-center shadow-card">
         <div className="mb-4 text-5xl">⚠️</div>
-        <h1 className="mb-2 text-xl font-bold tracking-tight text-ink">Lien invalide ou expiré</h1>
-        <p className="mb-4 text-sm text-ink-sub">Ce lien de confirmation est invalide ou a expiré.</p>
-        <Link to="/login" className="mb-2 block text-sm font-medium text-coral-600 hover:underline">
+        <h1 className="mb-2 text-xl font-bold tracking-tight text-text">Lien invalide ou expiré</h1>
+        <p className="mb-4 text-sm text-text-3">Ce lien de confirmation est invalide ou a expiré.</p>
+        <Link to="/login" className="mb-2 block text-sm font-medium text-primary-strong hover:underline">
           Se connecter
         </Link>
-        <p className="text-xs text-ink-sub">
+        <p className="text-sm text-text-3">
           Connectez-vous et demandez un renvoi de l'email de confirmation depuis votre profil.
         </p>
       </div>

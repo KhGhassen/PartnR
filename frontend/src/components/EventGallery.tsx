@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react';
+import { ImagePlus, X } from 'lucide-react';
 import { addEventPhoto, deleteEventPhoto } from '../api/eventPhotos';
 import { uploadImage } from '../api/uploads';
+import Button from './ui/Button';
 import type { EventPhoto } from '../types';
 
 interface Props {
@@ -47,10 +49,12 @@ export default function EventGallery({ eventId, photos, canAdd, currentUserId, i
     }
   };
 
+  if (photos.length === 0 && !canAdd) return null;
+
   return (
-    <div className="mb-8">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-lg font-semibold">Photos de l'événement</h2>
+    <section className="mt-8">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-xl font-extrabold text-text">Photos</h2>
         {canAdd && (
           <>
             <input
@@ -60,43 +64,39 @@ export default function EventGallery({ eventId, photos, canAdd, currentUserId, i
               className="hidden"
               onChange={(e) => handleFile(e.target.files?.[0])}
             />
-            <button
-              onClick={() => fileRef.current?.click()}
-              disabled={loading}
-              className="text-coral-600 hover:text-coral-700 text-sm font-medium disabled:opacity-50"
-            >
-              {loading ? 'Envoi…' : '+ Ajouter une photo'}
-            </button>
+            <Button variant="secondary" size="sm" onClick={() => fileRef.current?.click()} disabled={loading}>
+              <ImagePlus size={18} aria-hidden="true" /> {loading ? 'Envoi…' : 'Ajouter une photo'}
+            </Button>
           </>
         )}
       </div>
 
-      {error && <p className="text-red-500 text-xs mb-2">{error}</p>}
+      {error && <p className="mb-2 text-sm font-semibold text-danger-strong">{error}</p>}
 
       {photos.length === 0 ? (
-        <p className="text-sm text-gray-500">Aucune photo pour l'instant.</p>
+        <p className="text-[15px] text-text-2">Aucune photo pour l'instant. Les participants peuvent en ajouter après la sortie.</p>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
           {photos.map((p) => (
-            <div key={p.id} className="relative group">
+            <div key={p.id} className="group relative">
               <img
                 src={p.url}
-                alt="Photo de l'événement"
-                className="w-full h-32 object-cover rounded-lg bg-gray-100"
+                alt="Photo de la sortie"
+                className="h-36 w-full rounded-2xl bg-surface-sunken object-cover"
               />
               {(p.uploaderId === currentUserId || isCreator) && (
                 <button
                   onClick={() => handleDelete(p.id)}
-                  className="absolute top-1 right-1 bg-black/60 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-full bg-text/70 text-white opacity-0 transition-opacity focus-visible:opacity-100 group-hover:opacity-100"
                   aria-label="Supprimer la photo"
                 >
-                  ✕
+                  <X size={18} aria-hidden="true" />
                 </button>
               )}
             </div>
           ))}
         </div>
       )}
-    </div>
+    </section>
   );
 }

@@ -44,12 +44,12 @@ export default function PhotoInput({ value, onChange, placeholder = 'Choisir une
       <div className="flex items-center gap-3">
         {value ? (
           <div className="relative">
-            <img src={value} alt="" className="h-20 w-32 rounded-2xl border border-line object-cover bg-cream-deep" />
+            <img src={value} alt="" className="h-20 w-32 rounded-2xl border border-border object-cover bg-surface-sunken" />
             <button
               type="button"
               onClick={() => onChange('')}
               aria-label="Retirer la photo"
-              className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-ink text-xs text-white transition-colors hover:bg-red-500"
+              className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-text text-sm text-white transition-colors hover:bg-danger"
             >
               ✕
             </button>
@@ -59,10 +59,10 @@ export default function PhotoInput({ value, onChange, placeholder = 'Choisir une
             type="button"
             onClick={() => inputRef.current?.click()}
             disabled={uploading}
-            className="flex h-20 w-32 flex-col items-center justify-center gap-1 rounded-2xl border-[1.5px] border-dashed border-line bg-cream text-ink-sub transition-colors hover:border-coral-300 hover:text-coral-600 disabled:opacity-50"
+            className="flex h-20 w-32 flex-col items-center justify-center gap-1 rounded-2xl border-[1.5px] border-dashed border-border bg-surface-sunken text-text-3 transition-colors hover:border-primary hover:text-primary-strong disabled:opacity-50"
           >
             <span className="text-xl">📷</span>
-            <span className="text-xs font-medium">{uploading ? 'Envoi…' : placeholder}</span>
+            <span className="text-sm font-medium">{uploading ? 'Envoi…' : placeholder}</span>
           </button>
         )}
         {value && (
@@ -70,13 +70,13 @@ export default function PhotoInput({ value, onChange, placeholder = 'Choisir une
             type="button"
             onClick={() => inputRef.current?.click()}
             disabled={uploading}
-            className="text-sm font-medium text-coral-600 hover:underline disabled:opacity-50"
+            className="text-sm font-medium text-primary-strong hover:underline disabled:opacity-50"
           >
             {uploading ? 'Envoi…' : 'Changer'}
           </button>
         )}
       </div>
-      {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
+      {error && <p className="mt-1 text-sm text-danger-strong">{error}</p>}
     </div>
   );
 }
