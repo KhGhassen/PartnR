@@ -36,11 +36,11 @@ export default function Login() {
 
   return (
     <AuthLayout>
-      <h1 className="mb-1 text-2xl font-bold tracking-tight text-ink">Bon retour 👋</h1>
-      <p className="mb-6 text-sm text-ink-sub">Connectez-vous pour retrouver vos activités.</p>
+      <h1 className="mb-1 text-3xl font-extrabold text-text">Content de vous revoir</h1>
+      <p className="mb-6 text-base text-text-2">Connectez-vous pour retrouver vos sorties.</p>
 
       {error && (
-        <div className="mb-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
+        <div className="mb-4 rounded-2xl bg-danger-surface px-4 py-3 font-semibold text-danger-strong">{error}</div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -65,7 +65,7 @@ export default function Login() {
           />
         </Field>
         <div className="flex justify-end">
-          <Link to="/forgot-password" className="text-xs font-medium text-coral-600 hover:underline">
+          <Link to="/forgot-password" className="text-[15px] font-bold text-primary-strong hover:underline">
             Mot de passe oublié ?
           </Link>
         </div>
@@ -74,13 +74,13 @@ export default function Login() {
         </Button>
       </form>
 
-      <p className="mt-5 text-center text-sm text-ink-sub">
+      <p className="mt-6 text-center text-base text-text-2">
         Pas encore de compte ?{' '}
         <Link
           to={redirect !== '/' ? `/register?redirect=${encodeURIComponent(redirect)}` : '/register'}
-          className="font-semibold text-coral-600 hover:underline"
+          className="font-bold text-primary-strong hover:underline"
         >
-          S'inscrire
+          Créer un compte
         </Link>
       </p>
     </AuthLayout>

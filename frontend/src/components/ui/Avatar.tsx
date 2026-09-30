@@ -1,14 +1,16 @@
 const PALETTE = [
-  { bg: 'bg-coral-50', text: 'text-coral-700' },
-  { bg: 'bg-violet-50', text: 'text-violet-700' },
-  { bg: 'bg-amber-50', text: 'text-amber-700' },
-  { bg: 'bg-emerald-50', text: 'text-emerald-700' },
+  'bg-primary-surface text-primary-strong',
+  'bg-violet-surface text-violet-strong',
+  'bg-sun-surface text-sun-strong',
+  'bg-success-surface text-success-strong',
+  'bg-cat-games text-cat-games-text',
+  'bg-cat-walk text-cat-walk-text',
 ];
 
 const sizes = {
-  sm: 'h-8 w-8 text-xs',
-  md: 'h-10 w-10 text-sm',
-  lg: 'h-16 w-16 text-2xl',
+  sm: 'h-9 w-9 text-sm',
+  md: 'h-11 w-11 text-base',
+  lg: 'h-20 w-20 text-3xl',
 };
 
 interface AvatarProps {
@@ -24,14 +26,14 @@ export default function Avatar({ name, url, size = 'md', className = '' }: Avata
       <img
         src={url}
         alt={name}
-        className={`${sizes[size]} rounded-full object-cover bg-cream-deep ${className}`}
+        className={`${sizes[size]} rounded-full object-cover bg-surface-sunken ${className}`}
       />
     );
   }
   const color = PALETTE[(name.charCodeAt(0) || 0) % PALETTE.length];
   return (
     <div
-      className={`${sizes[size]} ${color.bg} ${color.text} flex shrink-0 items-center justify-center rounded-full font-bold ${className}`}
+      className={`${sizes[size]} ${color} flex shrink-0 items-center justify-center rounded-full font-extrabold ${className}`}
     >
       {name[0]?.toUpperCase() ?? '?'}
     </div>

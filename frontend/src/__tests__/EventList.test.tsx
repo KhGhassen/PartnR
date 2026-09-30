@@ -116,7 +116,7 @@ describe('EventList', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Aucun événement trouvé.')).toBeInTheDocument();
+      expect(screen.getByText('Aucune sortie pour l\'instant.')).toBeInTheDocument();
     });
   });
 
