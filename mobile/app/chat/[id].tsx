@@ -32,7 +32,7 @@ export default function ChatDetail() {
   const confirmBlock = (userId: string, name: string) =>
     Alert.alert(
       `Bloquer ${name} ?`,
-      "Cette personne ne verra plus vos événements, ne pourra plus les rejoindre, et vos messages seront masqués l'un pour l'autre.",
+      "Cette personne ne verra plus vos sorties, ne pourra plus les rejoindre, et vos messages seront masqués l'un pour l'autre.",
       [
         { text: 'Annuler', style: 'cancel' },
         {
