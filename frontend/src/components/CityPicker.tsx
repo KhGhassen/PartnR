@@ -87,14 +87,14 @@ export default function CityPicker({ value, onChange, placeholder = 'Votre ville
         className={inputClass(error)}
       />
       {open && results.length > 0 && (
-        <ul className="absolute left-0 right-0 top-full z-[1200] mt-1 overflow-hidden rounded-2xl border border-line bg-white shadow-card-hover">
+        <ul className="absolute left-0 right-0 top-full z-[1200] mt-1 overflow-hidden rounded-2xl border border-border bg-surface shadow-card-hover">
           {results.map((c, i) => (
             <li key={`${c.nom}-${i}`}>
               <button
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => pick(c)}
-                className="w-full truncate px-4 py-2.5 text-left text-sm text-ink-mid transition-colors hover:bg-coral-50 hover:text-ink"
+                className="w-full truncate px-4 py-2.5 text-left text-sm text-text-2 transition-colors hover:bg-primary-surface hover:text-text"
               >
                 📍 {c.nom}
               </button>

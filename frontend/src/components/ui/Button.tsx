@@ -1,30 +1,31 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
-type Variant = 'primary' | 'soft' | 'ghost' | 'danger' | 'violet';
+type Variant = 'primary' | 'sun' | 'secondary' | 'soft' | 'ghost' | 'danger' | 'violet';
 type Size = 'sm' | 'md' | 'lg';
 
-// Buttons are 10px-radius rectangles; chips stay pills. With 53 rounded-full
-// classes in the app a filter chip and a primary action were the same object —
-// the shape contrast is what separates "action" from "filter".
+// Pills, bold, never under 44 px tall: a button has to look like a button to
+// someone who does not use the web every day, and be easy to hit with a
+// finger or a shaky hand.
 const base =
-  'inline-flex items-center justify-center gap-2 font-semibold rounded-xl transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none whitespace-nowrap';
+  'inline-flex items-center justify-center gap-2 rounded-full font-bold transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none whitespace-nowrap active:scale-[0.98]';
 
-// text-on-accent, never a literal white: on the light theme the accent carries
-// white, on the dark theme it carries ink. White on a light accent is 2.8:1 —
-// the mistake most dark modes ship.
+// on-primary, never a literal white: the light theme carries white on the
+// primary, the dark theme carries ink on a light primary.
 const variants: Record<Variant, string> = {
-  primary: 'bg-accent text-on-accent hover:bg-accent-strong shadow-card',
-  violet: 'bg-violet text-on-accent hover:opacity-90 shadow-card',
-  soft: 'bg-accent-surface text-accent-strong hover:brightness-95 border border-accent-surface',
-  ghost: 'bg-surface text-text-2 border border-border-strong hover:text-text',
-  danger: 'bg-danger-surface text-danger border border-danger-surface hover:brightness-95',
+  primary: 'bg-primary text-on-primary hover:bg-primary-hover shadow-card',
+  sun: 'bg-sun text-on-sun hover:brightness-95 shadow-card',
+  secondary: 'bg-primary-surface text-primary-strong hover:brightness-95',
+  soft: 'bg-primary-surface text-primary-strong hover:brightness-95',
+  ghost: 'bg-surface text-text border-2 border-border hover:border-border-strong hover:bg-surface-sunken',
+  danger: 'bg-danger-surface text-danger-strong border-2 border-danger-surface hover:brightness-95',
+  violet: 'bg-violet text-white hover:opacity-90 shadow-card',
 };
 
 const sizes: Record<Size, string> = {
-  sm: 'text-xs px-3.5 py-1.5',
-  md: 'text-sm px-5 py-2.5',
-  lg: 'text-base px-7 py-3',
+  sm: 'min-h-11 px-5 text-[15px]',
+  md: 'min-h-12 px-6 text-base',
+  lg: 'min-h-14 px-8 text-lg',
 };
 
 function buttonClass(variant: Variant = 'primary', size: Size = 'md', extra = '') {

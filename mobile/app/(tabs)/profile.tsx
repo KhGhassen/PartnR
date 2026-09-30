@@ -207,7 +207,7 @@ export default function ProfileScreen() {
           onPress={() =>
             Alert.alert(
               'Supprimer mon compte',
-              'Vos événements, messages et notes seront définitivement effacés. Cette action est irréversible.',
+              'Vos sorties, messages et notes seront définitivement effacés. Cette action est irréversible.',
               [
                 { text: 'Annuler', style: 'cancel' },
                 {

@@ -21,7 +21,7 @@ export default function MessagesScreen() {
       setEvents(r.items);
       setError('');
     } catch {
-      setError('Impossible de charger vos événements.');
+      setError('Impossible de charger vos sorties.');
     }
   }, []);
 
@@ -39,7 +39,7 @@ export default function MessagesScreen() {
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <Text style={styles.title}>Messages</Text>
-        <Text style={styles.sub}>Vos événements</Text>
+        <Text style={styles.sub}>Vos sorties</Text>
       </View>
 
       {loading ? (
@@ -79,7 +79,7 @@ export default function MessagesScreen() {
             <View style={styles.emptyBox}>
               <Text style={styles.emptyIcon}>💬</Text>
               <Text style={styles.emptyTitle}>Aucun chat pour l'instant</Text>
-              <Text style={styles.emptySub}>Rejoignez un événement pour accéder à son chat.</Text>
+              <Text style={styles.emptySub}>Rejoignez une sortie pour accéder à son chat.</Text>
             </View>
           )}
         </ScrollView>

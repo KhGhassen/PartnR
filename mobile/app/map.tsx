@@ -37,7 +37,7 @@ var events = ${JSON.stringify(markers)};
 events.forEach(function(e){
   var icon = L.divIcon({className:'', html:'<div style="width:38px;height:38px;border-radius:50% 50% 50% 4px;background:${T.coral};transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.35);border:2px solid #fff"><span style="transform:rotate(45deg);font-size:17px">'+e.icon+'</span></div>', iconSize:[38,38], iconAnchor:[8,34], popupAnchor:[11,-30]});
   L.marker([e.lat, e.lng], {icon: icon}).addTo(map)
-    .bindPopup('<b>'+e.icon+' '+e.title+'</b><br><small>'+e.sub+'</small><br><a href="#" onclick="window.ReactNativeWebView.postMessage(\\''+e.id+'\\');return false" style="color:${T.coral};font-weight:600">Voir l\\'événement →</a>');
+    .bindPopup('<b>'+e.icon+' '+e.title+'</b><br><small>'+e.sub+'</small><br><a href="#" onclick="window.ReactNativeWebView.postMessage(\\''+e.id+'\\');return false" style="color:${T.coral};font-weight:600">Voir l\\'sortie →</a>');
 });
 </script></body></html>`;
 }
@@ -61,10 +61,10 @@ export default function MapScreen() {
           center = { lat: pos.coords.latitude, lng: pos.coords.longitude, zoom: 12 };
           hasUser = true;
         } else {
-          setNotice('Position indisponible — affichage de tous les événements.');
+          setNotice('Position indisponible — affichage de tous les sorties.');
         }
       } catch {
-        setNotice('Position indisponible — affichage de tous les événements.');
+        setNotice('Position indisponible — affichage de tous les sorties.');
       }
 
       try {
@@ -73,7 +73,7 @@ export default function MapScreen() {
           : await listEvents({ pageSize: 100 });
         setHtml(buildHtml(center, res.items, hasUser));
       } catch {
-        setNotice('Erreur lors du chargement des événements.');
+        setNotice('Erreur lors du chargement des sorties.');
         setHtml(buildHtml(center, [], hasUser));
       }
     };

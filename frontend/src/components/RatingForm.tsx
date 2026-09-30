@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { createRating } from '../api/ratings';
+import Button from './ui/Button';
+import { inputClass } from './ui/classes';
 
 interface Props {
   eventId: string;
@@ -40,13 +42,12 @@ export default function RatingForm({ eventId, ratedUserId, ratedUserName, onRate
   const displayScore = hoveredScore || score;
 
   return (
-    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-      <p className="text-sm font-medium mb-3">
-        Noter <span className="text-coral-600">{ratedUserName}</span>
+    <div className="rounded-2xl bg-surface-sunken p-4 ring-1 ring-border">
+      <p className="mb-3 text-base font-bold text-text">
+        Noter <span className="text-primary-strong">{ratedUserName}</span>
       </p>
 
-      {/* Stars */}
-      <div className="flex gap-1 mb-3">
+      <div className="mb-3 flex items-center gap-1">
         {[1, 2, 3, 4, 5].map((s) => (
           <button
             key={s}
@@ -54,43 +55,36 @@ export default function RatingForm({ eventId, ratedUserId, ratedUserName, onRate
             onClick={() => setScore(s)}
             onMouseEnter={() => setHoveredScore(s)}
             onMouseLeave={() => setHoveredScore(0)}
-            className="text-2xl transition-transform hover:scale-110"
+            className={`h-11 w-11 text-3xl transition-transform hover:scale-110 ${s <= displayScore ? 'text-sun' : 'text-border-strong'}`}
             aria-label={`${s} étoile${s > 1 ? 's' : ''}`}
           >
             {s <= displayScore ? '★' : '☆'}
           </button>
         ))}
         {displayScore > 0 && (
-          <span className="text-sm text-gray-500 ml-2 self-center">{displayScore}/5</span>
+          <span className="ml-2 self-center text-[15px] font-bold text-text-2">{displayScore}/5</span>
         )}
       </div>
 
-      {/* Comment */}
       <textarea
         value={comment}
         onChange={(e) => setComment(e.target.value)}
-        placeholder="Commentaire (optionnel)"
+        placeholder="Un mot (facultatif)"
         maxLength={500}
         rows={2}
-        className="w-full border-[1.5px] border-line rounded-2xl px-3 py-2 text-sm focus:ring-2 focus:ring-coral-500/30 focus:border-coral-500 outline-none resize-none mb-3"
+        aria-label="Commentaire"
+        className={inputClass(false, 'mb-3 resize-none')}
       />
 
-      {error && <p className="text-red-500 text-xs mb-2">{error}</p>}
+      {error && <p className="mb-2 text-sm font-semibold text-danger-strong">{error}</p>}
 
-      <div className="flex gap-2">
-        <button
-          onClick={handleSubmit}
-          disabled={loading || score === 0}
-          className="bg-coral-500 text-white px-4 py-1.5 rounded-full text-sm font-semibold hover:bg-coral-600 disabled:opacity-50"
-        >
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" onClick={handleSubmit} disabled={loading || score === 0}>
           {loading ? 'Envoi...' : 'Envoyer'}
-        </button>
-        <button
-          onClick={onCancel}
-          className="text-gray-500 hover:text-gray-700 text-sm px-3"
-        >
+        </Button>
+        <Button size="sm" variant="ghost" onClick={onCancel}>
           Annuler
-        </button>
+        </Button>
       </div>
     </div>
   );

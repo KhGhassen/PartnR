@@ -74,17 +74,17 @@ export default function Register() {
       <AuthLayout>
         <div className="text-center">
           <div className="mb-4 text-5xl">📬</div>
-          <h1 className="mb-2 text-2xl font-bold tracking-tight text-ink">Vérifiez votre email</h1>
-          <p className="mb-6 text-sm text-ink-sub">
-            Un lien de confirmation a été envoyé à <span className="font-medium text-ink">{form.email}</span>.
+          <h1 className="mb-2 text-2xl font-bold tracking-tight text-text">Vérifiez votre email</h1>
+          <p className="mb-6 text-sm text-text-3">
+            Un lien de confirmation a été envoyé à <span className="font-medium text-text">{form.email}</span>.
             Cliquez sur ce lien pour activer votre compte.
           </p>
           {resent ? (
-            <p className="mb-4 text-sm text-emerald-600">Email renvoyé !</p>
+            <p className="mb-4 text-sm text-success-strong">Email renvoyé !</p>
           ) : (
             <button
               onClick={handleResend}
-              className="mx-auto mb-4 block text-sm font-medium text-coral-600 hover:underline"
+              className="mx-auto mb-4 block text-sm font-medium text-primary-strong hover:underline"
             >
               Renvoyer l'email
             </button>
@@ -99,11 +99,11 @@ export default function Register() {
 
   return (
     <AuthLayout>
-      <h1 className="mb-1 text-2xl font-bold tracking-tight text-ink">Inscription</h1>
-      <p className="mb-6 text-sm text-ink-sub">Rejoignez la communauté en 30 secondes.</p>
+      <h1 className="mb-1 text-3xl font-extrabold text-text">Créer mon compte</h1>
+      <p className="mb-6 text-base text-text-2">C'est gratuit et ça prend 30 secondes.</p>
 
       {error && (
-        <div className="mb-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
+        <div className="mb-4 rounded-2xl border border-danger-surface bg-danger-surface px-4 py-3 text-sm text-danger-strong">{error}</div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -145,8 +145,8 @@ export default function Register() {
               {PASSWORD_RULES.map((rule) => (
                 <p
                   key={rule.label}
-                  className={`flex items-center gap-1 text-xs ${
-                    rule.test(form.password) ? 'text-emerald-600' : 'text-ink-sub'
+                  className={`flex items-center gap-1 text-sm ${
+                    rule.test(form.password) ? 'text-success-strong' : 'text-text-3'
                   }`}
                 >
                   {rule.test(form.password) ? '✓' : '○'} {rule.label}
@@ -155,7 +155,7 @@ export default function Register() {
             </div>
           )}
           {form.password.length === 0 && (
-            <p className="mt-1 text-xs text-ink-sub">Min. 8 caractères, 1 majuscule, 1 chiffre</p>
+            <p className="mt-1 text-sm text-text-3">Min. 8 caractères, 1 majuscule, 1 chiffre</p>
           )}
         </div>
         <Field label="Ville">
@@ -165,13 +165,13 @@ export default function Register() {
           />
         </Field>
         <Button type="submit" size="lg" disabled={loading || !passwordValid} className="w-full">
-          {loading ? 'Inscription...' : "S'inscrire"}
+          {loading ? 'Un instant…' : "Je m'inscris"}
         </Button>
       </form>
 
-      <p className="mt-5 text-center text-sm text-ink-sub">
+      <p className="mt-5 text-center text-sm text-text-3">
         Déjà un compte ?{' '}
-        <Link to="/login" className="font-semibold text-coral-600 hover:underline">
+        <Link to="/login" className="font-semibold text-primary-strong hover:underline">
           Se connecter
         </Link>
       </p>

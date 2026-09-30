@@ -44,7 +44,7 @@ export default function HomeScreen() {
       });
       setEvents(result.items);
     } catch {
-      setError('Impossible de charger les événements.');
+      setError('Impossible de charger les sorties.');
     }
   }, []);
 
@@ -85,7 +85,7 @@ export default function HomeScreen() {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        setError('Autorisez la localisation pour voir les événements près de vous.');
+        setError('Autorisez la localisation pour voir les sorties près de vous.');
         return;
       }
       const pos = await Location.getCurrentPositionAsync({});
@@ -158,7 +158,7 @@ export default function HomeScreen() {
           <TextInput
             value={search}
             onChangeText={applySearch}
-            placeholder="Rechercher un événement, un lieu…"
+            placeholder="Rechercher une sortie, un lieu…"
             placeholderTextColor={T.textSub}
             autoFocus
             style={styles.searchInput}
@@ -226,7 +226,7 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
         ) : filtered.length === 0 ? (
-          <Text style={styles.empty}>Aucun événement trouvé.</Text>
+          <Text style={styles.empty}>Aucune sortie trouvé.</Text>
         ) : (
           filtered.map((ev) => <EventRow key={ev.id} ev={ev} />)
         )}
@@ -270,7 +270,7 @@ function EventRow({ ev }: { ev: EventSummary }) {
         </View>
         <View style={styles.cardBottom}>
           <Text style={styles.creator}>par {ev.creatorName}</Text>
-          <Text style={styles.join}>Rejoindre →</Text>
+          <Text style={styles.join}>Je participe →</Text>
         </View>
       </View>
     </TouchableOpacity>

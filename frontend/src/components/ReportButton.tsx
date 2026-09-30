@@ -42,7 +42,7 @@ export default function ReportButton({ targetType, targetId }: Props) {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="text-xs text-ink-sub transition-colors hover:text-red-500"
+        className="text-sm text-text-3 transition-colors hover:text-danger"
       >
         🚩 Signaler
       </button>
@@ -50,9 +50,9 @@ export default function ReportButton({ targetType, targetId }: Props) {
   }
 
   return (
-    <div className="w-full rounded-2xl border border-line bg-cream p-4">
-      <p className="mb-2 text-sm font-semibold text-ink">
-        Signaler {targetType === 'event' ? 'cet événement' : 'ce profil'}
+    <div className="w-full rounded-2xl border border-border bg-surface-sunken p-4">
+      <p className="mb-2 text-sm font-semibold text-text">
+        Signaler {targetType === 'event' ? 'cette sortie' : 'ce profil'}
       </p>
       <textarea
         value={reason}

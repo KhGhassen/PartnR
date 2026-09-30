@@ -108,7 +108,7 @@ describe('EventDetail', () => {
     });
     renderDetail();
 
-    expect(await screen.findByRole('button', { name: 'Rejoindre 🎉' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Je participe' })).toBeInTheDocument();
     expect(screen.getByText(/L'adresse exacte est communiquée aux participants/)).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Se connecter pour rejoindre' })).not.toBeInTheDocument();
   });
@@ -129,6 +129,6 @@ describe('EventDetail', () => {
     expect(await screen.findByText('Quai de Valmy')).toBeInTheDocument();
     expect(screen.queryByText(/L'adresse exacte est communiquée/)).not.toBeInTheDocument();
     expect(screen.getByTestId('chat')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Rejoindre 🎉' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Je participe' })).not.toBeInTheDocument();
   });
 });

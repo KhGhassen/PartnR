@@ -46,6 +46,7 @@ export interface EventSummary {
   status: string;
   activityName: string;
   activityIcon: string;
+  activityCategory?: string | null;
   creatorId: string;
   creatorName: string;
   participantCount: number;

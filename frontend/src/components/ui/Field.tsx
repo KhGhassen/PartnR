@@ -32,17 +32,17 @@ export default function Field({ label, error, hint, children }: FieldProps) {
 
   return (
     <div>
-      <label htmlFor={id} className="mb-1.5 block text-xs font-semibold text-text-2">
+      <label htmlFor={id} className="mb-2 block text-[15px] font-bold text-text">
         {label}
       </label>
       {control}
       {error && (
-        <p id={errorId} className="mt-1 text-xs text-danger">
+        <p id={errorId} className="mt-1.5 text-sm font-semibold text-danger-strong">
           {error}
         </p>
       )}
       {!error && hint && (
-        <p id={hintId} className="mt-1 text-xs text-text-3">
+        <p id={hintId} className="mt-1.5 text-sm text-text-3">
           {hint}
         </p>
       )}

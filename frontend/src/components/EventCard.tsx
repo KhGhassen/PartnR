@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
-import { CalendarDays, MapPin, Repeat2, Users } from 'lucide-react';
+import { Clock, MapPin, Repeat2, Users } from 'lucide-react';
 import StatusBadge from './ui/StatusBadge';
+import { categoryTone } from '../lib/catalogue';
 import type { EventSummary } from '../types';
 
 interface EventCardProps {
@@ -8,96 +9,92 @@ interface EventCardProps {
   showStatus?: boolean;
 }
 
-const dateFmt = new Intl.DateTimeFormat('fr-FR', {
-  weekday: 'short',
-  day: 'numeric',
-  month: 'short',
-});
+const dayFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric' });
+const monthFmt = new Intl.DateTimeFormat('fr-FR', { month: 'short' });
+const weekdayFmt = new Intl.DateTimeFormat('fr-FR', { weekday: 'long' });
 const timeFmt = new Intl.DateTimeFormat('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
 export default function EventCard({ ev, showStatus = false }: EventCardProps) {
   const date = new Date(ev.date);
-  const pct = ev.maxParticipants > 0 ? Math.min(100, (ev.participantCount / ev.maxParticipants) * 100) : 0;
   const spotsLeft = Math.max(0, ev.maxParticipants - ev.participantCount);
   const isFull = spotsLeft === 0;
   const isScarce = !isFull && spotsLeft <= 2;
+  const tone = categoryTone(ev.activityCategory);
 
-  // Scarcity is the product's core pressure, so it gets its own colour rather
-  // than being one more grey line.
-  const gaugeTone = isFull ? 'bg-danger' : isScarce ? 'bg-warn' : 'bg-accent';
-  const seatTone = isFull ? 'text-danger' : isScarce ? 'text-warn' : 'text-text-2';
+  // Seats are the decision, so they get a coloured pill, not a grey line.
+  const seatClass = isFull
+    ? 'bg-danger-surface text-danger-strong'
+    : isScarce
+      ? 'bg-warn-surface text-warn-strong'
+      : 'bg-success-surface text-success-strong';
+  const seatLabel = isFull ? 'Complet' : `${spotsLeft} place${spotsLeft > 1 ? 's' : ''}`;
 
   return (
     <Link
       to={`/events/${ev.id}`}
-      className="group flex flex-col overflow-hidden rounded-3xl border border-border bg-surface shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover"
+      className="group flex flex-col overflow-hidden rounded-3xl bg-surface shadow-card ring-1 ring-border transition-all duration-200 hover:-translate-y-1 hover:shadow-card-hover"
     >
-      <div className="relative h-28 bg-surface-sunken">
-        {ev.photoUrl && (
+      {/* Photo, or the category pastel with the activity emoji large enough to
+          be recognised from across the room. */}
+      <div className={`relative h-36 ${tone.bg}`}>
+        {ev.photoUrl ? (
           <img src={ev.photoUrl} alt="" loading="lazy" className="h-full w-full object-cover" />
+        ) : (
+          <span className="absolute inset-0 flex items-center justify-center text-6xl" aria-hidden="true">
+            {ev.activityIcon}
+          </span>
         )}
-        {/* The activity emoji is content — an admin-editable taxonomy — so it
-            stays, promoted into a medallion instead of floating in a pastel
-            field whose colour came from the row index. */}
-        <span className="absolute left-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-2xl border border-border bg-surface text-2xl shadow-card">
-          {ev.activityIcon}
-        </span>
-        <span className="absolute right-3 top-3 rounded-full bg-surface/90 px-2.5 py-1 text-xs font-medium text-text-2 backdrop-blur-sm">
+
+        {/* The date is what people scan first; a calendar leaf reads at a glance. */}
+        <div className="absolute left-4 top-4 flex min-w-14 flex-col items-center rounded-2xl bg-surface px-3 py-1.5 shadow-card">
+          <span className="text-2xl font-extrabold leading-none tabular-nums text-text">{dayFmt.format(date)}</span>
+          <span className="text-sm font-bold uppercase text-text-3">{monthFmt.format(date).replace('.', '')}</span>
+        </div>
+
+        <span className={`absolute right-4 top-4 rounded-full bg-surface/95 px-3 py-1 text-sm font-bold ${tone.text}`}>
           {ev.activityName}
         </span>
+
         {showStatus && (
-          <span className="absolute bottom-3 right-3">
+          <span className="absolute bottom-3 right-4">
             <StatusBadge status={ev.status} />
           </span>
         )}
       </div>
 
-      <div className="flex flex-1 flex-col p-5">
-        {/* Reading order follows the decision: when, then what, then where. */}
-        <p className="mb-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] font-medium tabular-nums text-text-2">
-          <CalendarDays size={14} className="shrink-0" aria-hidden="true" />
+      <div className="flex flex-1 flex-col gap-2 p-5">
+        <h2 className="line-clamp-2 text-xl font-extrabold leading-snug text-text">{ev.title}</h2>
+
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[15px] text-text-2">
+          <Clock size={16} className="shrink-0 text-text-3" aria-hidden="true" />
           <span>
-            {dateFmt.format(date)} · {timeFmt.format(date)}
+            <span className="capitalize">{weekdayFmt.format(date)}</span> à {timeFmt.format(date).replace(':', 'h')}
           </span>
           {ev.isRecurring && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-violet-surface px-2 py-0.5 text-[11px] font-semibold text-violet">
+            <span className="inline-flex items-center gap-1 rounded-full bg-violet-surface px-2 py-0.5 text-sm font-bold text-violet-strong">
               <Repeat2 size={12} aria-hidden="true" />
               {ev.upcomingOccurrences ? `${ev.upcomingOccurrences} dates` : 'Chaque semaine'}
             </span>
           )}
         </p>
 
-        <h2 className="mb-2 line-clamp-2 font-display text-xl leading-tight font-bold text-text">
-          {ev.title}
-        </h2>
-
-        <p className="mb-4 flex items-center gap-1.5 truncate text-[13px] text-text-3">
-          <MapPin size={14} className="shrink-0" aria-hidden="true" />
+        <p className="flex items-center gap-2 text-[15px] text-text-2">
+          <MapPin size={16} className="shrink-0 text-text-3" aria-hidden="true" />
           <span className="truncate">
             {ev.city}
-            {ev.location ? ` — ${ev.location}` : ''}
+            {ev.location ? ` · ${ev.location}` : ''}
             {ev.distanceKm != null ? ` · ${ev.distanceKm.toFixed(1)} km` : ''}
           </span>
         </p>
 
-        <div className="mt-auto">
-          <div className="mb-2.5 flex items-center gap-3">
-            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-sunken">
-              <div className={`h-full rounded-full ${gaugeTone}`} style={{ width: `${pct}%` }} />
-            </div>
-            <span className={`text-xs font-semibold tabular-nums ${seatTone}`}>
-              {isFull ? 'Complet' : `${spotsLeft} place${spotsLeft > 1 ? 's' : ''}`}
-            </span>
-          </div>
-
-          {/* "Voir →" is gone: the whole card is the link, so the affordance was
-              redundant chrome competing with the title. */}
-          <p className="flex items-center gap-1.5 text-xs text-text-3">
-            <Users size={13} className="shrink-0" aria-hidden="true" />
+        <div className="mt-auto flex items-center justify-between gap-3 border-t border-border pt-3">
+          <span className="flex min-w-0 items-center gap-2 text-sm text-text-3">
+            <Users size={16} className="shrink-0" aria-hidden="true" />
             <span className="truncate">
-              {`par ${ev.creatorName} · ${ev.participantCount}/${ev.maxParticipants}`}
+              {ev.participantCount}/{ev.maxParticipants} · par {ev.creatorName}
             </span>
-          </p>
+          </span>
+          <span className={`shrink-0 rounded-full px-3 py-1 text-sm font-bold ${seatClass}`}>{seatLabel}</span>
         </div>
       </div>
     </Link>

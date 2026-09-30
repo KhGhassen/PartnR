@@ -18,9 +18,9 @@ interface ToastContextType {
 const ToastContext = createContext<ToastContextType>(null!);
 
 const KIND_STYLES: Record<ToastKind, { icon: string; accent: string }> = {
-  success: { icon: '✓', accent: 'bg-emerald-500' },
-  error: { icon: '✕', accent: 'bg-red-500' },
-  info: { icon: 'ℹ', accent: 'bg-violet-500' },
+  success: { icon: '✓', accent: 'bg-success' },
+  error: { icon: '✕', accent: 'bg-danger' },
+  info: { icon: 'ℹ', accent: 'bg-violet' },
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
@@ -56,16 +56,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             key={t.id}
             role="status"
             onClick={() => dismiss(t.id)}
-            className={`pointer-events-auto flex cursor-pointer items-center gap-3 rounded-2xl border border-line bg-white px-4 py-3 shadow-card-hover transition-all duration-200 ${
+            className={`pointer-events-auto flex cursor-pointer items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3 shadow-card-hover transition-all duration-200 ${
               t.leaving ? 'translate-y-2 opacity-0' : 'translate-y-0 opacity-100'
             }`}
           >
             <span
-              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${KIND_STYLES[t.kind].accent}`}
+              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white ${KIND_STYLES[t.kind].accent}`}
             >
               {KIND_STYLES[t.kind].icon}
             </span>
-            <p className="text-sm font-medium text-ink">{t.message}</p>
+            <p className="text-sm font-medium text-text">{t.message}</p>
           </div>
         ))}
       </div>

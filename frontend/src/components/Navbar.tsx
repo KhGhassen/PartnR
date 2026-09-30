@@ -1,25 +1,55 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
+import {
+  BarChart3,
+  CalendarCheck,
+  Compass,
+  Flag,
+  LogOut,
+  Map,
+  Menu,
+  Moon,
+  Plus,
+  ShieldCheck,
+  Sun,
+  Users,
+  X,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Avatar from './ui/Avatar';
 import NotificationBell from './NotificationBell';
 import { ButtonLink } from './ui/Button';
 
-function NavItem({ to, children, onClick }: { to: string; children: React.ReactNode; onClick?: () => void }) {
+// Every destination shows an icon AND a word: an icon alone is a guess for
+// someone who does not use apps every day, a word alone is slower to scan.
+function NavItem({
+  to,
+  icon,
+  children,
+  onClick,
+  compact = false,
+}: {
+  to: string;
+  icon: ReactNode;
+  children: ReactNode;
+  onClick?: () => void;
+  // Admin destinations: icon only on a laptop, icon and word on a wide screen.
+  compact?: boolean;
+}) {
   return (
     <NavLink
       to={to}
       end={to === '/'}
       onClick={onClick}
+      title={compact ? String(children) : undefined}
       className={({ isActive }) =>
-        `whitespace-nowrap border-b-2 px-2.5 py-1 text-sm font-medium transition-colors ${
-          isActive
-            ? 'border-accent text-text'
-            : 'border-transparent text-text-2 hover:border-border-strong hover:text-text'
+        `flex min-h-11 items-center gap-2 whitespace-nowrap rounded-full px-4 text-[15px] font-bold transition-colors ${
+          isActive ? 'bg-primary-surface text-primary-strong' : 'text-text-2 hover:bg-surface-sunken hover:text-text'
         }`
       }
     >
-      {children}
+      <span aria-hidden="true">{icon}</span>
+      <span className={compact ? 'sr-only 2xl:not-sr-only' : undefined}>{children}</span>
     </NavLink>
   );
 }
@@ -44,127 +74,140 @@ export default function Navbar() {
   };
 
   const close = () => setOpen(false);
+  const isAdmin = user?.role === 'admin';
 
   const links = (
     <>
-      <NavItem to="/" onClick={close}>Événements</NavItem>
-      <NavItem to="/map" onClick={close}>Carte</NavItem>
-      {isAuthenticated && <NavItem to="/my-events" onClick={close}>Mes événements</NavItem>}
-      {isAuthenticated && <NavItem to="/events/new" onClick={close}>Créer</NavItem>}
-      {user?.role === 'admin' && (
-        <>
-          <NavItem to="/admin/analytics" onClick={close}>Analytics</NavItem>
-          <NavItem to="/admin/users" onClick={close}>Utilisateurs</NavItem>
-          <NavItem to="/admin/events" onClick={close}>Modération</NavItem>
-          <NavItem to="/admin/reports" onClick={close}>Signalements</NavItem>
-        </>
+      <NavItem to="/" icon={<Compass size={18} />} onClick={close}>Découvrir</NavItem>
+      <NavItem to="/map" icon={<Map size={18} />} onClick={close}>Carte</NavItem>
+      {isAuthenticated && (
+        <NavItem to="/my-events" icon={<CalendarCheck size={18} />} onClick={close}>Mes sorties</NavItem>
       )}
     </>
   );
 
+  const adminLinks = (compact: boolean) =>
+    isAdmin && (
+      <>
+        <NavItem to="/admin/analytics" icon={<BarChart3 size={18} />} onClick={close} compact={compact}>Statistiques</NavItem>
+        <NavItem to="/admin/users" icon={<Users size={18} />} onClick={close} compact={compact}>Membres</NavItem>
+        <NavItem to="/admin/events" icon={<ShieldCheck size={18} />} onClick={close} compact={compact}>Modération</NavItem>
+        <NavItem to="/admin/reports" icon={<Flag size={18} />} onClick={close} compact={compact}>Signalements</NavItem>
+      </>
+    );
+
+  const themeButton = (
+    <button
+      onClick={toggleTheme}
+      aria-label={dark ? 'Passer en mode clair' : 'Passer en mode sombre'}
+      className="flex h-11 w-11 items-center justify-center rounded-full text-text-2 transition-colors hover:bg-surface-sunken hover:text-text"
+    >
+      {dark ? <Sun size={20} aria-hidden="true" /> : <Moon size={20} aria-hidden="true" />}
+    </button>
+  );
+
   return (
-    <nav className="sticky top-0 z-[1100] border-b border-border bg-bg/85 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-6xl items-center gap-2 px-4">
-        <Link to="/" className="flex shrink-0 items-baseline" onClick={close}>
-          <span className="font-display text-xl font-bold tracking-tight text-text">PartnR</span>
-          <span className="ml-0.5 h-1.5 w-1.5 rounded-full bg-accent" aria-hidden="true" />
+    <header className="sticky top-0 z-[1100] bg-surface/95 shadow-[0_1px_0_0_var(--color-border)] backdrop-blur">
+      <div className="mx-auto flex h-[4.5rem] max-w-6xl items-center gap-2 px-4">
+        <Link to="/" className="flex shrink-0 items-center gap-2.5" onClick={close} aria-label="PartnR, accueil">
+          <span className="grid h-10 w-10 place-items-center rounded-2xl bg-primary text-xl font-black text-on-primary">
+            P
+          </span>
+          <span className="text-2xl font-extrabold tracking-tight text-primary">PartnR</span>
         </Link>
 
-        <div className="ml-6 hidden items-center gap-1 lg:flex">{links}</div>
+        <nav className="ml-4 hidden items-center gap-1 lg:flex" aria-label="Navigation principale">
+          {links}
+          {isAdmin && <span className="mx-1 h-6 w-px bg-border" aria-hidden="true" />}
+          {adminLinks(true)}
+        </nav>
 
-        <div className="ml-auto hidden items-center gap-3 lg:flex">
-          <button
-            onClick={toggleTheme}
-            aria-label={dark ? 'Passer en mode clair' : 'Passer en mode sombre'}
-            className="flex h-9 w-9 items-center justify-center rounded-full text-base transition-colors hover:bg-cream-deep"
-          >
-            {dark ? '☀️' : '🌙'}
-          </button>
+        <div className="ml-auto hidden items-center gap-2 lg:flex">
           {isAuthenticated ? (
             <>
+              <ButtonLink to="/events/new" size="sm" className="mr-1">
+                <Plus size={18} aria-hidden="true" /> Créer une sortie
+              </ButtonLink>
+              {themeButton}
               <NotificationBell />
               <Link
                 to={`/profile/${user?.id}`}
-                className="flex items-center gap-2 rounded-full py-1 pl-1 pr-3 transition-colors hover:bg-cream-deep"
+                aria-label={`Mon profil, ${user?.firstName ?? ''}`}
+                title="Mon profil"
+                className="flex min-h-11 items-center gap-2 rounded-full py-1 pl-1 pr-1 transition-colors hover:bg-surface-sunken 2xl:pr-4"
               >
                 <Avatar name={user?.firstName ?? '?'} url={user?.avatarUrl} size="sm" />
-                <span className="text-sm font-semibold text-ink">{user?.firstName}</span>
+                <span className="hidden text-[15px] font-bold text-text 2xl:inline">{user?.firstName}</span>
               </Link>
               <button
                 onClick={handleLogout}
-                className="text-sm text-ink-sub transition-colors hover:text-ink"
+                aria-label="Se déconnecter"
+                title="Se déconnecter"
+                className="flex h-11 w-11 items-center justify-center rounded-full text-text-3 transition-colors hover:bg-surface-sunken hover:text-text"
               >
-                Déconnexion
+                <LogOut size={20} aria-hidden="true" />
               </button>
             </>
           ) : (
             <>
-              <Link to="/login" className="text-sm font-medium text-ink-mid hover:text-ink">
-                Connexion
-              </Link>
-              <ButtonLink to="/register" size="sm">Inscription</ButtonLink>
+              {themeButton}
+              <ButtonLink to="/login" variant="ghost" size="sm">Se connecter</ButtonLink>
+              <ButtonLink to="/register" size="sm">Créer un compte</ButtonLink>
             </>
           )}
         </div>
 
-        <button
-          onClick={toggleTheme}
-          aria-label={dark ? 'Passer en mode clair' : 'Passer en mode sombre'}
-          className="ml-auto flex h-9 w-9 items-center justify-center rounded-full text-base hover:bg-surface-sunken lg:hidden"
-        >
-          {dark ? '☀️' : '🌙'}
-        </button>
-        <button
-          onClick={() => setOpen((o) => !o)}
-          className="flex h-9 w-9 items-center justify-center rounded-full text-text-2 hover:bg-surface-sunken lg:hidden"
-          aria-label="Menu"
-        >
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            {open ? (
-              <>
-                <line x1="4" y1="4" x2="14" y2="14" />
-                <line x1="14" y1="4" x2="4" y2="14" />
-              </>
-            ) : (
-              <>
-                <line x1="2" y1="5" x2="16" y2="5" />
-                <line x1="2" y1="9" x2="16" y2="9" />
-                <line x1="2" y1="13" x2="16" y2="13" />
-              </>
-            )}
-          </svg>
-        </button>
+        <div className="ml-auto flex items-center gap-1 lg:hidden">
+          {isAuthenticated && <NotificationBell />}
+          <button
+            onClick={() => setOpen((o) => !o)}
+            className="flex h-11 items-center gap-2 rounded-full px-3 text-[15px] font-bold text-text-2 hover:bg-surface-sunken"
+            aria-label={open ? 'Fermer le menu' : 'Ouvrir le menu'}
+            aria-expanded={open}
+          >
+            {open ? <X size={22} aria-hidden="true" /> : <Menu size={22} aria-hidden="true" />}
+            Menu
+          </button>
+        </div>
       </div>
 
       {open && (
-        <div className="flex flex-col gap-1 border-t border-border px-4 py-3 lg:hidden">
-          {links}
-          <div className="mt-2 flex items-center gap-3 border-t border-line pt-3">
+        <div className="border-t border-border bg-surface px-4 py-3 lg:hidden">
+          <nav className="flex flex-col gap-1" aria-label="Navigation principale">
+            {links}
+            {isAuthenticated && (
+              <NavItem to="/events/new" icon={<Plus size={18} />} onClick={close}>Créer une sortie</NavItem>
+            )}
+            {adminLinks(false)}
+          </nav>
+          <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-border pt-3">
+            {themeButton}
             {isAuthenticated ? (
               <>
                 <Link
                   to={`/profile/${user?.id}`}
                   onClick={close}
-                  className="flex items-center gap-2 text-sm font-semibold text-ink"
+                  className="flex min-h-11 items-center gap-2 rounded-full pr-3 text-[15px] font-bold text-text"
                 >
                   <Avatar name={user?.firstName ?? '?'} url={user?.avatarUrl} size="sm" />
                   {user?.firstName}
                 </Link>
-                <button onClick={handleLogout} className="ml-auto text-sm text-ink-sub">
-                  Déconnexion
+                <button
+                  onClick={handleLogout}
+                  className="ml-auto flex min-h-11 items-center gap-2 rounded-full px-3 text-[15px] font-bold text-text-3"
+                >
+                  <LogOut size={18} aria-hidden="true" /> Se déconnecter
                 </button>
               </>
             ) : (
               <>
-                <Link to="/login" onClick={close} className="text-sm font-medium text-ink-mid">
-                  Connexion
-                </Link>
-                <ButtonLink to="/register" size="sm" className="ml-auto">Inscription</ButtonLink>
+                <ButtonLink to="/login" variant="ghost" size="sm">Se connecter</ButtonLink>
+                <ButtonLink to="/register" size="sm" className="ml-auto">Créer un compte</ButtonLink>
               </>
             )}
           </div>
         </div>
       )}
-    </nav>
+    </header>
   );
 }

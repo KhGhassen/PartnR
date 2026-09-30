@@ -8,10 +8,10 @@ import { T } from '../../constants/tokens';
 type TabName = 'index' | 'match' | 'messages' | 'profile';
 
 const TAB_ITEMS: { name: TabName; label: string; icon: keyof typeof Ionicons.glyphMap; iconActive: keyof typeof Ionicons.glyphMap }[] = [
-  { name: 'index',    label: 'Discover',  icon: 'compass-outline',       iconActive: 'compass' },
-  { name: 'match',    label: 'For You',   icon: 'heart-outline',          iconActive: 'heart' },
+  { name: 'index',    label: 'Découvrir', icon: 'compass-outline',       iconActive: 'compass' },
+  { name: 'match',    label: 'Pour vous', icon: 'heart-outline',          iconActive: 'heart' },
   { name: 'messages', label: 'Messages',  icon: 'chatbubble-outline',     iconActive: 'chatbubble' },
-  { name: 'profile',  label: 'Profile',   icon: 'person-outline',         iconActive: 'person' },
+  { name: 'profile',  label: 'Profil',    icon: 'person-outline',         iconActive: 'person' },
 ];
 
 function CustomTabBar({ state, navigation }: BottomTabBarProps) {

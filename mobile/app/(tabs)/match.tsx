@@ -90,7 +90,7 @@ export default function MatchScreen() {
           {suggested.length === 0 && other.length === 0 && (
             <View style={styles.emptyBox}>
               <Text style={styles.emptyIcon}>🎯</Text>
-              <Text style={styles.emptyTitle}>Aucun événement pour l'instant</Text>
+              <Text style={styles.emptyTitle}>Aucune sortie pour l'instant</Text>
               <Text style={styles.emptySub}>Revenez plus tard ou créez le vôtre !</Text>
             </View>
           )}

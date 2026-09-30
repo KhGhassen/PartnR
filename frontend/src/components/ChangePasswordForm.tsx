@@ -42,9 +42,9 @@ export default function ChangePasswordForm({ onClose }: { onClose: () => void })
 
   if (success) {
     return (
-      <div className="bg-green-50 text-green-700 p-4 rounded-lg text-sm flex items-center justify-between">
+      <div className="flex items-center justify-between rounded-2xl bg-success-surface p-4 text-[15px] font-semibold text-success-strong">
         <span>Mot de passe modifié avec succès.</span>
-        <button onClick={onClose} className="text-green-800 underline">
+        <button onClick={onClose} className="font-bold text-success-strong underline">
           Fermer
         </button>
       </div>
@@ -53,36 +53,36 @@ export default function ChangePasswordForm({ onClose }: { onClose: () => void })
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">{error}</div>}
+      {error && <div className="bg-danger-surface text-danger-strong rounded-2xl p-3 text-sm font-semibold">{error}</div>}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Mot de passe actuel</label>
+        <label className="block text-sm font-medium text-text-2 mb-1">Mot de passe actuel</label>
         <input
           type="password"
           required
           value={currentPassword}
           onChange={(e) => setCurrentPassword(e.target.value)}
-          className="w-full border-[1.5px] border-line rounded-2xl px-3 py-2 focus:ring-2 focus:ring-coral-500/30 focus:border-coral-500 focus:border-transparent outline-none"
+          className="w-full rounded-2xl border-2 border-border-input px-4 py-3 text-base outline-none focus:border-primary"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Nouveau mot de passe</label>
+        <label className="block text-sm font-medium text-text-2 mb-1">Nouveau mot de passe</label>
         <input
           type="password"
           required
           minLength={8}
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
-          className="w-full border-[1.5px] border-line rounded-2xl px-3 py-2 focus:ring-2 focus:ring-coral-500/30 focus:border-coral-500 focus:border-transparent outline-none"
+          className="w-full rounded-2xl border-2 border-border-input px-4 py-3 text-base outline-none focus:border-primary"
         />
         {newPassword.length > 0 && (
           <div className="mt-2 space-y-1">
             {PASSWORD_RULES.map((rule) => (
               <p
                 key={rule.label}
-                className={`text-xs flex items-center gap-1 ${
-                  rule.test(newPassword) ? 'text-green-600' : 'text-gray-400'
+                className={`text-sm flex items-center gap-1 ${
+                  rule.test(newPassword) ? 'text-success-strong' : 'text-text-3'
                 }`}
               >
                 {rule.test(newPassword) ? '✓' : '○'} {rule.label}
@@ -93,13 +93,13 @@ export default function ChangePasswordForm({ onClose }: { onClose: () => void })
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Confirmer le nouveau mot de passe</label>
+        <label className="block text-sm font-medium text-text-2 mb-1">Confirmer le nouveau mot de passe</label>
         <input
           type="password"
           required
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
-          className="w-full border-[1.5px] border-line rounded-2xl px-3 py-2 focus:ring-2 focus:ring-coral-500/30 focus:border-coral-500 focus:border-transparent outline-none"
+          className="w-full rounded-2xl border-2 border-border-input px-4 py-3 text-base outline-none focus:border-primary"
         />
       </div>
 
@@ -107,14 +107,14 @@ export default function ChangePasswordForm({ onClose }: { onClose: () => void })
         <button
           type="submit"
           disabled={loading || !passwordValid}
-          className="bg-coral-500 text-white px-6 py-2 rounded-full font-semibold hover:bg-coral-600 disabled:opacity-50"
+          className="inline-flex min-h-12 items-center rounded-full bg-primary px-6 font-bold text-on-primary hover:bg-primary-hover disabled:opacity-50"
         >
           {loading ? 'Enregistrement...' : 'Enregistrer'}
         </button>
         <button
           type="button"
           onClick={onClose}
-          className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300"
+          className="inline-flex min-h-12 items-center rounded-full border-2 border-border bg-surface px-6 font-bold text-text hover:border-border-strong"
         >
           Annuler
         </button>

@@ -66,7 +66,7 @@ export default function EditEvent() {
         longitude: ev.longitude,
       });
     }).catch(() => {
-      setError('Événement introuvable.');
+      setError('Sortie introuvable.');
     }).finally(() => {
       setPageLoading(false);
     });
@@ -122,17 +122,17 @@ export default function EditEvent() {
     }
   };
 
-  if (pageLoading) return <p className="py-16 text-center text-ink-sub">Chargement...</p>;
+  if (pageLoading) return <p className="py-16 text-center text-text-3">Chargement...</p>;
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="mb-6 text-3xl font-bold tracking-tight text-ink">Modifier l'événement</h1>
+      <h1 className="mb-6 text-3xl font-bold tracking-tight text-text">Modifier la sortie</h1>
 
       {error && (
-        <div className="mb-4 rounded-2xl border border-red-100 bg-red-50 px-5 py-3 text-sm text-red-600">{error}</div>
+        <div className="mb-4 rounded-2xl border border-danger-surface bg-danger-surface px-5 py-3 text-sm text-danger-strong">{error}</div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-5 rounded-3xl border border-line bg-white p-8 shadow-card">
+      <form onSubmit={handleSubmit} className="space-y-5 rounded-3xl border border-border bg-surface p-8 shadow-card">
         <Field label="Titre" error={validationErrors.title}>
           <input
             type="text"
@@ -160,7 +160,7 @@ export default function EditEvent() {
         </Field>
 
         <div>
-          <label className="mb-1.5 block text-xs font-semibold text-ink-mid">Ville</label>
+          <label className="mb-1.5 block text-sm font-semibold text-text-2">Ville</label>
           <div className="mb-2 flex flex-wrap gap-2">
             {cities.slice(0, 8).map((c) => (
               <Chip key={c} active={form.city === c} onClick={() => set('city', c)}>
@@ -179,7 +179,7 @@ export default function EditEvent() {
               }
             }}
           />
-          {validationErrors.city && <p className="mt-1 text-xs text-red-500">{validationErrors.city}</p>}
+          {validationErrors.city && <p className="mt-1 text-sm text-danger-strong">{validationErrors.city}</p>}
         </div>
 
         <Field label="Lieu / Point de RDV">
@@ -220,14 +220,14 @@ export default function EditEvent() {
 
         <Field label="Statut">
           <select value={form.status} onChange={update('status')} className={inputClass(false)}>
-            <option value="Published">Publié</option>
+            <option value="Published">Ouvert</option>
             <option value="Cancelled">Annulé</option>
             <option value="Completed">Terminé</option>
           </select>
         </Field>
 
         {isRecurring && (
-          <label className="flex cursor-pointer items-center gap-2 text-sm text-ink-mid">
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-text-2">
             <input
               type="checkbox"
               checked={applyToSeries}

@@ -37,7 +37,7 @@ export default function ActivityDetailScreen() {
     try {
       setEvent(await getEvent(id!));
     } catch {
-      setError('Événement introuvable.');
+      setError('Sortie introuvable.');
     } finally {
       setLoading(false);
     }
@@ -111,7 +111,7 @@ export default function ActivityDetailScreen() {
     ? 'Quitter la liste d\'attente'
     : isFull
     ? 'Rejoindre la liste d\'attente ⏳'
-    : `Rejoindre · ${spotsLeft} place${spotsLeft !== 1 ? 's' : ''}`;
+    : `Je participe · ${spotsLeft} place${spotsLeft !== 1 ? 's' : ''}`;
 
   const ctaAction = isCreator ? undefined : isParticipant || isWaitlisted ? handleLeave : handleJoin;
 
@@ -191,7 +191,7 @@ export default function ActivityDetailScreen() {
             </TouchableOpacity>
             <View style={[styles.statusBadge, { backgroundColor: event.status === 'Published' ? T.successL : T.bg2 }]}>
               <Text style={[styles.statusText, { color: event.status === 'Published' ? T.success : T.textMid }]}>
-                {event.status === 'Published' ? 'Publié' : event.status === 'Completed' ? 'Terminé' : 'Annulé'}
+                {event.status === 'Published' ? 'Ouvert' : event.status === 'Completed' ? 'Terminé' : 'Annulé'}
               </Text>
             </View>
           </View>
@@ -371,7 +371,7 @@ export default function ActivityDetailScreen() {
             </View>
           ) : (
             <TouchableOpacity onPress={() => setReporting(true)} style={{ alignSelf: 'flex-end' }}>
-              <Text style={styles.reportLink}>🚩 Signaler cet événement</Text>
+              <Text style={styles.reportLink}>🚩 Signaler cette sortie</Text>
             </TouchableOpacity>
           )
         )}

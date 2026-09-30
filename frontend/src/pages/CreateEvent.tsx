@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createEvent } from '../api/events';
 import { listActivities } from '../api/activities';
@@ -15,8 +15,24 @@ import Button from '../components/ui/Button';
 import Chip from '../components/ui/Chip';
 import Field from '../components/ui/Field';
 import { inputClass } from '../components/ui/classes';
-import { groupByCategory } from '../lib/catalogue';
+import { categoryTone, groupByCategory } from '../lib/catalogue';
 import type { Activity } from '../types';
+
+// Three numbered cards: what, then the words, then where and when. Someone
+// who has never filled a web form knows where they are and what is left.
+function Step({ n, title, children }: { n: number; title: string; children: ReactNode }) {
+  return (
+    <section className="rounded-3xl bg-surface p-5 shadow-card ring-1 ring-border sm:p-7">
+      <h2 className="mb-5 flex items-center gap-3 text-xl font-extrabold text-text">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary text-base text-on-primary" aria-hidden="true">
+          {n}
+        </span>
+        {title}
+      </h2>
+      <div className="space-y-5">{children}</div>
+    </section>
+  );
+}
 
 export default function CreateEvent() {
   const { isAuthenticated } = useAuth();
@@ -64,11 +80,11 @@ export default function CreateEvent() {
 
   const validate = (): boolean => {
     const errors: Record<string, string> = {};
-    if (form.title.trim().length < 3) errors.title = 'Le titre doit contenir au moins 3 caractères';
-    if (!form.city.trim()) errors.city = 'La ville est requise';
-    if (!form.date) errors.date = 'La date est requise';
-    else if (new Date(form.date) < new Date()) errors.date = 'La date doit être dans le futur';
-    if (!form.activityId) errors.activityId = 'Choisissez une activité';
+    if (form.title.trim().length < 3) errors.title = "Donnez un titre d'au moins 3 caractères.";
+    if (!form.city.trim()) errors.city = 'Indiquez la ville.';
+    if (!form.date) errors.date = "Indiquez la date et l'heure.";
+    else if (new Date(form.date) < new Date()) errors.date = 'La date doit être dans le futur.';
+    if (!form.activityId) errors.activityId = 'Choisissez une activité.';
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -88,7 +104,7 @@ export default function CreateEvent() {
         recurrenceWeeks: form.recurrenceWeeks >= 2 ? form.recurrenceWeeks : undefined,
       });
       trackAction({ action: 'event_created', entityType: 'event', entityId: ev.id });
-      toast.success('Événement créé 🎉');
+      toast.success('Votre sortie est en ligne 🎉');
       navigate(`/events/${ev.id}`);
     } catch (err) {
       setError(toApiError(err).message);
@@ -98,149 +114,153 @@ export default function CreateEvent() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="mb-1 text-3xl font-bold tracking-tight text-ink">Créer un événement</h1>
-      <p className="mb-6 text-ink-sub">Proposez une activité et trouvez des partenaires.</p>
+    <div className="mx-auto max-w-2xl px-4 py-6 sm:py-8">
+      <h1 className="text-3xl font-extrabold text-text">Proposer une sortie</h1>
+      <p className="mb-6 mt-1 text-base text-text-2">Trois étapes, et vous pourrez tout modifier ensuite.</p>
 
       {error && (
-        <div className="mb-4 rounded-2xl border border-red-100 bg-red-50 px-5 py-3 text-sm text-red-600">{error}</div>
+        <div className="mb-4 rounded-2xl bg-danger-surface px-5 py-3 font-semibold text-danger-strong">{error}</div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-5 rounded-3xl border border-line bg-white p-8 shadow-card">
-        <div>
-          <label className="mb-1.5 block text-xs font-semibold text-text-2">Activité</label>
-          <div className="space-y-3">
-            {groupByCategory(activities).map((g) => (
-              <div key={g.category}>
-                <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-text-3">
-                  {g.icon} {g.category}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {g.activities.map((a) => (
-                    <Chip
-                      key={a.id}
-                      active={form.activityId === a.id}
-                      onClick={() => set('activityId', a.id)}
-                    >
-                      {a.icon} {a.name}
-                    </Chip>
-                  ))}
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <Step n={1} title="Quelle activité ?">
+          <div className="space-y-4">
+            {groupByCategory(activities).map((g) => {
+              const tone = categoryTone(g.category);
+              return (
+                <div key={g.category}>
+                  <p className={`mb-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold ${tone.bg} ${tone.text}`}>
+                    <span aria-hidden="true">{g.icon}</span> {g.category}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {g.activities.map((a) => (
+                      <Chip key={a.id} active={form.activityId === a.id} onClick={() => set('activityId', a.id)}>
+                        <span aria-hidden="true">{a.icon}</span> {a.name}
+                      </Chip>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
-          {validationErrors.activityId && <p className="mt-1 text-xs text-red-500">{validationErrors.activityId}</p>}
-        </div>
+          {validationErrors.activityId && (
+            <p className="text-sm font-semibold text-danger-strong">{validationErrors.activityId}</p>
+          )}
+        </Step>
 
-        <Field label="Titre" error={validationErrors.title}>
-          <input
-            type="text"
-            required
-            minLength={3}
-            maxLength={100}
-            value={form.title}
-            onChange={update('title')}
-            placeholder="Ex: Footing matinal au parc"
-            className={inputClass(!!validationErrors.title)}
-          />
-        </Field>
-
-        <Field label="Description">
-          <textarea
-            maxLength={1000}
-            value={form.description}
-            onChange={update('description')}
-            rows={3}
-            placeholder="Décrivez votre événement..."
-            className={inputClass(false, 'resize-none')}
-          />
-        </Field>
-
-        <Field label="Photo de couverture" hint="Optionnel — illustre la carte de l'événement.">
-          <PhotoInput value={form.photoUrl} onChange={(url) => set('photoUrl', url)} />
-        </Field>
-
-        <div>
-          <label className="mb-1.5 block text-xs font-semibold text-ink-mid">Ville</label>
-          <div className="mb-2 flex flex-wrap gap-2">
-            {cities.slice(0, 8).map((c) => (
-              <Chip key={c} active={form.city === c} onClick={() => set('city', c)}>
-                {c}
-              </Chip>
-            ))}
-          </div>
-          <CityPicker
-            value={form.city}
-            error={!!validationErrors.city}
-            placeholder="Ou cherchez votre commune…"
-            onChange={(c) => {
-              set('city', c.name);
-              if (c.lat != null && c.lng != null && form.latitude == null) {
-                setForm((prev) => ({ ...prev, latitude: c.lat, longitude: c.lng }));
-              }
-            }}
-          />
-          {validationErrors.city && <p className="mt-1 text-xs text-red-500">{validationErrors.city}</p>}
-        </div>
-
-        <Field label="Lieu / Point de RDV">
-          <input
-            type="text"
-            value={form.location}
-            onChange={update('location')}
-            placeholder="Ex: Entrée du parc"
-            className={inputClass(false)}
-          />
-        </Field>
-
-        <Field label="Localisation sur la carte">
-          <LocationPicker latitude={form.latitude} longitude={form.longitude} onChange={updateLocation} />
-        </Field>
-
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Date et heure" error={validationErrors.date}>
+        <Step n={2} title="Décrivez la sortie">
+          <Field label="Titre" error={validationErrors.title}>
             <input
-              type="datetime-local"
+              type="text"
               required
-              value={form.date}
-              onChange={update('date')}
-              className={inputClass(!!validationErrors.date)}
+              minLength={3}
+              maxLength={100}
+              value={form.title}
+              onChange={update('title')}
+              placeholder="Ex. : Footing tranquille au parc"
+              className={inputClass(!!validationErrors.title)}
             />
           </Field>
-          <Field label="Max participants">
+
+          <Field label="Quelques mots" hint="Le rythme, le niveau, ce qu'il faut apporter… Tout ce qui rassure avant de venir.">
+            <textarea
+              maxLength={1000}
+              value={form.description}
+              onChange={update('description')}
+              rows={4}
+              placeholder="Ex. : On court 5 km à allure douce, tous niveaux bienvenus. On finit par un café."
+              className={inputClass(false, 'resize-none')}
+            />
+          </Field>
+
+          <Field label="Photo" hint="Facultatif. Elle illustre la carte de la sortie.">
+            <PhotoInput value={form.photoUrl} onChange={(url) => set('photoUrl', url)} />
+          </Field>
+        </Step>
+
+        <Step n={3} title="Où et quand ?">
+          <div>
+            <p className="mb-2 block text-[15px] font-bold text-text">Ville</p>
+            <div className="mb-2 flex flex-wrap gap-2">
+              {cities.slice(0, 8).map((c) => (
+                <Chip key={c} active={form.city === c} onClick={() => set('city', c)}>
+                  {c}
+                </Chip>
+              ))}
+            </div>
+            <CityPicker
+              value={form.city}
+              error={!!validationErrors.city}
+              placeholder="Ou cherchez votre commune…"
+              onChange={(c) => {
+                set('city', c.name);
+                if (c.lat != null && c.lng != null && form.latitude == null) {
+                  setForm((prev) => ({ ...prev, latitude: c.lat, longitude: c.lng }));
+                }
+              }}
+            />
+            {validationErrors.city && <p className="mt-1.5 text-sm font-semibold text-danger-strong">{validationErrors.city}</p>}
+          </div>
+
+          <Field label="Point de rendez-vous" hint="Visible seulement par les participants.">
             <input
-              type="number"
-              required
-              min={2}
-              max={50}
-              value={form.maxParticipants}
-              onChange={update('maxParticipants')}
+              type="text"
+              value={form.location}
+              onChange={update('location')}
+              placeholder="Ex. : Entrée du parc, côté fontaine"
               className={inputClass(false)}
             />
           </Field>
-        </div>
 
-        <div>
-          <label className="mb-1.5 block text-xs font-semibold text-ink-mid">Récurrence</label>
-          <div className="flex flex-wrap items-center gap-2">
-            <Chip active={form.recurrenceWeeks === 0} onClick={() => set('recurrenceWeeks', 0)}>
-              Une seule fois
-            </Chip>
-            {[2, 4, 8, 12].map((w) => (
-              <Chip key={w} active={form.recurrenceWeeks === w} onClick={() => set('recurrenceWeeks', w)}>
-                🔁 {w} semaines
-              </Chip>
-            ))}
+          <Field label="Sur la carte">
+            <LocationPicker latitude={form.latitude} longitude={form.longitude} onChange={updateLocation} />
+          </Field>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field label="Date et heure" error={validationErrors.date}>
+              <input
+                type="datetime-local"
+                required
+                value={form.date}
+                onChange={update('date')}
+                className={inputClass(!!validationErrors.date)}
+              />
+            </Field>
+            <Field label="Nombre de places" hint="Vous compris, de 2 à 50.">
+              <input
+                type="number"
+                required
+                min={2}
+                max={50}
+                value={form.maxParticipants}
+                onChange={update('maxParticipants')}
+                className={inputClass(false)}
+              />
+            </Field>
           </div>
-          {form.recurrenceWeeks >= 2 && (
-            <p className="mt-1 text-xs text-ink-sub">
-              {form.recurrenceWeeks} événements seront créés, un par semaine à la même heure.
-            </p>
-          )}
-        </div>
 
-        <Button type="submit" size="lg" disabled={loading} className="w-full">
-          {loading ? 'Création...' : "Créer l'événement 🎉"}
+          <div>
+            <p className="mb-2 block text-[15px] font-bold text-text">Ça revient ?</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <Chip active={form.recurrenceWeeks === 0} onClick={() => set('recurrenceWeeks', 0)}>
+                Une seule fois
+              </Chip>
+              {[2, 4, 8, 12].map((w) => (
+                <Chip key={w} active={form.recurrenceWeeks === w} onClick={() => set('recurrenceWeeks', w)}>
+                  Chaque semaine, {w} fois
+                </Chip>
+              ))}
+            </div>
+            {form.recurrenceWeeks >= 2 && (
+              <p className="mt-2 text-[15px] text-text-2">
+                {form.recurrenceWeeks} dates seront créées, une par semaine à la même heure.
+              </p>
+            )}
+          </div>
+        </Step>
+
+        <Button type="submit" variant="sun" size="lg" disabled={loading} className="w-full">
+          {loading ? 'Publication…' : 'Publier ma sortie'}
         </Button>
       </form>
     </div>

@@ -14,6 +14,28 @@ export const CATEGORY_ICON: Record<string, string> = {
   Engagement: '🤝',
 };
 
+// One pastel per category, so a card can be recognised before it is read.
+// Class strings are literal on purpose: Tailwind only emits what it can see.
+export interface CategoryTone {
+  bg: string;
+  text: string;
+}
+
+const CATEGORY_TONE: Record<string, CategoryTone> = {
+  Sport: { bg: 'bg-cat-sport', text: 'text-cat-sport-text' },
+  'Boire & manger': { bg: 'bg-cat-food', text: 'text-cat-food-text' },
+  Culture: { bg: 'bg-cat-culture', text: 'text-cat-culture-text' },
+  Balades: { bg: 'bg-cat-walk', text: 'text-cat-walk-text' },
+  Jeux: { bg: 'bg-cat-games', text: 'text-cat-games-text' },
+  Engagement: { bg: 'bg-cat-care', text: 'text-cat-care-text' },
+};
+
+const NEUTRAL_TONE: CategoryTone = { bg: 'bg-surface-sunken', text: 'text-text-2' };
+
+export function categoryTone(category?: string | null): CategoryTone {
+  return (category && CATEGORY_TONE[category]) || NEUTRAL_TONE;
+}
+
 export interface CategoryGroup {
   category: string;
   icon: string;

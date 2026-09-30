@@ -9,13 +9,13 @@ interface EmptyStateProps {
 
 export default function EmptyState({ emoji, title, hint, action }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center gap-2 py-16 text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-cream-deep text-3xl">
+    <div className="flex flex-col items-center gap-2 rounded-3xl bg-surface px-6 py-16 text-center shadow-card">
+      <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary-surface text-4xl">
         {emoji}
       </div>
-      <p className="mt-2 font-semibold text-ink">{title}</p>
-      {hint && <p className="max-w-sm text-sm text-ink-sub">{hint}</p>}
-      {action && <div className="mt-3">{action}</div>}
+      <p className="mt-3 text-xl font-extrabold text-text">{title}</p>
+      {hint && <p className="max-w-md text-base text-text-2">{hint}</p>}
+      {action && <div className="mt-4">{action}</div>}
     </div>
   );
 }

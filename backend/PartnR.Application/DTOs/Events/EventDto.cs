@@ -23,6 +23,8 @@ public class EventDto
     public double? Latitude { get; set; }
     public double? Longitude { get; set; }
     public double? DistanceKm { get; set; }
+    /// <summary>Catalogue category of the activity (« Sport », « Culture »…), for colour-coding.</summary>
+    public string ActivityCategory { get; set; } = string.Empty;
     public bool IsRecurring { get; set; }
     public int? UpcomingOccurrences { get; set; }
     public DateTime CreatedAt { get; set; }

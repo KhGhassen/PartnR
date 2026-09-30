@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Plus } from 'lucide-react';
 import { listEvents } from '../api/events';
 import { toApiError } from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -11,8 +12,8 @@ import type { EventSummary } from '../types';
 
 const TABS = [
   { key: 'Published', label: 'À venir' },
-  { key: 'Completed', label: 'Terminés' },
-  { key: 'Cancelled', label: 'Annulés' },
+  { key: 'Completed', label: 'Passées' },
+  { key: 'Cancelled', label: 'Annulées' },
 ] as const;
 
 type TabKey = (typeof TABS)[number]['key'];
@@ -48,11 +49,18 @@ export default function MyEvents() {
   const joined = events.filter((e) => e.creatorId !== user?.id);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
-      <h1 className="mb-1 text-3xl font-bold tracking-tight text-ink">Mes événements</h1>
-      <p className="mb-6 text-ink-sub">Les activités que vous organisez ou avez rejointes.</p>
+    <div className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-extrabold text-text">Mes sorties</h1>
+          <p className="mt-1 text-base text-text-2">Celles que vous organisez et celles que vous avez rejointes.</p>
+        </div>
+        <ButtonLink to="/events/new">
+          <Plus size={18} aria-hidden="true" /> Proposer une sortie
+        </ButtonLink>
+      </div>
 
-      <div className="mb-6 flex gap-2">
+      <div className="mb-6 flex flex-wrap gap-2" role="group" aria-label="Période">
         {TABS.map((t) => (
           <Chip key={t.key} active={tab === t.key} onClick={() => setTab(t.key)}>
             {t.label}
@@ -61,11 +69,11 @@ export default function MyEvents() {
       </div>
 
       {error && (
-        <div className="mb-6 rounded-2xl border border-red-100 bg-red-50 px-5 py-4 text-sm text-red-600">{error}</div>
+        <div className="mb-6 rounded-2xl bg-danger-surface px-5 py-4 font-semibold text-danger-strong">{error}</div>
       )}
 
       {loading ? (
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
           <span className="sr-only">Chargement...</span>
           {Array.from({ length: 3 }).map((_, i) => (
             <EventCardSkeleton key={i} />
@@ -76,17 +84,17 @@ export default function MyEvents() {
           emoji={tab === 'Published' ? '🗓️' : tab === 'Completed' ? '🏁' : '🚫'}
           title={
             tab === 'Published'
-              ? 'Aucun événement à venir.'
+              ? "Rien de prévu pour l'instant."
               : tab === 'Completed'
-                ? 'Aucun événement terminé.'
-                : 'Aucun événement annulé.'
+                ? 'Aucune sortie passée.'
+                : 'Aucune sortie annulée.'
           }
-          hint={tab === 'Published' ? 'Rejoignez une activité ou créez la vôtre !' : undefined}
+          hint={tab === 'Published' ? 'Rejoignez une sortie près de chez vous, ou proposez la vôtre.' : undefined}
           action={
             tab === 'Published' ? (
-              <div className="flex gap-3">
-                <ButtonLink to="/">Parcourir les événements</ButtonLink>
-                <ButtonLink to="/events/new" variant="soft">Créer un événement</ButtonLink>
+              <div className="flex flex-wrap justify-center gap-3">
+                <ButtonLink to="/">Découvrir les sorties</ButtonLink>
+                <ButtonLink to="/events/new" variant="secondary">Proposer une sortie</ButtonLink>
               </div>
             ) : undefined
           }
@@ -95,10 +103,10 @@ export default function MyEvents() {
         <div className="space-y-10">
           {organized.length > 0 && (
             <section>
-              <h2 className="mb-4 text-lg font-bold text-ink">
-                Organisés par moi <span className="ml-1 text-sm font-normal text-ink-sub">({organized.length})</span>
+              <h2 className="mb-4 text-xl font-extrabold text-text">
+                J'organise <span className="ml-1 text-base font-bold text-text-3">({organized.length})</span>
               </h2>
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
                 {organized.map((ev) => (
                   <EventCard key={ev.id} ev={ev} showStatus={tab !== 'Published'} />
                 ))}
@@ -107,10 +115,10 @@ export default function MyEvents() {
           )}
           {joined.length > 0 && (
             <section>
-              <h2 className="mb-4 text-lg font-bold text-ink">
-                Rejoints <span className="ml-1 text-sm font-normal text-ink-sub">({joined.length})</span>
+              <h2 className="mb-4 text-xl font-extrabold text-text">
+                Je participe <span className="ml-1 text-base font-bold text-text-3">({joined.length})</span>
               </h2>
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
                 {joined.map((ev) => (
                   <EventCard key={ev.id} ev={ev} showStatus={tab !== 'Published'} />
                 ))}

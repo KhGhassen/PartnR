@@ -29,11 +29,11 @@ export default function ResetPassword() {
   if (!email || !token) {
     return (
       <div className="flex min-h-[80vh] items-center justify-center px-4">
-        <div className="w-full max-w-md rounded-3xl border border-line bg-white p-8 text-center shadow-card">
+        <div className="w-full max-w-md rounded-3xl border border-border bg-surface p-8 text-center shadow-card">
           <div className="mb-4 text-5xl">⚠️</div>
-          <h1 className="mb-2 text-xl font-bold tracking-tight text-ink">Lien invalide</h1>
-          <p className="mb-4 text-sm text-ink-sub">Ce lien de réinitialisation est invalide ou a expiré.</p>
-          <Link to="/forgot-password" className="text-sm font-medium text-coral-600 hover:underline">
+          <h1 className="mb-2 text-xl font-bold tracking-tight text-text">Lien invalide</h1>
+          <p className="mb-4 text-sm text-text-3">Ce lien de réinitialisation est invalide ou a expiré.</p>
+          <Link to="/forgot-password" className="text-sm font-medium text-primary-strong hover:underline">
             Demander un nouveau lien
           </Link>
         </div>
@@ -66,10 +66,10 @@ export default function ResetPassword() {
   if (success) {
     return (
       <div className="flex min-h-[80vh] items-center justify-center px-4">
-        <div className="w-full max-w-md rounded-3xl border border-line bg-white p-8 text-center shadow-card">
+        <div className="w-full max-w-md rounded-3xl border border-border bg-surface p-8 text-center shadow-card">
           <div className="mb-4 text-5xl">✅</div>
-          <h1 className="mb-2 text-2xl font-bold tracking-tight text-ink">Mot de passe modifié</h1>
-          <p className="mb-6 text-sm text-ink-sub">Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.</p>
+          <h1 className="mb-2 text-2xl font-bold tracking-tight text-text">Mot de passe modifié</h1>
+          <p className="mb-6 text-sm text-text-3">Vous pouvez maintenant vous connecter avec votre nouveau mot de passe.</p>
           <Button size="lg" onClick={() => navigate('/login')} className="w-full">
             Se connecter
           </Button>
@@ -80,11 +80,11 @@ export default function ResetPassword() {
 
   return (
     <div className="flex min-h-[80vh] items-center justify-center px-4">
-      <div className="w-full max-w-md rounded-3xl border border-line bg-white p-8 shadow-card">
-        <h1 className="mb-6 text-center text-2xl font-bold tracking-tight text-ink">Nouveau mot de passe</h1>
+      <div className="w-full max-w-md rounded-3xl border border-border bg-surface p-8 shadow-card">
+        <h1 className="mb-6 text-center text-2xl font-bold tracking-tight text-text">Nouveau mot de passe</h1>
 
         {error && (
-          <div className="mb-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
+          <div className="mb-4 rounded-2xl border border-danger-surface bg-danger-surface px-4 py-3 text-sm text-danger-strong">{error}</div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -105,8 +105,8 @@ export default function ResetPassword() {
                 {PASSWORD_RULES.map((rule) => (
                   <p
                     key={rule.label}
-                    className={`flex items-center gap-1 text-xs ${
-                      rule.test(newPassword) ? 'text-emerald-600' : 'text-ink-sub'
+                    className={`flex items-center gap-1 text-sm ${
+                      rule.test(newPassword) ? 'text-success-strong' : 'text-text-3'
                     }`}
                   >
                     {rule.test(newPassword) ? '✓' : '○'} {rule.label}

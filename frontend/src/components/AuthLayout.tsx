@@ -1,30 +1,33 @@
 import type { ReactNode } from 'react';
+import { CATEGORY_ICON, CATEGORY_ORDER } from '../lib/catalogue';
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-5xl items-center px-4 py-10">
-      <div className="grid w-full overflow-hidden rounded-3xl border border-line bg-white shadow-card md:grid-cols-2">
-        <div className="relative hidden flex-col justify-between bg-gradient-to-br from-coral-500 to-violet-500 p-10 text-white md:flex">
-          <div className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full bg-white/10" />
-          <div className="pointer-events-none absolute -bottom-16 -left-10 h-56 w-56 rounded-full bg-white/10" />
-          <div className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20 text-base font-bold">
-              P
-            </span>
-            <span className="text-xl font-bold">PartnR</span>
+    <div className="mx-auto flex min-h-[calc(100vh-4.5rem)] max-w-5xl items-center px-4 py-8">
+      <div className="grid w-full overflow-hidden rounded-3xl bg-surface shadow-card ring-1 ring-border md:grid-cols-2">
+        <div className="relative hidden flex-col justify-between overflow-hidden bg-primary p-10 text-on-primary md:flex">
+          <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-sun/30" aria-hidden="true" />
+          <div className="pointer-events-none absolute -bottom-24 -left-16 h-64 w-64 rounded-full bg-white/10" aria-hidden="true" />
+          <div className="relative flex items-center gap-2.5">
+            <span className="grid h-10 w-10 place-items-center rounded-2xl bg-white text-xl font-black text-primary">P</span>
+            <span className="text-2xl font-extrabold">PartnR</span>
           </div>
-          <div>
-            <h2 className="mb-3 text-3xl font-bold leading-tight">
-              Ne faites plus rien seul·e.
-            </h2>
-            <p className="text-sm leading-relaxed text-white/80">
-              Course à pied, resto, concert, expo… Trouvez des partenaires près de chez vous
-              pour toutes vos activités.
+          <div className="relative">
+            <h2 className="mb-3 text-3xl font-extrabold leading-tight">Sortez, rencontrez, partagez.</h2>
+            <p className="text-base text-white/90">
+              Un footing, un resto, une expo… Trouvez des gens près de chez vous pour ne plus rien faire seul.
             </p>
           </div>
-          <div className="flex gap-2 text-2xl">🏃 🍜 🎸 🎨 ⚽</div>
+          <div className="relative grid grid-cols-3 gap-2" aria-hidden="true">
+            {CATEGORY_ORDER.map((c) => (
+              <span key={c} className="flex flex-col items-center gap-1 rounded-2xl bg-white/15 px-2 py-3 text-sm font-bold">
+                <span className="text-2xl">{CATEGORY_ICON[c]}</span>
+                {c}
+              </span>
+            ))}
+          </div>
         </div>
-        <div className="p-8 md:p-10">{children}</div>
+        <div className="p-6 sm:p-10">{children}</div>
       </div>
     </div>
   );

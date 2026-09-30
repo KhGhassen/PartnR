@@ -29,14 +29,14 @@ const AdminEventsPage = lazy(() => import('./pages/AdminEvents'));
 const AdminReports = lazy(() => import('./pages/AdminReports'));
 
 function RouteFallback() {
-  return <p className="py-16 text-center text-ink-sub">Chargement...</p>;
+  return <p className="py-16 text-center text-text-2">Chargement...</p>;
 }
 
 function AppRoutes() {
   useAnalytics();
 
   return (
-    <div className="min-h-screen bg-cream">
+    <div className="min-h-screen bg-bg">
       <Navbar />
       <EmailVerificationBanner />
       <ErrorBoundary>
