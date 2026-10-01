@@ -95,6 +95,8 @@ export default function ProfileScreen() {
     : new Date().getFullYear();
 
   const STATS: [string, string][] = [
+    [String(profile?.sortiesCount ?? 0), 'Sorties'],
+    [profile?.reliabilityPercent != null ? `${profile.reliabilityPercent} %` : '—', 'Fiabilité'],
     [ratingCount > 0 ? ratingAvg.toFixed(1) : '—', 'Note'],
     [String(ratingCount), 'Avis'],
   ];
@@ -121,7 +123,7 @@ export default function ProfileScreen() {
         ) : (
           <>
             {/* Stats */}
-            {ratingCount > 0 && (
+            {profile && (
               <View style={styles.statsCard}>
                 {STATS.map(([num, label]) => (
                   <View key={label} style={styles.statItem}>

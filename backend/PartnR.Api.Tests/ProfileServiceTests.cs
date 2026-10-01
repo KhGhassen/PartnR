@@ -36,7 +36,7 @@ public class ProfileServiceTests : IDisposable
         });
         _db.SaveChanges();
 
-        _service = new ProfileService(new UserRepository(_db), new UnitOfWork(_db));
+        _service = new ProfileService(new UserRepository(_db), new EventParticipantRepository(_db), new UnitOfWork(_db));
     }
 
     [Fact]
@@ -110,6 +110,28 @@ public class ProfileServiceTests : IDisposable
         var results = await _service.SearchAsync("Marseille", null);
 
         Assert.Empty(results);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_ReportsReliability_OnlyOnceSomeoneMarkedAttendance()
+    {
+        var fresh = await _service.GetByIdAsync(_userId);
+        Assert.Equal(0, fresh.SortiesCount);
+        Assert.Null(fresh.ReliabilityPercent);
+
+        var activityId = Guid.Parse("a1000000-0000-0000-0000-000000000001");
+        var organiser = Guid.NewGuid();
+        foreach (var attendance in new[] { AttendanceStatus.Present, AttendanceStatus.Present, AttendanceStatus.Present, AttendanceStatus.Absent, AttendanceStatus.Unknown })
+        {
+            var ev = new Event { Title = "x", City = "Paris", Date = DateTime.UtcNow.AddDays(-1), MaxParticipants = 5, CreatorId = organiser, ActivityId = activityId };
+            _db.Events.Add(ev);
+            _db.EventParticipants.Add(new EventParticipant { EventId = ev.Id, UserId = _userId, Attendance = attendance });
+        }
+        await _db.SaveChangesAsync();
+
+        var profile = await _service.GetByIdAsync(_userId);
+        Assert.Equal(3, profile.SortiesCount);
+        Assert.Equal(75, profile.ReliabilityPercent);   // 3 present out of 4 marked; the unmarked one does not count
     }
 
     public void Dispose() => _db.Dispose();

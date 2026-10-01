@@ -4,7 +4,7 @@ import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import { ArrowLeft, CalendarPlus, Clock, MapPin, Pencil, Share2, Trash2, Users } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import '../lib/leafletIcons';
-import { getEvent, joinEvent, leaveEvent, deleteEvent } from '../api/events';
+import { getEvent, joinEvent, leaveEvent, deleteEvent, markAttendance } from '../api/events';
 import { toApiError } from '../api/client';
 import { loginUrl } from '../lib/redirect';
 import { useAuth } from '../context/AuthContext';
@@ -152,6 +152,23 @@ export default function EventDetail() {
       navigate('/');
     } catch (err) {
       setError(toApiError(err).message);
+    }
+  };
+
+  // Only the organiser, only once the outing has happened; the server
+  // enforces the same rules.
+  const canMarkAttendance = isCreator && event.status !== 'Cancelled' && date.getTime() <= Date.now();
+  const markPresence = async (userId: string, present: boolean) => {
+    try {
+      await markAttendance(event.id, userId, present);
+      setEvent({
+        ...event,
+        participants: event.participants.map((p) =>
+          p.userId === userId ? { ...p, attendance: present ? 'Present' : 'Absent' } : p
+        ),
+      });
+    } catch (err) {
+      toast.error(toApiError(err).message);
     }
   };
 
@@ -406,11 +423,55 @@ export default function EventDetail() {
                         Organise
                       </span>
                     )}
+                    {p.attendance === 'Present' && (
+                      <span className="rounded-full bg-success-surface px-2 py-0.5 text-xs font-bold text-success-strong">
+                        Était là
+                      </span>
+                    )}
                   </Link>
                 ))}
               </div>
             )}
           </section>
+
+          {canMarkAttendance && confirmed.some((p) => p.userId !== user?.id) && (
+            <section className="mt-8 rounded-2xl bg-sun-surface p-5">
+              <h2 className="mb-1 text-xl font-extrabold text-text">Qui est venu ?</h2>
+              <p className="mb-4 text-[15px] text-text-2">
+                Cochez les présences : c'est ce qui construit la fiabilité de chacun et l'ordre des listes d'attente.
+              </p>
+              <div className="space-y-2">
+                {confirmed
+                  .filter((p) => p.userId !== user?.id)
+                  .map((p) => (
+                    <div key={p.userId} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-surface px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <Avatar name={p.firstName} url={p.avatarUrl} size="sm" />
+                        <span className="text-[15px] font-bold text-text">{p.firstName}</span>
+                      </div>
+                      <div className="flex gap-2" role="group" aria-label={`Présence de ${p.firstName}`}>
+                        <Button
+                          size="sm"
+                          variant={p.attendance === 'Present' ? 'primary' : 'ghost'}
+                          aria-pressed={p.attendance === 'Present'}
+                          onClick={() => markPresence(p.userId, true)}
+                        >
+                          Présent
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant={p.attendance === 'Absent' ? 'danger' : 'ghost'}
+                          aria-pressed={p.attendance === 'Absent'}
+                          onClick={() => markPresence(p.userId, false)}
+                        >
+                          Absent
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </section>
+          )}
 
           {event.status === 'Completed' && isParticipant && (
             <section className="mt-8">

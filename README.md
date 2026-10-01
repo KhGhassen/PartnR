@@ -11,6 +11,7 @@ Plateforme sociale pour trouver des partenaires d'activités sportives et de loi
 - **Chat temps réel** — Messagerie de groupe par événement via SignalR (web + mobile), avec notification des absents
 - **Notifications** — In-app, push Expo (avec retries) et email : inscription, liste d'attente, annulation, report, rappel J-1
 - **Modération** — Signalement d'un profil ou d'un événement, blocage d'utilisateurs, console admin (utilisateurs, événements, signalements)
+- **Fiabilité** — L'organisateur note qui est venu ; le profil affiche le nombre de sorties et le taux de présence, et un absent récidiviste perd sa priorité sur les listes d'attente
 - **Notation** — Évaluation post-activité entre participants (1-5 étoiles)
 - **Analytics** — Tracking d'actions utilisateur (fire-and-forget), dashboard admin avec graphiques
 - **Application mobile** — iOS/Android via Expo React Native, parité fonctionnelle avec le web
@@ -153,7 +154,8 @@ Les erreurs sont renvoyées en JSON `{ "error": "…" }` : 400 (validation, règ
 | PUT | `/api/events/{id}?applyToSeries=` | Oui | Modifier (créateur). Un changement de date notifie les participants |
 | DELETE | `/api/events/{id}?applyToSeries=` | Oui | Supprimer (créateur) |
 | POST | `/api/events/{id}/join` | Oui | Rejoindre (liste d'attente si complet) |
-| POST | `/api/events/{id}/leave` | Oui | Quitter (promeut le premier en attente) |
+| POST | `/api/events/{id}/leave` | Oui | Quitter (promeut le premier en attente, sauf les absents récidivistes) |
+| POST | `/api/events/{id}/attendance` | Oui | Organisateur, après la date : `{ userId, present }` note qui est venu |
 | GET | `/api/events/{id}/comments` | Non | Questions / réponses publiques |
 | POST | `/api/events/{id}/comments` | Oui | Poser une question |
 | DELETE | `/api/events/{id}/comments/{commentId}` | Oui | Supprimer (auteur ou créateur) |
@@ -237,6 +239,7 @@ Events      ──N:1── Events (RecurrenceGroupId : occurrences d'une série
 | `00016` | Retries push avec backoff |
 | `00017` | Rappel J-1 par participant (`EventParticipants.ReminderSentAt`) |
 | `00018` | Blocages (`UserBlocks`) |
+| `00019` | Présences (`EventParticipants.Attendance`) |
 
 ## Installation
 

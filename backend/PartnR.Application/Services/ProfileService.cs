@@ -9,11 +9,13 @@ namespace PartnR.Application.Services;
 public class ProfileService : IProfileService
 {
     private readonly IUserRepository _users;
+    private readonly IEventParticipantRepository _participants;
     private readonly IUnitOfWork _unitOfWork;
 
-    public ProfileService(IUserRepository users, IUnitOfWork unitOfWork)
+    public ProfileService(IUserRepository users, IEventParticipantRepository participants, IUnitOfWork unitOfWork)
     {
         _users = users;
+        _participants = participants;
         _unitOfWork = unitOfWork;
     }
 
@@ -22,7 +24,9 @@ public class ProfileService : IProfileService
         var user = await _users.FindAsync(userId)
             ?? throw new KeyNotFoundException("User not found.");
 
-        return MapToDto(user);
+        var dto = MapToDto(user);
+        await FillReliabilityAsync(dto);
+        return dto;
     }
 
     public async Task<ProfileDto> UpdateAsync(Guid userId, UpdateProfileDto dto)
@@ -38,7 +42,9 @@ public class ProfileService : IProfileService
         if (dto.ProfileType.HasValue) user.ProfileType = dto.ProfileType.Value;
 
         await _unitOfWork.SaveChangesAsync();
-        return MapToDto(user);
+        var result = MapToDto(user);
+        await FillReliabilityAsync(result);
+        return result;
     }
 
     public async Task<List<ProfileDto>> SearchAsync(string? city, string? activity)
@@ -53,6 +59,24 @@ public class ProfileService : IProfileService
 
         var users = await query.OrderByDescending(u => u.RatingAvg).Take(50).ToListAsync();
         return users.Select(MapToDto).ToList();
+    }
+
+    // Reliability is what makes strangers show up: how many outings this
+    // person was marked present at, and the share of marks that were
+    // "present". Null until an organiser has marked anything, so a newcomer
+    // reads as new, not as unreliable.
+    private async Task FillReliabilityAsync(ProfileDto dto)
+    {
+        var marks = await _participants.Query()
+            .Where(p => p.UserId == dto.Id && p.Attendance != AttendanceStatus.Unknown)
+            .GroupBy(p => p.Attendance)
+            .Select(g => new { g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        var present = marks.FirstOrDefault(m => m.Key == AttendanceStatus.Present)?.Count ?? 0;
+        var absent = marks.FirstOrDefault(m => m.Key == AttendanceStatus.Absent)?.Count ?? 0;
+        dto.SortiesCount = present;
+        dto.ReliabilityPercent = present + absent == 0 ? null : (int)Math.Round(100.0 * present / (present + absent));
     }
 
     private static ProfileDto MapToDto(AppUser u) => new()

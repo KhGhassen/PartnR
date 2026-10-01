@@ -14,6 +14,10 @@ public class ProfileDto
     public string? ProfileType { get; set; }
     public double RatingAvg { get; set; }
     public int RatingCount { get; set; }
+    /// <summary>Outings the organiser marked this person present at.</summary>
+    public int SortiesCount { get; set; }
+    /// <summary>Present / (Present + Absent), in percent. Null until at least one mark exists.</summary>
+    public int? ReliabilityPercent { get; set; }
     public DateTime CreatedAt { get; set; }
 }
 

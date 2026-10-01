@@ -208,7 +208,7 @@ export default function Profile() {
             </p>
           )}
 
-          <div className="mb-6 grid grid-cols-2 gap-4">
+          <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
             <div className="rounded-2xl bg-surface-sunken p-4">
               <p className="mb-0.5 text-sm text-text-3">Ville</p>
               {editing ? (
@@ -228,6 +228,22 @@ export default function Profile() {
                 <span className="text-warn">{stars(profile.ratingAvg)}</span>
                 <span className="ml-1 text-sm font-normal text-text-3">({profile.ratingCount} avis)</span>
               </p>
+            </div>
+            <div className="rounded-2xl bg-surface-sunken p-4">
+              <p className="mb-0.5 text-sm text-text-3">Sorties</p>
+              <p className="text-2xl font-extrabold text-text">{profile.sortiesCount ?? 0}</p>
+            </div>
+            {/* Null until an organiser has marked anything: a newcomer is new,
+                not unreliable. */}
+            <div className="rounded-2xl bg-surface-sunken p-4" title="Part des sorties où la personne était bien présente">
+              <p className="mb-0.5 text-sm text-text-3">Fiabilité</p>
+              {profile.reliabilityPercent == null ? (
+                <p className="text-base font-bold text-text-2">Nouveau membre</p>
+              ) : (
+                <p className={`text-2xl font-extrabold ${profile.reliabilityPercent >= 80 ? 'text-success-strong' : 'text-text'}`}>
+                  {profile.reliabilityPercent} %
+                </p>
+              )}
             </div>
           </div>
 

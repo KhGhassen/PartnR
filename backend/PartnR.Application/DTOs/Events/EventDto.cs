@@ -54,6 +54,14 @@ public class ParticipantDto
     public string? AvatarUrl { get; set; }
     public string Status { get; set; } = null!;
     public DateTime JoinedAt { get; set; }
+    /// <summary>Unknown until the organiser marks it after the outing: Present or Absent.</summary>
+    public string Attendance { get; set; } = "Unknown";
+}
+
+public class MarkAttendanceDto
+{
+    public Guid UserId { get; set; }
+    public bool Present { get; set; }
 }
 
 public class CreateEventDto

@@ -14,5 +14,7 @@ public interface IEventService
     Task<EventDetailDto> UpdateAsync(Guid eventId, Guid userId, UpdateEventDto dto, bool applyToSeries = false);
     Task JoinAsync(Guid eventId, Guid userId);
     Task LeaveAsync(Guid eventId, Guid userId);
+    /// <summary>Organiser only, once the date has passed: records who came.</summary>
+    Task MarkAttendanceAsync(Guid eventId, Guid organiserId, Guid targetUserId, bool present);
     Task DeleteAsync(Guid eventId, Guid userId, bool applyToSeries = false);
 }
