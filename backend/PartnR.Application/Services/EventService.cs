@@ -472,6 +472,27 @@ public class EventService : IEventService
         }
     }
 
+    public async Task MarkAttendanceAsync(Guid eventId, Guid organiserId, Guid targetUserId, bool present)
+    {
+        var ev = await _events.FindAsync(eventId)
+            ?? throw new KeyNotFoundException("Sortie introuvable.");
+        if (ev.CreatorId != organiserId)
+            throw new UnauthorizedAccessException("Seul l'organisateur peut noter les présences.");
+        if (ev.Status == EventStatus.Cancelled)
+            throw new InvalidOperationException("Cette sortie a été annulée.");
+        if (ev.Date > DateTime.UtcNow)
+            throw new InvalidOperationException("La sortie n'a pas encore eu lieu.");
+        if (targetUserId == organiserId)
+            throw new InvalidOperationException("Vous ne pouvez pas noter votre propre présence.");
+
+        var participant = await _participants.Query()
+            .FirstOrDefaultAsync(p => p.EventId == eventId && p.UserId == targetUserId && p.Status == ParticipantStatus.Confirmed)
+            ?? throw new KeyNotFoundException("Cette personne n'était pas inscrite.");
+
+        participant.Attendance = present ? AttendanceStatus.Present : AttendanceStatus.Absent;
+        await _unitOfWork.SaveChangesAsync();
+    }
+
     private async Task LeaveCoreAsync(Guid eventId, Guid userId)
     {
         var participant = await _participants.Query()
@@ -496,9 +517,12 @@ public class EventService : IEventService
         // A confirmed spot opened up — promote the oldest waitlisted participant.
         if (wasConfirmed)
         {
+            // First come, first served — unless you have already stood two
+            // organisers up. A repeat no-show goes behind everyone else.
             var promoted = await _participants.Query()
                 .Where(p => p.EventId == eventId && p.Status == ParticipantStatus.Waitlisted)
-                .OrderBy(p => p.JoinedAt)
+                .OrderBy(p => _participants.Query().Count(x => x.UserId == p.UserId && x.Attendance == AttendanceStatus.Absent) >= 2 ? 1 : 0)
+                .ThenBy(p => p.JoinedAt)
                 .FirstOrDefaultAsync();
             if (promoted is not null)
             {
@@ -596,7 +620,8 @@ public class EventService : IEventService
             FirstName = p.User.FirstName,
             AvatarUrl = p.User.AvatarUrl,
             Status = p.Status.ToString(),
-            JoinedAt = p.JoinedAt
+            JoinedAt = p.JoinedAt,
+            Attendance = p.Attendance.ToString()
         }).ToList(),
         Photos = e.Photos.OrderByDescending(p => p.CreatedAt).Select(p => new EventPhotoDto
         {

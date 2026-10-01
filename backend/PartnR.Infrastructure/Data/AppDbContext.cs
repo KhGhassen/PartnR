@@ -124,6 +124,11 @@ public class AppDbContext : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>
                 .HasMaxLength(20)
                 .HasDefaultValue(ParticipantStatus.Confirmed);
 
+            e.Property(ep => ep.Attendance)
+                .HasConversion<string>()
+                .HasMaxLength(10)
+                .HasDefaultValue(AttendanceStatus.Unknown);
+
             e.HasOne(ep => ep.Event)
                 .WithMany(ev => ev.Participants)
                 .HasForeignKey(ep => ep.EventId)

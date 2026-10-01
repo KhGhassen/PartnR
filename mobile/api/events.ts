@@ -27,6 +27,7 @@ export type Participant = {
   firstName: string;
   avatarUrl: string | null;
   status: string;
+  attendance?: 'Unknown' | 'Present' | 'Absent';
 };
 
 export type EventPhoto = {
@@ -95,3 +96,6 @@ export const joinEvent = (id: string) =>
 
 export const leaveEvent = (id: string) =>
   client.post(`/events/${id}/leave`);
+
+export const markAttendance = (id: string, userId: string, present: boolean) =>
+  client.post(`/events/${id}/attendance`, { userId, present });

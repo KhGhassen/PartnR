@@ -10,6 +10,8 @@ export type Profile = {
   profileType: string | null;
   ratingAvg: number;
   ratingCount: number;
+  sortiesCount?: number;
+  reliabilityPercent?: number | null;
   createdAt: string;
 };
 

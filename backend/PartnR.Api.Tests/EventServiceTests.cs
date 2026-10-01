@@ -871,5 +871,82 @@ public class EventServiceTests : IDisposable
         Assert.All(_db.EventParticipants.Where(p => p.EventId == created.Id), p => Assert.Null(p.ReminderSentAt));
     }
 
+    private async Task<Guid> AddUserAsync(string name)
+    {
+        var id = Guid.NewGuid();
+        var email = $"{name.ToLowerInvariant()}@test.com";
+        _db.Users.Add(new AppUser
+        {
+            Id = id, UserName = email, Email = email, FirstName = name, City = "Paris",
+            NormalizedEmail = email.ToUpperInvariant(), NormalizedUserName = email.ToUpperInvariant(), SecurityStamp = Guid.NewGuid().ToString()
+        });
+        await _db.SaveChangesAsync();
+        return id;
+    }
+
+    [Fact]
+    public async Task MarkAttendance_OrganiserOnly_AfterTheDate_OnConfirmedParticipants()
+    {
+        var bobId = await AddUserAsync("Bob");
+        var carolId = await AddUserAsync("Carol");
+        var created = await _service.CreateAsync(_userId, new CreateEventDto
+        {
+            Title = "Apéro", City = "Paris", Date = DateTime.UtcNow.AddDays(1), MaxParticipants = 5, ActivityId = _activityId
+        });
+        await _service.JoinAsync(created.Id, bobId);
+
+        // Not yet: the outing is tomorrow.
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _service.MarkAttendanceAsync(created.Id, _userId, bobId, true));
+
+        var ev = await _db.Events.FindAsync(created.Id);
+        ev!.Date = DateTime.UtcNow.AddHours(-3);
+        await _db.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => _service.MarkAttendanceAsync(created.Id, bobId, _userId, true));
+        await Assert.ThrowsAsync<KeyNotFoundException>(() => _service.MarkAttendanceAsync(created.Id, _userId, carolId, true));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _service.MarkAttendanceAsync(created.Id, _userId, _userId, true));
+
+        await _service.MarkAttendanceAsync(created.Id, _userId, bobId, false);
+        Assert.Equal(AttendanceStatus.Absent, _db.EventParticipants.Single(p => p.EventId == created.Id && p.UserId == bobId).Attendance);
+
+        var detail = await _service.GetByIdAsync(created.Id, _userId);
+        Assert.Equal("Absent", detail.Participants.Single(p => p.UserId == bobId).Attendance);
+        Assert.Equal("Unknown", detail.Participants.Single(p => p.UserId == _userId).Attendance);
+    }
+
+    [Fact]
+    public async Task LeaveAsync_PromotesTheEarliestWaitlisted_UnlessTheyAreARepeatNoShow()
+    {
+        var flakyId = await AddUserAsync("Flaky");
+        var steadyId = await AddUserAsync("Steady");
+        var memberId = await AddUserAsync("Member");
+
+        // Two past outings where Flaky was marked absent.
+        foreach (var i in new[] { 1, 2 })
+        {
+            var past = new Event
+            {
+                Title = $"Passé {i}", City = "Paris", Date = DateTime.UtcNow.AddDays(-i), MaxParticipants = 5,
+                CreatorId = _userId, ActivityId = _activityId,
+            };
+            _db.Events.Add(past);
+            _db.EventParticipants.Add(new EventParticipant { EventId = past.Id, UserId = flakyId, Attendance = AttendanceStatus.Absent });
+        }
+        await _db.SaveChangesAsync();
+
+        var created = await _service.CreateAsync(_userId, new CreateEventDto
+        {
+            Title = "Petit comité", City = "Paris", Date = DateTime.UtcNow.AddDays(2), MaxParticipants = 2, ActivityId = _activityId
+        });
+        await _service.JoinAsync(created.Id, memberId);   // seat 2 of 2
+        await _service.JoinAsync(created.Id, flakyId);    // waitlisted first
+        await _service.JoinAsync(created.Id, steadyId);   // waitlisted second
+
+        await _service.LeaveAsync(created.Id, memberId);
+
+        Assert.Equal(ParticipantStatus.Confirmed, _db.EventParticipants.Single(p => p.EventId == created.Id && p.UserId == steadyId).Status);
+        Assert.Equal(ParticipantStatus.Waitlisted, _db.EventParticipants.Single(p => p.EventId == created.Id && p.UserId == flakyId).Status);
+    }
+
     public void Dispose() => _db.Dispose();
 }

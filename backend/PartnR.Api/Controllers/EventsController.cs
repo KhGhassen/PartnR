@@ -116,6 +116,16 @@ public class EventsController : ControllerBase
     }
 
     [Authorize]
+    [HttpPost("{id:guid}/attendance")]
+    public async Task<IActionResult> MarkAttendance(Guid id, MarkAttendanceDto dto)
+    {
+        var userId = User.GetUserId();
+        await _eventService.MarkAttendanceAsync(id, userId, dto.UserId, dto.Present);
+        _tracker.Track(userId, "attendance_marked", "event", id);
+        return NoContent();
+    }
+
+    [Authorize]
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, [FromQuery] bool applyToSeries = false)
     {

@@ -44,3 +44,7 @@ export const joinEvent = (id: string) =>
 
 export const leaveEvent = (id: string) =>
   api.post(`/events/${id}/leave`);
+
+// Organiser only, after the outing: builds everyone's reliability.
+export const markAttendance = (id: string, userId: string, present: boolean) =>
+  api.post(`/events/${id}/attendance`, { userId, present });

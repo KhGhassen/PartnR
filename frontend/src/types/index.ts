@@ -24,6 +24,8 @@ export interface Profile {
   profileType: string | null;
   ratingAvg: number;
   ratingCount: number;
+  sortiesCount?: number;
+  reliabilityPercent?: number | null;
   createdAt: string;
 }
 
@@ -74,6 +76,7 @@ export interface Participant {
   avatarUrl: string | null;
   status: string;
   joinedAt: string;
+  attendance?: 'Unknown' | 'Present' | 'Absent';
 }
 
 export interface Occurrence {

@@ -11,6 +11,7 @@ vi.mock('../api/events', () => ({
   joinEvent: vi.fn(),
   leaveEvent: vi.fn(),
   deleteEvent: vi.fn(),
+  markAttendance: vi.fn(),
 }));
 vi.mock('../api/analytics', () => ({ trackAction: vi.fn() }));
 vi.mock('../lib/leafletIcons', () => ({}));
@@ -24,7 +25,8 @@ vi.mock('../components/EventGallery', () => ({ default: () => null }));
 vi.mock('../components/EventComments', () => ({ default: () => null }));
 vi.mock('../components/RatingForm', () => ({ default: () => null }));
 
-import { getEvent } from '../api/events';
+import userEvent from '@testing-library/user-event';
+import { getEvent, markAttendance } from '../api/events';
 
 const baseEvent: EventDetailType = {
   id: 'e1',
@@ -130,5 +132,41 @@ describe('EventDetail', () => {
     expect(screen.queryByText(/L'adresse exacte est communiquée/)).not.toBeInTheDocument();
     expect(screen.getByTestId('chat')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Je participe' })).not.toBeInTheDocument();
+  });
+
+  it('organiser after the outing: marks who came, and only then', async () => {
+    signIn('u-alice');
+    const participants = [
+      { userId: 'u-alice', firstName: 'Alice', avatarUrl: null, status: 'Confirmed', joinedAt: '2026-10-01T00:00:00Z' },
+      { userId: 'u-bob', firstName: 'Bob', avatarUrl: null, status: 'Confirmed', joinedAt: '2026-10-02T00:00:00Z' },
+    ];
+    vi.mocked(markAttendance).mockResolvedValue(undefined as never);
+
+    // Still in the future: nothing to mark yet.
+    vi.mocked(getEvent).mockResolvedValue({ ...baseEvent, location: 'Quai', locationHidden: false, participants });
+    const { unmount } = renderDetail();
+    expect(await screen.findByText('Vous organisez cette sortie')).toBeInTheDocument();
+    expect(screen.queryByText('Qui est venu ?')).not.toBeInTheDocument();
+    unmount();
+
+    vi.mocked(getEvent).mockResolvedValue({
+      ...baseEvent,
+      date: '2026-01-10T18:30:00Z',
+      status: 'Completed',
+      location: 'Quai',
+      locationHidden: false,
+      participants,
+    });
+    renderDetail();
+
+    expect(await screen.findByText('Qui est venu ?')).toBeInTheDocument();
+    const group = screen.getByRole('group', { name: 'Présence de Bob' });
+    expect(screen.queryByRole('group', { name: 'Présence de Alice' })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Présent' }));
+
+    expect(markAttendance).toHaveBeenCalledWith('e1', 'u-bob', true);
+    expect(group.querySelector('[aria-pressed="true"]')).toHaveTextContent('Présent');
+    expect(await screen.findByText('Était là')).toBeInTheDocument();
   });
 });

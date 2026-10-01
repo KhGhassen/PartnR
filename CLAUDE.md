@@ -59,6 +59,7 @@ backend/
 - `ListAsync(..., userId: viewer)` : le contrôleur passe l'utilisateur dès qu'il est authentifié ; les événements des personnes bloquées (dans les deux sens) sont masqués. Le blocage refuse aussi les inscriptions et masque les messages de la paire — jamais annoncé à l'autre partie.
 - `JoinAsync` / `LeaveAsync` sont sérialisés par `IEventRepository.LockAsync` (`pg_advisory_xact_lock`, no-op hors PostgreSQL).
 - Changer la date d'un événement notifie les participants (`event_rescheduled`) et remet `ReminderSentAt` à null.
+- `EventParticipant.Attendance` (`Unknown` / `Present` / `Absent`) n'est écrit que par l'organisateur, après la date, via `MarkAttendanceAsync`. Il nourrit `ProfileDto.SortiesCount` et `ReliabilityPercent` (null tant que personne n'a rien coché) et fait passer un participant absent deux fois derrière tout le monde dans la promotion de la liste d'attente.
 
 ## Frontend (`frontend/src/`)
 
@@ -106,7 +107,7 @@ app/
 
 **SignalR :** `mobile/hooks/useEventChat.ts` — token passé via `?access_token=` (même pattern que web).
 
-**Design tokens :** `mobile/constants/tokens.ts` — mêmes valeurs que la charte web « Le Programme » (`coral` = accent `#c2451c`, `bg` `#f7f4ee`, `success/danger/warn` + surfaces `*L`, `night`). Les noms historiques (`coral`, `coralL`, `bg2`) sont conservés ; jamais de couleur littérale dans les écrans, toujours `T.*`. Pas de thème sombre mobile pour l'instant.
+**Design tokens :** `mobile/constants/tokens.ts` — mêmes valeurs que la charte web « Grand Air » (`coral` = primaire `#2563eb`, `sun` `#ffb703`, `bg` `#f4f7fb`, `success/danger/warn` + surfaces `*L`, `night`) et `categoryTone()` pour la pastel par catégorie. Les noms historiques (`coral`, `coralL`, `bg2`) sont conservés ; jamais de couleur littérale dans les écrans, toujours `T.*`. Pas de thème sombre mobile pour l'instant.
 
 **Builds :** `mobile/eas.json` (profils development / preview / production). Le push exige un `extra.eas.projectId` dans `app.json`, écrit par `eas init` — sans lui `registerForPush` échoue silencieusement.
 

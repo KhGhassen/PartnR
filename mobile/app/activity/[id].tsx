@@ -4,7 +4,7 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { T } from '../../constants/tokens';
 import { API_URL } from '../../config';
-import { getEvent, joinEvent, leaveEvent, type EventDetail } from '../../api/events';
+import { getEvent, joinEvent, leaveEvent, markAttendance, type EventDetail } from '../../api/events';
 import { addEventPhoto, deleteEventPhoto } from '../../api/eventPhotos';
 import { listEventComments, addEventComment, deleteEventComment, type EventComment } from '../../api/eventComments';
 import { createReport } from '../../api/reports';
@@ -15,6 +15,7 @@ import Avatar from '../../components/Avatar';
 import BackBtn from '../../components/BackBtn';
 import ProgressBar from '../../components/ProgressBar';
 import CTAButton from '../../components/CTAButton';
+import Pill from '../../components/Pill';
 
 export default function ActivityDetailScreen() {
   const insets = useSafeAreaInsets();
@@ -72,6 +73,20 @@ export default function ActivityDetailScreen() {
       title: event.title,
       ...(url && Platform.OS === 'ios' ? { url } : {}),
     }).catch(() => {});
+  };
+
+  const markPresence = async (userId: string, present: boolean) => {
+    try {
+      await markAttendance(event.id, userId, present);
+      setEvent({
+        ...event,
+        participants: event.participants.map((p) =>
+          p.userId === userId ? { ...p, attendance: present ? 'Present' : 'Absent' } : p,
+        ),
+      });
+    } catch (err) {
+      setError(toApiError(err).message);
+    }
   };
 
   const addToCalendar = () =>
@@ -249,6 +264,25 @@ export default function ActivityDetailScreen() {
               ))}
           </View>
         </View>
+
+        {/* Attendance — organiser only, once the outing has happened. */}
+        {isCreator && event.status !== 'Cancelled' && new Date(event.date).getTime() <= Date.now() && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Qui est venu ?</Text>
+            <Text style={styles.noPhotos}>Cochez les présences : cela construit la fiabilité de chacun.</Text>
+            {event.participants
+              .filter((p) => p.status === 'Confirmed' && p.userId !== user?.id)
+              .map((p) => (
+                <View key={p.userId} style={styles.attendanceRow}>
+                  <Text style={styles.attendanceName}>{p.firstName}</Text>
+                  <View style={{ flexDirection: 'row', gap: 6 }}>
+                    <Pill label="Présent" active={p.attendance === 'Present'} small onPress={() => markPresence(p.userId, true)} />
+                    <Pill label="Absent" active={p.attendance === 'Absent'} small onPress={() => markPresence(p.userId, false)} />
+                  </View>
+                </View>
+              ))}
+          </View>
+        )}
 
         {/* Public questions */}
         <View style={styles.section}>
@@ -442,6 +476,8 @@ const styles = StyleSheet.create({
   metaRow:  { flexDirection: 'row', marginBottom: 6 },
   meta:     { fontSize: 13, color: T.textMid, fontFamily: 'DMSans_400Regular' },
   metaLink: { fontSize: 13, color: T.coral, fontFamily: 'DMSans_600SemiBold' },
+  attendanceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 },
+  attendanceName: { fontSize: 14, color: T.text, fontFamily: 'DMSans_600SemiBold' },
 
   section:      { marginTop: 20, marginBottom: 16 },
   sectionTitle: { fontSize: 13, fontWeight: '600', color: T.text, marginBottom: 8, fontFamily: 'DMSans_600SemiBold' },
